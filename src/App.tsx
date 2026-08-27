@@ -6,6 +6,7 @@ import { Compras } from './pages/Compras';
 import { ComprasSessao } from './pages/ComprasSessao';
 import { HistoricoCompras } from './pages/HistoricoCompras';
 import { Header } from './components/Header';
+import { RotaProtegida } from './components/RotaProtegida';
 import './App.css';
 
 function Placeholder({ titulo }: { titulo: string }) {
@@ -37,22 +38,24 @@ function App() {
           <Header />
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/lista" element={<Lista />} />
             <Route path="/conta" element={<Conta />} />
-            <Route path="/compre" element={<Compras />} />
-            <Route
-              path="/compre/:listaId"
-              element={<ComprasSessao />}
-            />
-            <Route
-              path="/historico"
-              element={<HistoricoCompras />}
-            />
-            <Route
-              path="/perfil"
-              element={<Placeholder titulo="Minha conta" />}
-            />
-            <Route path="/ajuda" element={<Placeholder titulo="Ajuda" />} />
+            <Route element={<RotaProtegida />}>
+              <Route path="/lista" element={<Lista />} />
+              <Route path="/compre" element={<Compras />} />
+              <Route
+                path="/compre/:listaId"
+                element={<ComprasSessao />}
+              />
+              <Route
+                path="/historico"
+                element={<HistoricoCompras />}
+              />
+              <Route
+                path="/perfil"
+                element={<Placeholder titulo="Minha conta" />}
+              />
+              <Route path="/ajuda" element={<Placeholder titulo="Ajuda" />} />
+            </Route>
           </Routes>
         </div>
 

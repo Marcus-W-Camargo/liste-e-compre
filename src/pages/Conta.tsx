@@ -3,21 +3,15 @@ import { type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
-  enviarCodigoCadastro,
-  enviarCodigoRecuperacao,
-} from '../services/emailService';
-
-import {
-  autenticarUsuario,
   confirmarCadastro,
   confirmarRecuperacao,
   iniciarCadastro,
   iniciarRecuperacao,
-  obterNomeUsuario,
   redefinirSenha,
-} from '../utils/authStorage';
+} from '../services/authService';
 
-import { salvarSessao } from '../utils/auth';
+import { autenticarUsuario } from '../utils/auth';
+import { EMAIL_VALIDO, ERRO_NOME, nomeValido, requisitosSenha as obterRequisitosSenha, senhaValida as validarSenha } from '../../shared/auth-validation.mjs';
 import './Conta.css';
 
 type Modo = 'login' | 'cadastro' | 'recuperacao';
@@ -37,8 +31,6 @@ const inicial: Formulario = {
   confirmarSenha: '',
 };
 
-const EMAIL_VALIDO = /^\S+@\S+\.\S+$/;
-
 export function Conta() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -56,6 +48,7 @@ export function Conta() {
   const [mensagem, setMensagem] = useState('');
   const [erro, setErro] = useState('');
   const [processando, setProcessando] = useState(false);
+  const [reenvioEspera, setReenvioEspera] = useState(0);
   const [mostrarAvisoSenha, setMostrarAvisoSenha] = useState(false);
   const [mostrarAvisoConfirmacao, setMostrarAvisoConfirmacao] =
     useState(false);
@@ -72,13 +65,13 @@ export function Conta() {
 
   const cadastro = modo === 'cadastro';
   const recuperacao = modo === 'recuperacao';
-  const requisitosSenha = [
-    { id: 'tamanho', texto: 'Pelo menos 6 caracteres', valido: formulario.senha.length >= 6 },
-    { id: 'numero', texto: 'Pelo menos 1 número', valido: /\d/.test(formulario.senha) },
-    { id: 'especial', texto: 'Pelo menos um caractere especial', valido: /[!@#$%&*/?_-]/.test(formulario.senha) },
-    { id: 'letras', texto: 'A senha não pode ser numérica', valido: /[a-zA-ZÀ-ÿ]/.test(formulario.senha) },
-  ];
-  const senhaValida = requisitosSenha.every((requisito) => requisito.valido);
+  const requisitosSenha = obterRequisitosSenha(formulario.senha);
+  const senhaValida = validarSenha(formulario.senha);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setReenvioEspera((segundos) => Math.max(0, segundos - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const novoModo = searchParams.get('modo');
@@ -230,6 +223,7 @@ export function Conta() {
             }
           }}
           autoComplete={autoComplete}
+          maxLength={72}
           required
         />
 
@@ -280,8 +274,8 @@ export function Conta() {
     try {
       const email = formulario.email.trim().toLowerCase();
 
-      if (cadastro && formulario.nome.trim().length < 2) {
-        throw new Error('Informe seu nome e sobrenome.');
+      if (cadastro && !nomeValido(formulario.nome)) {
+        throw new Error(ERRO_NOME);
       }
 
       if (!EMAIL_VALIDO.test(email)) {
@@ -289,6 +283,7 @@ export function Conta() {
       }
 
       if ((cadastro || recuperacao) && (!formulario.senha || !senhaValida)) {
+        setErro('Confira os requisitos da senha. O tamanho máximo é de 72 bytes (acentos podem ocupar mais de um).');
         setMostrarAvisoSenha(true);
         setAnimacaoRequisitos((atual) => atual + 1);
         return;
@@ -301,30 +296,22 @@ export function Conta() {
       }
 
       if (cadastro) {
-        const codigoGerado = await iniciarCadastro(
+        await iniciarCadastro(
           formulario.nome,
           email,
-          formulario.senha,
         );
-
-        await enviarCodigoCadastro({
-          email,
-          nome: formulario.nome.trim(),
-          codigo: codigoGerado,
-        });
-
+        setReenvioEspera(60);
         setCodigoCadastro('');
         setCadastroConfirmacao(true);
         setMensagem('Código enviado para seu e-mail.');
         return;
       }
 
-      const usuario = await autenticarUsuario(
+      await autenticarUsuario(
         email,
         formulario.senha,
       );
 
-      salvarSessao(usuario.nome, usuario.email);
       navigate('/');
     } catch (error) {
       if (
@@ -356,7 +343,7 @@ export function Conta() {
         throw new Error('Informe o código de 4 dígitos.');
       }
 
-      confirmarCadastro(formulario.email, codigoCadastro);
+      await confirmarCadastro(formulario.nome, formulario.email, formulario.senha, codigoCadastro);
 
       setCadastroConfirmacao(false);
       setCodigoCadastro('');
@@ -444,19 +431,8 @@ export function Conta() {
           throw new Error('Informe um e-mail válido.');
         }
 
-        const codigoGerado = iniciarRecuperacao(email);
-
-        if (!codigoGerado) {
-          throw new Error(
-            'Nenhuma conta foi encontrada com esse e-mail.',
-          );
-        }
-
-        await enviarCodigoRecuperacao({
-          email,
-          nome: obterNomeUsuario(email),
-          codigo: codigoGerado,
-        });
+        await iniciarRecuperacao(email);
+        setReenvioEspera(60);
 
         setEtapaRecuperacao('codigo');
         setMensagem('Código enviado para seu e-mail.');
@@ -468,7 +444,7 @@ export function Conta() {
           throw new Error('Informe o código de 4 dígitos.');
         }
 
-        confirmarRecuperacao(formulario.email, codigo);
+        await confirmarRecuperacao(formulario.email, codigo);
         setEtapaRecuperacao('senha');
         setCodigo('');
         setMensagem('Código confirmado. Defina sua nova senha.');
@@ -476,6 +452,7 @@ export function Conta() {
       }
 
       if (!senhaValida) {
+        setErro('Confira os requisitos da senha. O tamanho máximo é de 72 bytes (acentos podem ocupar mais de um).');
         setMostrarAvisoSenha(true);
         setAnimacaoRequisitos((atual) => atual + 1);
         return;
@@ -504,6 +481,23 @@ export function Conta() {
     } finally {
       setProcessando(false);
     }
+  }
+
+  async function reenviarCodigo() {
+    if (processando || reenvioEspera > 0) return;
+    setProcessando(true);
+    setErro('');
+    setMensagem('');
+    try {
+      if (cadastro) await iniciarCadastro(formulario.nome, formulario.email);
+      else await iniciarRecuperacao(formulario.email);
+      setCodigo('');
+      setCodigoCadastro('');
+      setReenvioEspera(60);
+      setMensagem('Novo código enviado. Use o e-mail mais recente.');
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : 'Não foi possível reenviar.');
+    } finally { setProcessando(false); }
   }
 
   return (
@@ -619,6 +613,10 @@ export function Conta() {
               >
                 {processando ? 'Confirmando...' : 'Confirmar Código'}
               </button>
+              <button type="button" className="link-corrigir" onClick={reenviarCodigo} disabled={processando || reenvioEspera > 0}>
+                {reenvioEspera > 0 ? `Reenviar em ${reenvioEspera}s` : 'Reenviar código'}
+              </button>
+              {mensagem && <span className="texto-sucesso" role="status">{mensagem}</span>}
             </div>
           ) : (
             <form
@@ -629,18 +627,21 @@ export function Conta() {
             >
               {cadastro && (
                 <div className="grupo-campo">
-                  <label htmlFor="usr-nome">Nome e sobrenome</label>
+                  <label htmlFor="usr-nome">Nome e Sobrenome</label>
 
                   <input
                     id="usr-nome"
                     type="text"
                     value={formulario.nome}
                     onChange={(event) =>
-                      alterarCampo('nome', event.target.value)
+                      alterarCampo('nome', event.target.value.normalize('NFC'))
                     }
                     autoComplete="name"
+                    maxLength={21}
+                    aria-describedby="nome-ajuda"
                     required
                   />
+                  <small id="nome-ajuda">Até 21 caracteres, com apenas um espaço. Ex.: Maria Silva.</small>
                 </div>
               )}
 
@@ -655,6 +656,7 @@ export function Conta() {
                     alterarCampo('email', event.target.value)
                   }
                   autoComplete="email"
+                  maxLength={254}
                   required
                 />
               </div>
@@ -764,7 +766,7 @@ export function Conta() {
                 </div>
               )}
 
-              {erro && (cadastro || recuperacao) && (
+              {erro && !mostrarAvisoLogin && (
                 <span className="texto-erro-senha">{erro}</span>
               )}
 
@@ -840,6 +842,9 @@ export function Conta() {
                   autoComplete="one-time-code"
                   required
                 />
+                <button type="button" className="link-corrigir" onClick={reenviarCodigo} disabled={processando || reenvioEspera > 0}>
+                  {reenvioEspera > 0 ? `Reenviar em ${reenvioEspera}s` : 'Reenviar código'}
+                </button>
               </div>
             )}
 

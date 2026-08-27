@@ -1,32 +1,45 @@
-# React + TypeScript + Vite
+# Liste e Compre
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Aplicação React + TypeScript + Vite para criar listas e acompanhar compras.
 
-Currently, two official plugins are available:
+## Autenticação
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Cadastro e recuperação com os templates EmailJS existentes e código de quatro dígitos, validado no servidor. O Upstash Redis guarda somente a verificação temporária protegida. O Supabase Auth recebe o cadastro **apenas depois da confirmação**.
 
-## React Compiler
+**Antes de publicar:** siga [o guia de ativação](docs/ATIVACAO_AUTH.md). É necessário configurar Supabase, Redis e variáveis privadas da Vercel. Não mescle sem testar o Preview.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Nome e sobrenome ficam no mesmo campo, com um espaço e até 21 caracteres. Nomes podem repetir; e-mail é único no Supabase Auth. Senhas são gerenciadas pelo Auth, sem hashes locais.
 
-## Expanding the Oxlint configuration
+As listas e históricos continuam locais ao navegador nesta etapa. Contas da versão antiga precisam de novo cadastro com confirmação; as listas não são apagadas.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## Desenvolvimento
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+Use Node 22 ou 24:
+
+```sh
+npm ci
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Copie `.env.example` para `.env.local` e configure os valores sem versionar segredos. Em outro terminal, execute `npm run dev:api`. O frontend local abre em `http://127.0.0.1:5173`.
+
+## Verificação
+
+```sh
+npm test
+npm run build
+npm run lint
+```
+
+Os testes não acessam serviços reais: usam provedores simulados, scripts Lua reais com comandos Redis simulados e PostgreSQL/PGlite local. A ativação exige também testar os provedores reais no Preview.
+
+## Estrutura
+
+- `src/`: interface e sessão Supabase.
+- `api/auth.js`: entrada da função Vercel.
+- `server/`: EmailJS, verificação e operações administrativas.
+- `shared/`: regras de validação comuns.
+- `supabase/migrations/`: perfis e políticas RLS.
+- `tests/`: regressão de autenticação e banco.
+
+Nunca exponha `SUPABASE_SECRET_KEY`, `EMAILJS_PRIVATE_KEY`, o token Redis ou `AUTH_VERIFICATION_SECRET` em variáveis `VITE_*`.

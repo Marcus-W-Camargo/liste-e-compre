@@ -1,0 +1,7 @@
+{
+  "framework": "vite",
+  "functions": { "api/auth.js": { "maxDuration": 60 } },
+  "rewrites": [
+    { "source": "/((?!api(?:/|$)).*)", "destination": "/index.html" }
+  ]
+}

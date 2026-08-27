@@ -1,6 +1,5 @@
 import {
   useEffect,
-  useLayoutEffect,
   useState,
   type ReactNode,
 } from 'react';
@@ -11,14 +10,12 @@ import logoTitulo from '../assets/titulo.png';
 import { useAuth } from '../hooks/useAuth';
 
 export function Header() {
-  const { logado, nome, logout, atualizarSessao } = useAuth();
+  const { logado, nome, logout } = useAuth();
   const location = useLocation();
   const [dropdownAberto, setDropdownAberto] = useState(false);
   const [modalLogout, setModalLogout] = useState(false);
-
-  useLayoutEffect(() => {
-    atualizarSessao();
-  }, [atualizarSessao, location.pathname]);
+  const [erroLogout, setErroLogout] = useState('');
+  const [saindo, setSaindo] = useState(false);
 
   useEffect(() => {
     if (!dropdownAberto) return;
@@ -32,10 +29,17 @@ export function Header() {
     return () => document.removeEventListener('click', fecharDropdown);
   }, [dropdownAberto]);
 
-  function confirmarLogout() {
-    logout();
-    setModalLogout(false);
-    setDropdownAberto(false);
+  async function confirmarLogout() {
+    if (saindo) return;
+    setSaindo(true);
+    setErroLogout('');
+    try {
+      await logout();
+      setModalLogout(false);
+      setDropdownAberto(false);
+    } catch (error) {
+      setErroLogout(error instanceof Error ? error.message : 'Não foi possível sair.');
+    } finally { setSaindo(false); }
   }
 
   if (location.pathname === '/conta') return null;
@@ -53,6 +57,7 @@ export function Header() {
       )}
 
       <header className="menu-conta">
+        {erroLogout && <span role="alert">{erroLogout}</span>}
         {!logado ? (
           <div className="botoes-autenticacao">
             <Link to="/conta?modo=login" className="botao-topo">

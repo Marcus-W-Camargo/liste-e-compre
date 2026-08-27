@@ -23,8 +23,8 @@ export function Home() {
   }, []);
 
   function handleRotaProtegida(event: MouseEvent, path: string) {
+    event.preventDefault();
     if (!logado) {
-      event.preventDefault();
       setModalAcesso(true);
       return;
     }
