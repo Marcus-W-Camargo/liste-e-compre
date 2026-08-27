@@ -1,0 +1,66 @@
+.overlay-bloqueio {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100vw;
+  height: 100dvh;
+  padding: 16px;
+  overflow-y: auto;
+  background: rgb(0 0 0 / 55%);
+  animation: aparecer-overlay 0.2s ease-out;
+}
+
+.card-bloqueio-home {
+  position: fixed !important;
+  top: 50%;
+  left: 50%;
+  box-sizing: border-box;
+  width: min(100%, 420px);
+  max-height: calc(100dvh - 32px);
+  padding: 24px;
+  margin: 0;
+  overflow-y: auto;
+  border: 3px solid #1a263b;
+  border-radius: 24px;
+  background-color: #fff;
+  transform: translate(-50%, -50%);
+  animation: aparecer-modal 0.2s ease-out;
+}
+
+@keyframes aparecer-overlay {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes aparecer-modal {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@media (max-width: 480px) {
+  .overlay-bloqueio {
+    padding: 10px;
+  }
+
+  .card-bloqueio-home {
+    width: 100%;
+    max-height: calc(100dvh - 20px);
+    padding: 20px 16px;
+  }
+}

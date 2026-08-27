@@ -1,0 +1,38 @@
+.pagina-compras { flex: 1 0 auto; width: 100%; padding: 105px 24px 50px; }
+.botao-voltar-lista { position: fixed; top: 50%; left: 18px; z-index: 900; width: auto; padding: 0; border: 0; background: transparent; color: #f7501b; cursor: pointer; font-size: 58px; font-weight: 700; line-height: 1; text-shadow: 0 2px 2px rgb(26 38 59 / 25%); transform: translateY(-50%); transition: color .2s ease, transform .2s ease; }
+.botao-voltar-lista:hover { color: #e04312; transform: translateY(-50%) scale(1.22); }
+.botao-voltar-lista:disabled { cursor: default; }
+body.transicao-para-lista .app-layout { animation: deslizar-para-lista .36s ease-in forwards; }
+@keyframes deslizar-para-lista { to { opacity: .25; transform: translateX(100%); } }
+.catalogo-listas { width: min(100%, 1080px); margin: 0 auto; }
+.cabecalho-catalogo { display: flex; justify-content: center; margin-bottom: 28px; text-align: center; }
+.cabecalho-catalogo h1 { position: relative; color: #f7501b; font-family: Georgia, serif; font-size: clamp(32px, 5vw, 44px); line-height: 1.15; }
+.cabecalho-catalogo h1 span { position: absolute; top: -27px; left: 50%; font-family: 'Poppins', sans-serif; font-size: 23px; transform: translateX(-50%); }
+.aviso-compras, .estado-vazio-listas { margin-bottom: 22px; color: #1a263b; font-weight: 500; }
+.estado-vazio-listas { color: #000; text-align: center; }
+.aviso-compras { padding: 12px 15px; border-radius: 12px; background: #ffebd6; }
+.grid-listas-compras { display: grid; grid-template-columns: repeat(auto-fit, 215px); justify-content: center; gap: 20px; }
+.card-lista-compra-wrapper { position: relative; width: 215px; min-height: 215px; }
+.card-lista-compra, .card-nova-lista { display: flex; flex-direction: column; align-items: flex-start; width: 215px; min-height: 215px; padding: 20px; border: 3px solid #000; border-radius: 20px; background: #fff; box-shadow: 0 7px 18px rgb(26 38 59 / 12%); }
+.card-lista-compra { cursor: pointer; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+.card-lista-compra:hover, .card-lista-compra:focus-visible, .card-lista-compra-ativo { border-color: #f7501b; box-shadow: 0 10px 24px rgb(26 38 59 / 20%); outline: none; transform: translateY(-3px); }
+.card-lista-compra h2 { width: 100%; overflow: hidden; color: #1a263b; font-size: 21px; text-overflow: ellipsis; white-space: nowrap; }
+.card-lista-compra p { margin-top: 5px; color: #4a5b78; font-size: 15px; }
+.card-lista-compra-data { margin-top: auto; color: #4a5b78; font-size: 13px; font-weight: 600; }
+.menu-acoes-lista { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; justify-content: center; width: 100%; min-height: 0; padding: 17px 12px; border: 3px solid #f7501b; border-radius: 20px; background: #b2cef7; box-shadow: 0 8px 18px rgb(26 38 59 / 22%); cursor: pointer; }
+.botao-acao-compra { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 7px 9px 7px 13px; border: 0; border-radius: 999px; background: #ff4f1f; color: #fff; cursor: pointer; font-family: Georgia, serif; font-size: 18px; font-weight: 700; text-align: left; transition: transform .18s ease, background-color .18s ease; }
+.botao-acao-compra b { display: grid; flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%; place-items: center; background: #b2cef7; color: #ff4f1f; font-family: 'Poppins', sans-serif; font-size: 28px; font-weight: 400; line-height: 1; transition: background-color .18s ease, color .18s ease; }
+.botao-acao-compra:hover { background: #e04312; transform: scale(1.02); }
+.botao-acao-compra:hover b { background: #fff; color: #f7501b; }
+.texto-escolha-compra { margin: 10px 0; color: #7a9dce; font-size: 15px; font-weight: 500; text-align: center; }
+.painel-agendamento { display: flex; flex-direction: column; align-items: stretch; gap: 5px; color: #1a263b; text-align: center; }
+.painel-agendamento h3 { font-family: Georgia, serif; font-size: 22px; line-height: 1.05; }
+.painel-agendamento p { color: #4a5b78; font-size: 13px; }
+.painel-agendamento input { width: 100%; padding: 8px; border: 3px solid #1a263b; border-radius: 12px; background: #fff; color: #1a263b; font-weight: 700; }
+.botao-confirmar-agendamento { padding: 6px; border: 0; border-radius: 10px; background: #ff4f1f; color: #fff; cursor: pointer; font-size: 13px; font-weight: 700; }
+.botao-voltar-agendamento { border: 0; background: transparent; color: #1a263b; cursor: pointer; font-size: 13px; font-weight: 700; }
+.card-nova-lista { align-items: center; justify-content: center; border-color: #000; border-style: dashed; background: rgb(220 231 247 / 72%); color: #1a263b; cursor: pointer; text-align: center; transition: border-color .18s ease, background-color .18s ease, transform .18s ease; }
+.card-nova-lista:hover, .card-nova-lista:focus-visible { border-color: #f7501b; background: rgb(238 244 253 / 85%); outline: none; transform: translateY(-3px); }
+.card-nova-lista span { display: grid; width: 47px; height: 47px; margin-bottom: 12px; border-radius: 50%; place-items: center; background: #ff4f1f; color: #fff; font-size: 32px; font-weight: 400; line-height: 1; }
+.card-nova-lista small { margin-top: 5px; color: #4a5b78; }
+@media (max-width: 600px) { .pagina-compras { padding: 90px 16px 35px; } .grid-listas-compras { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; } .card-lista-compra-wrapper, .card-lista-compra, .card-nova-lista { width: 100%; min-height: 0; aspect-ratio: 1; } .card-lista-compra, .card-nova-lista { padding: 16px; } .card-lista-compra h2 { font-size: 18px; } }

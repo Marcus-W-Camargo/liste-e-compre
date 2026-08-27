@@ -1,0 +1,7 @@
+Coloque aqui as imagens do projeto:
+
+- background.jpg  → fundo da tela (referenciado no CSS)
+- titulo.png      → logo canto superior esquerdo
+- Liste.png       → ícone ao lado do título "Criar Lista"
+
+Caminhos já configurados no código para src/assets/

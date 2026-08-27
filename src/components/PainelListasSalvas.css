@@ -1,0 +1,221 @@
+.barra-lateral-listas {
+  position: fixed;
+  top: 95px;
+  left: 20px;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+  width: 260px;
+  max-height: calc(100vh - 140px);
+  padding: 16px;
+  overflow: hidden;
+  border: 3px solid #1a263b;
+  border-radius: 20px;
+  background-color: #fff;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 10%);
+}
+
+.barra-lateral-listas h3 {
+  margin: 0 0 2px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #1a263b;
+  color: #1a263b;
+  font-size: 16px;
+  user-select: none;
+}
+
+.container-cards-laterais {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding-right: 2px;
+  overflow-y: auto;
+}
+
+.container-cards-laterais::-webkit-scrollbar {
+  width: 5px;
+}
+
+.container-cards-laterais::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.container-cards-laterais::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background-color: #f7501b;
+}
+
+.card-historico-lateral {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 7px 10px;
+  border: 2px solid #1a263b;
+  border-radius: 22px;
+  background-color: #fff;
+  cursor: pointer;
+  animation: cardSurgirLateral 0.2s ease-out;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.card-historico-lateral:focus-visible {
+  outline: 3px solid #f7501b;
+  outline-offset: 2px;
+}
+
+.card-historico-lateral:hover,
+.card-historico-lateral.editando-agora {
+  border-color: #f7501b;
+  background-color: #ffebd660;
+}
+
+.info-card-lat {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nome-lista-linha {
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 3px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.info-card-lat h4 {
+  min-width: 0;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  color: #1a263b;
+  font-size: 14px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.1;
+}
+
+.info-card-lat p {
+  padding: 0;
+  margin: 0;
+  color: #7b9fd6;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.info-card-lat p:last-child {
+  color: #f7501b;
+}
+
+.acoes-card-lat {
+  display: flex;
+  align-self: stretch;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 34px;
+  padding-left: 10px;
+  margin-left: 4px;
+  border-left: 2px solid #1a263b;
+}
+
+.botao-excluir-lista {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  transform: scale(1.15);
+}
+
+.botao-excluir-lista:hover {
+  transform: scale(1.50);
+}
+
+.botao-renomear-lista {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.botao-renomear-lista {
+  flex-shrink: 0;
+  font-size: 15px;
+  transform-origin: center;
+}
+
+.botao-renomear-lista:hover {
+  animation: balancar-lapis 0.67s infinite;
+}
+
+.lista-historico-vazia {
+  padding: 20px 0;
+  margin: 0;
+  color: #7b9fd6;
+  font-size: 13px;
+  text-align: center;
+}
+
+@keyframes cardSurgirLateral {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes balancar-lapis {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+
+  25% {
+    transform: rotate(-15deg);
+  }
+
+  75% {
+    transform: rotate(15deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .barra-lateral-listas {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    width: min(430px, calc(100vw - 30px));
+    max-height: 250px;
+    margin: 0;
+    transform: translateX(-50%);
+  }
+}
