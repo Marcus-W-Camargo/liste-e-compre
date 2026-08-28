@@ -1,246 +1,138 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import type { Item, ListaSalva, TipoMedida } from '../types';
+import { cloud } from '../services/cloudData';
 import {
-  adicionarListaAoHistorico,
-  atualizarListaNoHistorico,
-  carregarHistoricoListas,
-  carregarListaAtual,
   gerarId,
-  limparListaAtual,
   removerListaDoHistorico,
   renomearListaNoHistorico,
-  salvarListaAtual,
 } from '../utils/storage';
 import { obterSessao } from '../utils/auth';
-
 type ResultadoSalvar =
   | { ok: true; lista: ListaSalva }
-  | {
-      ok: false;
-      motivo: 'vazia' | 'nome-vazio' | 'nome-duplicado';
-    };
-
+  | { ok: false; motivo: 'vazia' | 'nome-vazio' | 'nome-duplicado' };
 export function useListaCompras() {
-  const [itens, setItens] = useState<Item[]>([]);
-  const [historico, setHistorico] = useState<ListaSalva[]>([]);
+  const { data } = useSyncExternalStore(cloud.subscribe, cloud.getSnapshot);
+  const { itens, historico, edicaoId: listaEmEdicaoId } = data;
   const [filtroCategoria, setFiltroCategoria] = useState('Geral');
-  const [carregado, setCarregado] = useState(false);
-  const [listaEmEdicaoId, setListaEmEdicaoId] = useState<string | null>(
-    null,
-  );
-  const emailConta = obterSessao().email;
-
-  useEffect(() => {
-    setItens(carregarListaAtual(emailConta));
-    setHistorico(carregarHistoricoListas(emailConta));
-    setCarregado(true);
-  }, [emailConta]);
-
-  useEffect(() => {
-    if (carregado) {
-      salvarListaAtual(emailConta, itens);
-    }
-  }, [itens, carregado, emailConta]);
-
-  const adicionarItem = useCallback(
-    (dados: {
-      nome: string;
-      categoria: string;
-      quantidade: number;
-      tipo: TipoMedida;
-    }) => {
-      const novoItem: Item = {
+  function adicionarItem(dados: {
+    nome: string;
+    categoria: string;
+    quantidade: number;
+    tipo: TipoMedida;
+  }) {
+    cloud.mutate((d) => {
+      d.itens.push({
         id: gerarId(),
+        ...dados,
         nome: dados.nome.trim(),
-        categoria: dados.categoria,
-        quantidade: dados.quantidade,
-        tipo: dados.tipo,
         comprado: false,
-      };
-
-      setItens((atual) => [...atual, novoItem]);
-    },
-    [],
-  );
-
-  const atualizarItem = useCallback(
-    (id: string, patch: Partial<Item>) => {
-      setItens((atual) =>
-        atual.map((item) =>
-          item.id === id ? { ...item, ...patch } : item,
-        ),
-      );
-    },
-    [],
-  );
-
-  const removerItem = useCallback((id: string) => {
-    setItens((atual) => atual.filter((item) => item.id !== id));
-  }, []);
-
-  const limparLista = useCallback(() => {
-    setItens([]);
-    setListaEmEdicaoId(null);
-    limparListaAtual(emailConta);
-  }, [emailConta]);
-
-  const carregarListaSalva = useCallback(
-    (id: string) => {
-      const lista = historico.find((item) => item.id === id);
-
-      if (!lista) return;
-
-      setItens([...lista.itens]);
-      setListaEmEdicaoId(lista.id);
-      setFiltroCategoria('Geral');
-    },
-    [historico],
-  );
-
-  const salvarEdicaoAtual = useCallback(() => {
-    if (!listaEmEdicaoId || itens.length === 0) {
-      return null;
+      });
+    });
+  }
+  function atualizarItem(id: string, patch: Partial<Item>) {
+    cloud.mutate((d) => {
+      d.itens = d.itens.map((i) => (i.id === id ? { ...i, ...patch } : i));
+    });
+  }
+  function removerItem(id: string) {
+    cloud.mutate((d) => {
+      d.itens = d.itens.filter((i) => i.id !== id);
+    });
+  }
+  function limparLista() {
+    cloud.mutate((d) => {
+      d.itens = [];
+      d.edicaoId = null;
+    });
+  }
+  function carregarListaSalva(id: string) {
+    const lista = historico.find((l) => l.id === id);
+    if (!lista) return;
+    cloud.mutate((d) => {
+      d.itens = structuredClone(lista.itens);
+      d.edicaoId = id;
+    });
+    setFiltroCategoria('Geral');
+  }
+  function salvarEdicaoAtual(): ListaSalva | null {
+    const lista = historico.find((l) => l.id === listaEmEdicaoId);
+    if (!lista || !itens.length) return null;
+    const updated = {
+      ...lista,
+      itens: structuredClone(itens),
+      data: new Date().toISOString(),
+    };
+    cloud.mutate((d) => {
+      d.historico = d.historico.map((l) => (l.id === lista.id ? updated : l));
+      d.itens = [];
+      d.edicaoId = null;
+    });
+    return updated;
+  }
+  function salvarListaComNome(nome: string): ResultadoSalvar {
+    if (!itens.length) return { ok: false, motivo: 'vazia' };
+    if (listaEmEdicaoId) {
+      const lista = salvarEdicaoAtual();
+      return lista ? { ok: true, lista } : { ok: false, motivo: 'vazia' };
     }
-
-    const listaAtualizada = atualizarListaNoHistorico(
-      emailConta,
-      listaEmEdicaoId,
-      itens,
-    );
-
-    if (!listaAtualizada) {
-      return null;
-    }
-
-    setHistorico((atual) =>
-      atual.map((lista) =>
-        lista.id === listaAtualizada.id ? listaAtualizada : lista,
-      ),
-    );
-
-    setItens([]);
-    setListaEmEdicaoId(null);
-    limparListaAtual(emailConta);
-
-    return listaAtualizada;
-  }, [emailConta, itens, listaEmEdicaoId]);
-
-  const salvarListaComNome = useCallback(
-    (nome: string): ResultadoSalvar => {
-      if (itens.length === 0) {
-        return { ok: false, motivo: 'vazia' };
-      }
-
-      if (listaEmEdicaoId) {
-        const listaAtualizada = salvarEdicaoAtual();
-
-        if (!listaAtualizada) {
-          return { ok: false, motivo: 'vazia' };
-        }
-
-        return { ok: true, lista: listaAtualizada };
-      }
-
-      const nomeLimpo = nome.trim();
-
-      if (!nomeLimpo) {
-        return { ok: false, motivo: 'nome-vazio' };
-      }
-
-      const nomeJaExiste = historico.some(
-        (lista) =>
-          lista.nome.toLowerCase() === nomeLimpo.toLowerCase(),
-      );
-
-      if (nomeJaExiste) {
-        return { ok: false, motivo: 'nome-duplicado' };
-      }
-
-      const novaLista = adicionarListaAoHistorico(
-        emailConta,
-        nomeLimpo,
-        itens,
-      );
-
-      setHistorico((atual) => [...atual, novaLista]);
-      setItens([]);
-      limparListaAtual(emailConta);
-
-      return { ok: true, lista: novaLista };
-    },
-    [emailConta, historico, itens, listaEmEdicaoId, salvarEdicaoAtual],
-  );
-
-  const excluirListaSalva = useCallback((id: string) => {
-    removerListaDoHistorico(emailConta, id);
-    setHistorico((atual) =>
-      atual.filter((lista) => lista.id !== id),
-    );
-
-    setListaEmEdicaoId((atual) => (atual === id ? null : atual));
-  }, [emailConta]);
-
-  const renomearListaSalva = useCallback(
-    (
-      id: string,
-      nome: string,
-    ):
-      | { ok: true }
-      | { ok: false; motivo: 'nome-vazio' | 'nome-duplicado' } => {
-      const nomeLimpo = nome.trim();
-
-      if (!nomeLimpo) {
-        return { ok: false, motivo: 'nome-vazio' };
-      }
-
-      const nomeJaExiste = historico.some(
-        (lista) =>
-          lista.id !== id &&
-          lista.nome.toLowerCase() === nomeLimpo.toLowerCase(),
-      );
-
-      if (nomeJaExiste) {
-        return { ok: false, motivo: 'nome-duplicado' };
-      }
-
-      renomearListaNoHistorico(emailConta, id, nomeLimpo);
-
-      setHistorico((atual) =>
-        atual.map((lista) =>
-          lista.id === id ? { ...lista, nome: nomeLimpo } : lista,
-        ),
-      );
-
-      return { ok: true };
-    },
-    [emailConta, historico],
-  );
-
-  const itensFiltrados =
-    filtroCategoria === 'Geral'
-      ? itens
-      : itens.filter(
-          (item) =>
-            item.categoria.includes(filtroCategoria) ||
-            item.categoria === filtroCategoria,
-        );
-
+    const limpo = nome.trim();
+    if (!limpo) return { ok: false, motivo: 'nome-vazio' };
+    if (historico.some((l) => l.nome.toLowerCase() === limpo.toLowerCase()))
+      return { ok: false, motivo: 'nome-duplicado' };
+    const lista = {
+      id: gerarId(),
+      nome: limpo,
+      itens: structuredClone(itens),
+      data: new Date().toISOString(),
+    };
+    cloud.mutate((d) => {
+      d.historico.push(lista);
+      d.itens = [];
+      d.edicaoId = null;
+    });
+    return { ok: true, lista };
+  }
+  function excluirListaSalva(id: string) {
+    removerListaDoHistorico(obterSessao().email, id);
+  }
+  function renomearListaSalva(
+    id: string,
+    nome: string,
+  ): { ok: true } | { ok: false; motivo: 'nome-vazio' | 'nome-duplicado' } {
+    const limpo = nome.trim();
+    if (!limpo) return { ok: false, motivo: 'nome-vazio' };
+    if (
+      historico.some(
+        (l) => l.id !== id && l.nome.toLowerCase() === limpo.toLowerCase(),
+      )
+    )
+      return { ok: false, motivo: 'nome-duplicado' };
+    renomearListaNoHistorico(obterSessao().email, id, limpo);
+    return { ok: true };
+  }
   return {
     itens,
-    itensFiltrados,
     historico,
+    listaEmEdicaoId,
     filtroCategoria,
     setFiltroCategoria,
-    carregado,
+    carregado: true,
+    itensFiltrados:
+      filtroCategoria === 'Geral'
+        ? itens
+        : itens.filter(
+            (i) =>
+              i.categoria.includes(filtroCategoria) ||
+              i.categoria === filtroCategoria,
+          ),
     adicionarItem,
     atualizarItem,
     removerItem,
     limparLista,
-    salvarListaComNome,
+    carregarListaSalva,
     salvarEdicaoAtual,
+    salvarListaComNome,
     excluirListaSalva,
     renomearListaSalva,
-    carregarListaSalva,
-    listaEmEdicaoId,
   };
 }

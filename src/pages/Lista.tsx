@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../hooks/useAuth';
 import { useListaCompras } from '../hooks/useListaCompras';
+import { cloud } from '../services/cloudData';
 import type { ListaSalva } from '../types';
 
 import { FormularioItem } from '../components/FormularioItem';
@@ -46,10 +47,8 @@ export function Lista() {
   const [modal, setModal] = useState<ModalTipo>(null);
   const [nomeLista, setNomeLista] = useState('');
   const [mensagemSucesso, setMensagemSucesso] = useState('');
-  const [listaEmEdicao, setListaEmEdicao] =
-    useState<ListaSalva | null>(null);
-  const [listaPendente, setListaPendente] =
-    useState<ListaSalva | null>(null);
+  const [listaEmEdicao, setListaEmEdicao] = useState<ListaSalva | null>(null);
+  const [listaPendente, setListaPendente] = useState<ListaSalva | null>(null);
   const [mensagemRenomear, setMensagemRenomear] = useState('');
   const [indoParaCompras, setIndoParaCompras] = useState(false);
 
@@ -100,7 +99,7 @@ export function Lista() {
     setModal(null);
   }
 
-  function handleSalvarClick() {
+  async function handleSalvarClick() {
     if (itens.length === 0) {
       setModal('vazia');
       return;
@@ -110,6 +109,11 @@ export function Lista() {
       const resultado = salvarEdicaoAtual();
 
       if (resultado) {
+        try {
+          await cloud.flush();
+        } catch {
+          return;
+        }
         setMensagemSucesso(
           `A lista "${resultado.nome}" foi atualizada com sucesso.`,
         );
@@ -135,7 +139,7 @@ export function Lista() {
     setModal('nao-salva');
   }
 
-  function confirmarNome() {
+  async function confirmarNome() {
     const resultado = salvarListaComNome(nomeLista);
 
     if (!resultado.ok) {
@@ -148,6 +152,11 @@ export function Lista() {
       return;
     }
 
+    try {
+      await cloud.flush();
+    } catch {
+      return;
+    }
     if (listaPendente) {
       carregarListaPendente();
       return;
@@ -160,13 +169,18 @@ export function Lista() {
     setModal('sucesso');
   }
 
-  function salvarAtualECarregarPendente() {
+  async function salvarAtualECarregarPendente() {
     if (!listaPendente) return;
 
     if (listaEmEdicaoId) {
       const resultado = salvarEdicaoAtual();
 
       if (resultado) {
+        try {
+          await cloud.flush();
+        } catch {
+          return;
+        }
         carregarListaPendente();
       }
 
@@ -187,10 +201,7 @@ export function Lista() {
   function confirmarRenomeacao() {
     if (!listaEmEdicao) return;
 
-    const resultado = renomearListaSalva(
-      listaEmEdicao.id,
-      nomeLista,
-    );
+    const resultado = renomearListaSalva(listaEmEdicao.id, nomeLista);
 
     if (!resultado.ok) {
       setMensagemRenomear(
@@ -248,18 +259,14 @@ export function Lista() {
         />
       </main>
 
-      <Modal
-        aberto={modal === 'nao-salva'}
-        onFechar={cancelarTrocaDeLista}
-      >
+      <Modal aberto={modal === 'nao-salva'} onFechar={cancelarTrocaDeLista}>
         <div className="conteudo-sucesso">
           <div className="icone-sucesso-laranja">⚠️</div>
 
           <h2>Lista não salva</h2>
 
           <p>
-            Existem itens na lista atual. Se continuar, eles serão
-            perdidos.
+            Existem itens na lista atual. Se continuar, eles serão perdidos.
           </p>
 
           <button
@@ -298,9 +305,7 @@ export function Lista() {
         <div className="form-conteudo modal-nome-lista">
           <h2>💾 Nomear sua lista</h2>
 
-          <p>
-            Dê um nome para identificar essa lista de compras.
-          </p>
+          <p>Dê um nome para identificar essa lista de compras.</p>
 
           <div className="grupo-campo">
             <input
@@ -341,10 +346,7 @@ export function Lista() {
         </div>
       </Modal>
 
-      <Modal
-        aberto={modal === 'renomear'}
-        onFechar={fecharModal}
-      >
+      <Modal aberto={modal === 'renomear'} onFechar={fecharModal}>
         <div className="form-conteudo modal-nome-lista">
           <h2>✏️ Renomear lista</h2>
 
@@ -369,9 +371,7 @@ export function Lista() {
           </div>
 
           {mensagemRenomear && (
-            <p className="mensagem-renomear-erro">
-              {mensagemRenomear}
-            </p>
+            <p className="mensagem-renomear-erro">{mensagemRenomear}</p>
           )}
 
           <button
@@ -382,28 +382,21 @@ export function Lista() {
             Confirmar alteração
           </button>
 
-          <button
-            type="button"
-            className="link-corrigir"
-            onClick={fecharModal}
-          >
+          <button type="button" className="link-corrigir" onClick={fecharModal}>
             Voltar
           </button>
         </div>
       </Modal>
 
-      <Modal
-        aberto={modal === 'duplicado'}
-        onFechar={() => setModal('nomear')}
-      >
+      <Modal aberto={modal === 'duplicado'} onFechar={() => setModal('nomear')}>
         <div className="conteudo-sucesso">
           <div className="icone-sucesso-laranja">📋</div>
 
           <h2>Nome já utilizado!</h2>
 
           <p>
-            Já existe uma lista salva com este nome. Escolha um
-            título diferente.
+            Já existe uma lista salva com este nome. Escolha um título
+            diferente.
           </p>
 
           <button
@@ -416,10 +409,7 @@ export function Lista() {
         </div>
       </Modal>
 
-      <Modal
-        aberto={modal === 'sucesso'}
-        onFechar={() => setModal(null)}
-      >
+      <Modal aberto={modal === 'sucesso'} onFechar={() => setModal(null)}>
         <div className="conteudo-sucesso">
           <div className="icone-sucesso-laranja">✓</div>
 
@@ -437,18 +427,15 @@ export function Lista() {
         </div>
       </Modal>
 
-      <Modal
-        aberto={modal === 'vazia'}
-        onFechar={() => setModal(null)}
-      >
+      <Modal aberto={modal === 'vazia'} onFechar={() => setModal(null)}>
         <div className="conteudo-sucesso">
           <div className="icone-sucesso-laranja">❌</div>
 
           <h2>Lista vazia!</h2>
 
           <p>
-            Não é possível salvar uma lista sem nenhum produto.
-            Adicione pelo menos um item antes de prosseguir.
+            Não é possível salvar uma lista sem nenhum produto. Adicione pelo
+            menos um item antes de prosseguir.
           </p>
 
           <button

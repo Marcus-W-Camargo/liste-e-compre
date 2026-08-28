@@ -1,35 +1,23 @@
-import { useState, useEffect, useCallback } from 'react';
-import { obterSessao, limparSessao, type SessaoUsuario } from '../utils/auth';
-
+import { useEffect, useCallback, useSyncExternalStore } from 'react';
+import {
+  iniciarAuth,
+  limparSessao,
+  observarSessao,
+  obterSessao,
+} from '../utils/auth';
+import { cloud } from '../services/cloudData';
 export function useAuth() {
-  const [sessao, setSessao] = useState<SessaoUsuario>(() => obterSessao());
-
-  // Revalida ao focar a janela (útil se outra aba fez logout)
+  const sessao = useSyncExternalStore(observarSessao, obterSessao);
   useEffect(() => {
-    const revalidar = () => setSessao(obterSessao());
-    window.addEventListener('sessao-alterada', revalidar);
-    window.addEventListener('focus', revalidar);
-    window.addEventListener('storage', revalidar);
-    return () => {
-      window.removeEventListener('sessao-alterada', revalidar);
-      window.removeEventListener('focus', revalidar);
-      window.removeEventListener('storage', revalidar);
-    };
+    void iniciarAuth();
   }, []);
-
-  const logout = useCallback(() => {
-    limparSessao();
-    setSessao({ logado: false, nome: '', email: '' });
+  const logout = useCallback(async () => {
+    await cloud.flush();
+    await limparSessao();
+    cloud.reset();
   }, []);
-
   const atualizarSessao = useCallback(() => {
-    setSessao(obterSessao());
+    void iniciarAuth();
   }, []);
-
-  return {
-    logado: sessao.logado,
-    nome: sessao.nome,
-    logout,
-    atualizarSessao,
-  };
+  return { ...sessao, logout, atualizarSessao };
 }

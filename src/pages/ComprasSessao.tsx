@@ -1,21 +1,40 @@
 import { useEffect, useId, useState, type CSSProperties } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { CATEGORIAS, type ItemCompra, type SessaoCompra, type TipoMedida } from '../types';
+import {
+  CATEGORIAS,
+  type ItemCompra,
+  type SessaoCompra,
+  type TipoMedida,
+} from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { obterSessao } from '../utils/auth';
-import { adicionarItensAListaSalva, carregarHistoricoListas, criarSessaoCompra, finalizarCompra, gerarId, salvarSessaoCompra } from '../utils/storage';
+import {
+  adicionarItensAListaSalva,
+  carregarHistoricoListas,
+  criarSessaoCompra,
+  finalizarCompra,
+  gerarId,
+  salvarSessaoCompra,
+} from '../utils/storage';
 import { Modal } from '../components/Modal';
+import { cloud } from '../services/cloudData';
 import iconeLista from '../assets/Liste.png';
 import './ComprasSessao.css';
 
-const moeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const moeda = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+});
 
 function textoContagem(qtd: number) {
   return qtd === 1 ? '1 Item' : `${qtd} Itens`;
 }
 
 function tituloVisivel(titulo: string) {
-  return titulo.replace(/^(?:\p{Extended_Pictographic}|\uFE0F|\u200D)+\s*/u, '');
+  return titulo.replace(
+    /^(?:\p{Extended_Pictographic}|\uFE0F|\u200D)+\s*/u,
+    '',
+  );
 }
 
 function iconeCategoria(categoria: string) {
@@ -32,22 +51,34 @@ export function ComprasSessao() {
   const navigate = useNavigate();
   const email = obterSessao().email;
   const [sessao, setSessao] = useState<SessaoCompra | null>(null);
-  const [abertas, setAbertas] = useState<Record<string, boolean>>({ Geral: true });
-  const [modal, setModal] = useState<'adicionar' | 'pendencias' | 'transferir' | null>(null);
-  const [novo, setNovo] = useState<{ nome: string; categoria: string; quantidade: string; tipo: TipoMedida }>({
+  const [abertas, setAbertas] = useState<Record<string, boolean>>({
+    Geral: true,
+  });
+  const [modal, setModal] = useState<
+    'adicionar' | 'pendencias' | 'transferir' | null
+  >(null);
+  const [novo, setNovo] = useState<{
+    nome: string;
+    categoria: string;
+    quantidade: string;
+    tipo: TipoMedida;
+  }>({
     nome: '',
     categoria: CATEGORIAS[0].label,
     quantidade: '1',
     tipo: 'un',
   });
   const [destino, setDestino] = useState('');
+  const [finalizando, setFinalizando] = useState(false);
 
   useEffect(() => {
     if (!logado) {
       navigate('/', { replace: true });
       return;
     }
-    const lista = carregarHistoricoListas(email).find((item) => item.id === listaId);
+    const lista = carregarHistoricoListas(email).find(
+      (item) => item.id === listaId,
+    );
     if (!lista) {
       navigate('/compre', { replace: true });
       return;
@@ -56,20 +87,22 @@ export function ComprasSessao() {
   }, [email, listaId, logado, navigate]);
 
   function atualizarItens(fn: (itens: ItemCompra[]) => ItemCompra[]) {
-    setSessao((atual) => {
-      if (!atual) return atual;
-      const proxima = { ...atual, itens: fn(atual.itens) };
-      salvarSessaoCompra(email, proxima);
-      return proxima;
-    });
+    if (!sessao) return;
+    const proxima = { ...sessao, itens: fn(sessao.itens) };
+    salvarSessaoCompra(email, proxima);
+    setSessao(proxima);
   }
 
   const itens = sessao?.itens ?? [];
   const porcentagem = itens.length
-    ? Math.round((itens.filter((item) => item.pego).length / itens.length) * 100)
+    ? Math.round(
+        (itens.filter((item) => item.pego).length / itens.length) * 100,
+      )
     : 0;
   const total = itens
-    .filter((item) => item.pego && item.precoUnitario > 0 && item.quantidade > 0)
+    .filter(
+      (item) => item.pego && item.precoUnitario > 0 && item.quantidade > 0,
+    )
     .reduce((soma, item) => soma + item.precoUnitario * item.quantidade, 0);
 
   function patch(id: string, patchItem: Partial<ItemCompra>) {
@@ -77,9 +110,13 @@ export function ComprasSessao() {
       atuais.map((item) => {
         if (item.id !== id) return item;
         const proximo = { ...item, ...patchItem };
-        const mudouValor = 'precoUnitario' in patchItem || 'quantidade' in patchItem;
+        const mudouValor =
+          'precoUnitario' in patchItem || 'quantidade' in patchItem;
         return mudouValor
-          ? { ...proximo, pego: proximo.precoUnitario > 0 && proximo.quantidade > 0 }
+          ? {
+              ...proximo,
+              pego: proximo.precoUnitario > 0 && proximo.quantidade > 0,
+            }
           : proximo;
       }),
     );
@@ -101,7 +138,12 @@ export function ComprasSessao() {
         origem: 'extra',
       },
     ]);
-    setNovo({ nome: '', categoria: CATEGORIAS[0].label, quantidade: '1', tipo: 'un' });
+    setNovo({
+      nome: '',
+      categoria: CATEGORIAS[0].label,
+      quantidade: '1',
+      tipo: 'un',
+    });
     setModal(null);
   }
 
@@ -111,18 +153,28 @@ export function ComprasSessao() {
     adicionarItensAListaSalva(
       email,
       destino,
-      pendentes.map(({ precoUnitario: _preco, pego: _pego, origem: _origem, quantidadePlanejada: _qtd, ...item }) => item),
+      pendentes.map(
+        ({
+          precoUnitario: _preco,
+          pego: _pego,
+          origem: _origem,
+          quantidadePlanejada: _qtd,
+          ...item
+        }) => item,
+      ),
     );
     atualizarItens((atuais) => atuais.filter((item) => item.pego));
     setModal(null);
   }
 
-  function finalizar() {
+  async function finalizar() {
+    if (finalizando) return;
     if (itens.some((item) => !item.pego)) {
       setModal('pendencias');
       return;
     }
     if (!sessao) return;
+    setFinalizando(true);
     finalizarCompra(email, {
       ...sessao,
       dataFim: new Date().toISOString(),
@@ -132,24 +184,39 @@ export function ComprasSessao() {
         .filter((item) => item.origem === 'extra')
         .reduce((soma, item) => soma + item.precoUnitario * item.quantidade, 0),
     });
-    navigate('/historico');
+    try {
+      await cloud.flush();
+      navigate('/historico');
+    } catch {
+      /* O aviso global mantém a edição e oferece nova tentativa. */
+    } finally {
+      setFinalizando(false);
+    }
   }
 
-  function Secao({ titulo, lista }: { titulo: string; lista: ItemCompra[] }) {
+  function renderSecao(titulo: string, lista: ItemCompra[]) {
     const chaveEstado = titulo.startsWith('Geral') ? 'Geral' : titulo;
     const aberta = abertas[chaveEstado] ?? false;
 
     return (
-      <section className={`secao-compra ${aberta ? 'secao-aberta' : ''}`}>
+      <section
+        key={chaveEstado}
+        className={`secao-compra ${aberta ? 'secao-aberta' : ''}`}
+      >
         <button
           type="button"
           className="cabecalho-secao-compra"
-          onClick={() => setAbertas((atual) => ({ ...atual, [chaveEstado]: !aberta }))}
+          onClick={() =>
+            setAbertas((atual) => ({ ...atual, [chaveEstado]: !aberta }))
+          }
         >
           <span>{tituloVisivel(titulo)}</span>
           <span className="meta-secao-compra">
             <small>{textoContagem(lista.length)}</small>
-            <i className={`seta-secao ${aberta ? 'aberta' : ''}`} aria-hidden="true" />
+            <i
+              className={`seta-secao ${aberta ? 'aberta' : ''}`}
+              aria-hidden="true"
+            />
           </span>
         </button>
         {aberta && (
@@ -159,7 +226,11 @@ export function ComprasSessao() {
                 key={`${chaveEstado}-${item.id}`}
                 item={item}
                 onPatch={patch}
-                onRemover={(id) => atualizarItens((atuais) => atuais.filter((atual) => atual.id !== id))}
+                onRemover={(id) =>
+                  atualizarItens((atuais) =>
+                    atuais.filter((atual) => atual.id !== id),
+                  )
+                }
               />
             ))}
           </div>
@@ -178,7 +249,12 @@ export function ComprasSessao() {
           <div>
             <h1>{sessao.nomeLista}</h1>
             {sessao.dataPrevista && (
-              <span>Agendada para {new Date(`${sessao.dataPrevista}T12:00:00`).toLocaleDateString('pt-BR')}</span>
+              <span>
+                Agendada para{' '}
+                {new Date(`${sessao.dataPrevista}T12:00:00`).toLocaleDateString(
+                  'pt-BR',
+                )}
+              </span>
             )}
           </div>
         </div>
@@ -191,26 +267,37 @@ export function ComprasSessao() {
           >
             <span />
           </div>
-          <span aria-label={`${porcentagem}% concluída`}>{porcentagem}% concluída</span>
+          <span aria-label={`${porcentagem}% concluída`}>
+            {porcentagem}% concluída
+          </span>
         </div>
-        <b className="total-parcial-sessao">Total parcial: {moeda.format(total)}</b>
+        <b className="total-parcial-sessao">
+          Total parcial: {moeda.format(total)}
+        </b>
       </div>
 
-      <Secao titulo="Geral (Todos)" lista={itens} />
+      {renderSecao('Geral (Todos)', itens)}
 
       {CATEGORIAS.map((categoria) => {
         const lista = itens.filter(
-          (item) => item.categoria === categoria.label || item.categoria.includes(categoria.value),
+          (item) =>
+            item.categoria === categoria.label ||
+            item.categoria.includes(categoria.value),
         );
-        return <Secao key={categoria.value} titulo={categoria.label} lista={lista} />;
+        return renderSecao(categoria.label, lista);
       })}
 
       <div className="acoes-sessao">
         <button type="button" onClick={() => setModal('adicionar')}>
           + Adicionar item
         </button>
-        <button type="button" className="finalizar-compra" onClick={finalizar}>
-          Finalizar compra
+        <button
+          type="button"
+          className="finalizar-compra"
+          onClick={finalizar}
+          disabled={finalizando}
+        >
+          {finalizando ? 'Salvando…' : 'Finalizar compra'}
         </button>
       </div>
 
@@ -229,12 +316,20 @@ export function ComprasSessao() {
             value={novo.quantidade}
             onChange={(e) => setNovo({ ...novo, quantidade: e.target.value })}
           />
-          <select value={novo.categoria} onChange={(e) => setNovo({ ...novo, categoria: e.target.value })}>
+          <select
+            value={novo.categoria}
+            onChange={(e) => setNovo({ ...novo, categoria: e.target.value })}
+          >
             {CATEGORIAS.map((c) => (
               <option key={c.value}>{c.label}</option>
             ))}
           </select>
-          <select value={novo.tipo} onChange={(e) => setNovo({ ...novo, tipo: e.target.value as TipoMedida })}>
+          <select
+            value={novo.tipo}
+            onChange={(e) =>
+              setNovo({ ...novo, tipo: e.target.value as TipoMedida })
+            }
+          >
             <option value="un">Unidade</option>
             <option value="Kg">Kg</option>
           </select>
@@ -247,8 +342,15 @@ export function ComprasSessao() {
       <Modal aberto={modal === 'pendencias'} onFechar={() => setModal(null)}>
         <div className="modal-compra">
           <h2>Existem itens pendentes</h2>
-          <p>Conclua, apague ou transfira os itens não marcados antes de finalizar.</p>
-          <button type="button" className="botao-enviar" onClick={() => setModal('transferir')}>
+          <p>
+            Conclua, apague ou transfira os itens não marcados antes de
+            finalizar.
+          </p>
+          <button
+            type="button"
+            className="botao-enviar"
+            onClick={() => setModal('transferir')}
+          >
             Transferir pendentes
           </button>
           <button
@@ -261,13 +363,20 @@ export function ComprasSessao() {
           >
             Apagar pendentes
           </button>
-          <button type="button" className="link-corrigir" onClick={() => setModal(null)}>
+          <button
+            type="button"
+            className="link-corrigir"
+            onClick={() => setModal(null)}
+          >
             Voltar
           </button>
         </div>
       </Modal>
 
-      <Modal aberto={modal === 'transferir'} onFechar={() => setModal('pendencias')}>
+      <Modal
+        aberto={modal === 'transferir'}
+        onFechar={() => setModal('pendencias')}
+      >
         <div className="modal-compra">
           <h2>Transferir pendentes</h2>
           <select value={destino} onChange={(e) => setDestino(e.target.value)}>
@@ -280,7 +389,12 @@ export function ComprasSessao() {
                 </option>
               ))}
           </select>
-          <button type="button" className="botao-enviar" onClick={transferirPendentes} disabled={!destino}>
+          <button
+            type="button"
+            className="botao-enviar"
+            onClick={transferirPendentes}
+            disabled={!destino}
+          >
             Confirmar transferência
           </button>
         </div>
@@ -330,7 +444,9 @@ function LinhaCompra({
           step="0.01"
           value={item.precoUnitario || ''}
           placeholder="00,00"
-          onChange={(e) => onPatch(item.id, { precoUnitario: Number(e.target.value) || 0 })}
+          onChange={(e) =>
+            onPatch(item.id, { precoUnitario: Number(e.target.value) || 0 })
+          }
           aria-label={`Preço de ${item.nome}`}
         />
       </label>
@@ -343,7 +459,9 @@ function LinhaCompra({
             className="checkbox-switch-compra"
             type="checkbox"
             checked={tipoKg}
-            onChange={(e) => onPatch(item.id, { tipo: e.target.checked ? 'Kg' : 'un' })}
+            onChange={(e) =>
+              onPatch(item.id, { tipo: e.target.checked ? 'Kg' : 'un' })
+            }
             aria-label={`Unidade de medida de ${item.nome}`}
           />
           <label htmlFor={idSwitch} className="corpo-switch-compra">
@@ -360,7 +478,9 @@ function LinhaCompra({
           min="0"
           step={tipoKg ? '0.001' : '1'}
           value={item.quantidade}
-          onChange={(e) => onPatch(item.id, { quantidade: Number(e.target.value) || 0 })}
+          onChange={(e) =>
+            onPatch(item.id, { quantidade: Number(e.target.value) || 0 })
+          }
           aria-label={`Quantidade de ${item.nome}`}
         />
       </label>

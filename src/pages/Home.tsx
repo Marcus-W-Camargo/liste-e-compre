@@ -23,8 +23,8 @@ export function Home() {
   }, []);
 
   function handleRotaProtegida(event: MouseEvent, path: string) {
+    event.preventDefault();
     if (!logado) {
-      event.preventDefault();
       setModalAcesso(true);
       return;
     }
@@ -35,19 +35,13 @@ export function Home() {
   return (
     <div className="body-home-wrapper">
       <main className="container-principal">
-        <img
-          src={tituloImg}
-          alt="Liste e Compre"
-          className="imagem-titulo"
-        />
+        <img src={tituloImg} alt="Liste e Compre" className="imagem-titulo" />
 
         <div className="fluxo-botoes">
           <a
             href="/lista"
             className="botao-lista btn-protegido"
-            onClick={(event) =>
-              handleRotaProtegida(event, '/lista')
-            }
+            onClick={(event) => handleRotaProtegida(event, '/lista')}
           >
             Crie sua lista <span>&rarr;</span>
           </a>
@@ -57,9 +51,7 @@ export function Home() {
           <a
             href="/compre"
             className="botao-lista btn-protegido"
-            onClick={(event) =>
-              handleRotaProtegida(event, '/compre')
-            }
+            onClick={(event) => handleRotaProtegida(event, '/compre')}
           >
             Faça sua compra <span>&rarr;</span>
           </a>
@@ -69,19 +61,14 @@ export function Home() {
           <a
             href="/historico"
             className="botao-lista btn-protegido"
-            onClick={(event) =>
-              handleRotaProtegida(event, '/historico')
-            }
+            onClick={(event) => handleRotaProtegida(event, '/historico')}
           >
             Histórico de compras <span>&rarr;</span>
           </a>
         </div>
       </main>
 
-      <Modal
-        aberto={modalAcesso}
-        onFechar={() => setModalAcesso(false)}
-      >
+      <Modal aberto={modalAcesso} onFechar={() => setModalAcesso(false)}>
         <div className="conteudo-sucesso">
           <div
             className="icone-sucesso-laranja"
@@ -93,8 +80,8 @@ export function Home() {
           <h2>Acesso Negado</h2>
 
           <p>
-            Para acessar as suas listas e históricos, você precisa
-            estar conectado à sua conta cadastrada.
+            Para acessar as suas listas e históricos, você precisa estar
+            conectado à sua conta cadastrada.
           </p>
 
           <div className="grupo-botoes-bloqueio">

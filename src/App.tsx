@@ -6,6 +6,8 @@ import { Compras } from './pages/Compras';
 import { ComprasSessao } from './pages/ComprasSessao';
 import { HistoricoCompras } from './pages/HistoricoCompras';
 import { Header } from './components/Header';
+import { CloudAccess, CloudStatus } from './components/CloudAccess';
+import { useAuth } from './hooks/useAuth';
 import './App.css';
 
 function Placeholder({ titulo }: { titulo: string }) {
@@ -29,30 +31,38 @@ function Rodape() {
   );
 }
 
+function Perfil() {
+  const { nome, email } = useAuth();
+  return (
+    <main className="pagina-placeholder">
+      <h1>Minha conta</h1>
+      <p>{nome}</p>
+      <p>{email}</p>
+      <p>
+        Suas listas são vinculadas a esta conta e sincronizadas com a nuvem.
+      </p>
+    </main>
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
       <div className="app-layout">
         <div className="app-conteudo">
           <Header />
+          <CloudStatus />
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/lista" element={<Lista />} />
             <Route path="/conta" element={<Conta />} />
-            <Route path="/compre" element={<Compras />} />
-            <Route
-              path="/compre/:listaId"
-              element={<ComprasSessao />}
-            />
-            <Route
-              path="/historico"
-              element={<HistoricoCompras />}
-            />
-            <Route
-              path="/perfil"
-              element={<Placeholder titulo="Minha conta" />}
-            />
-            <Route path="/ajuda" element={<Placeholder titulo="Ajuda" />} />
+            <Route element={<CloudAccess />}>
+              <Route path="/lista" element={<Lista />} />
+              <Route path="/compre" element={<Compras />} />
+              <Route path="/compre/:listaId" element={<ComprasSessao />} />
+              <Route path="/historico" element={<HistoricoCompras />} />
+              <Route path="/perfil" element={<Perfil />} />
+              <Route path="/ajuda" element={<Placeholder titulo="Ajuda" />} />
+            </Route>
           </Routes>
         </div>
 

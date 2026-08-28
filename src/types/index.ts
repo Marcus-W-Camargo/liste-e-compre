@@ -42,6 +42,14 @@ export interface CompraFinalizada extends SessaoCompra {
   gastosAdicionais: number;
 }
 
+export interface DadosConta {
+  itens: Item[];
+  historico: ListaSalva[];
+  sessao: SessaoCompra | null;
+  compras: CompraFinalizada[];
+  edicaoId: string | null;
+}
+
 /** Categorias disponíveis (iguais ao sistema original) */
 export const CATEGORIAS = [
   { value: 'Mercearia', label: '🍞 Mercearia' },

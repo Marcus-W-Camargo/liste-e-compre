@@ -3,21 +3,13 @@ import { type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
-  enviarCodigoCadastro,
-  enviarCodigoRecuperacao,
-} from '../services/emailService';
-
-import {
-  autenticarUsuario,
-  confirmarCadastro,
-  confirmarRecuperacao,
-  iniciarCadastro,
-  iniciarRecuperacao,
-  obterNomeUsuario,
-  redefinirSenha,
-} from '../utils/authStorage';
-
-import { salvarSessao } from '../utils/auth';
+  cancelarTentativa,
+  ErroAutenticacao,
+  solicitarAuth,
+  type Tentativa,
+} from '../services/authService';
+import { autenticarUsuario } from '../utils/auth';
+import { EMAIL_VALIDO, nomeValido } from '../../shared/auth-validation.mjs';
 import './Conta.css';
 
 type Modo = 'login' | 'cadastro' | 'recuperacao';
@@ -37,8 +29,6 @@ const inicial: Formulario = {
   confirmarSenha: '',
 };
 
-const EMAIL_VALIDO = /^\S+@\S+\.\S+$/;
-
 export function Conta() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -57,26 +47,105 @@ export function Conta() {
   const [erro, setErro] = useState('');
   const [processando, setProcessando] = useState(false);
   const [mostrarAvisoSenha, setMostrarAvisoSenha] = useState(false);
-  const [mostrarAvisoConfirmacao, setMostrarAvisoConfirmacao] =
-    useState(false);
+  const [mostrarAvisoConfirmacao, setMostrarAvisoConfirmacao] = useState(false);
   const [mostrarAvisoLogin, setMostrarAvisoLogin] = useState(false);
   const [animacaoRequisitos, setAnimacaoRequisitos] = useState(0);
   const [animacaoConfirmacao, setAnimacaoConfirmacao] = useState(0);
-  const [senhasVisiveis, setSenhasVisiveis] = useState<
-    Record<string, boolean>
-  >({});
+  const [senhasVisiveis, setSenhasVisiveis] = useState<Record<string, boolean>>(
+    {},
+  );
 
-  const referenciasSenha = useRef<
-    Record<string, HTMLInputElement | null>
-  >({});
+  const referenciasSenha = useRef<Record<string, HTMLInputElement | null>>({});
+  const tentativa = useRef<Tentativa | null>(null);
+  const geracao = useRef(0);
+  const montado = useRef(true);
+
+  function abandonarTentativa() {
+    geracao.current++;
+    if (tentativa.current) cancelarTentativa(tentativa.current);
+    tentativa.current = null;
+  }
+  function tratarErro(error: unknown, padrao: string) {
+    setErro(error instanceof Error ? error.message : padrao);
+    if (
+      error instanceof ErroAutenticacao &&
+      [
+        'TENTATIVA_INVALIDA',
+        'TENTATIVA_BLOQUEADA',
+        'CONTA_EXISTENTE',
+        'CADASTRO_FALHOU',
+        'RECUPERACAO_FALHOU',
+        'CONTA_INEXISTENTE',
+      ].includes(error.code)
+    ) {
+      abandonarTentativa();
+      setCadastroConfirmacao(false);
+      setEtapaRecuperacao('email');
+      setCodigo('');
+      setCodigoCadastro('');
+    }
+  }
+  async function iniciarTentativa(
+    purpose: 'cadastro' | 'recuperacao',
+    email: string,
+  ) {
+    abandonarTentativa();
+    const versao = geracao.current;
+    const nova = await solicitarAuth<Tentativa>({
+      action: 'start',
+      purpose,
+      email,
+      name: purpose === 'cadastro' ? formulario.nome.normalize('NFC') : '',
+    });
+    if (!montado.current || versao !== geracao.current) {
+      cancelarTentativa(nova);
+      return false;
+    }
+    tentativa.current = nova;
+    return true;
+  }
+  useEffect(() => {
+    montado.current = true;
+    const sair = () => abandonarTentativa();
+    const retornar = () => {
+      if (!tentativa.current) {
+        setCadastroConfirmacao(false);
+        setEtapaRecuperacao('email');
+      }
+    };
+    window.addEventListener('pagehide', sair);
+    window.addEventListener('pageshow', retornar);
+    return () => {
+      montado.current = false;
+      sair();
+      window.removeEventListener('pagehide', sair);
+      window.removeEventListener('pageshow', retornar);
+    };
+  }, []);
 
   const cadastro = modo === 'cadastro';
   const recuperacao = modo === 'recuperacao';
   const requisitosSenha = [
-    { id: 'tamanho', texto: 'Pelo menos 6 caracteres', valido: formulario.senha.length >= 6 },
-    { id: 'numero', texto: 'Pelo menos 1 número', valido: /\d/.test(formulario.senha) },
-    { id: 'especial', texto: 'Pelo menos um caractere especial', valido: /[!@#$%&*/?_-]/.test(formulario.senha) },
-    { id: 'letras', texto: 'A senha não pode ser numérica', valido: /[a-zA-ZÀ-ÿ]/.test(formulario.senha) },
+    {
+      id: 'tamanho',
+      texto: 'Pelo menos 6 caracteres',
+      valido: formulario.senha.length >= 6,
+    },
+    {
+      id: 'numero',
+      texto: 'Pelo menos 1 número',
+      valido: /\d/.test(formulario.senha),
+    },
+    {
+      id: 'especial',
+      texto: 'Pelo menos um caractere especial',
+      valido: /[!@#$%&*/?_-]/.test(formulario.senha),
+    },
+    {
+      id: 'letras',
+      texto: 'A senha não pode ser numérica',
+      valido: /[a-zA-ZÀ-ÿ]/.test(formulario.senha),
+    },
   ];
   const senhaValida = requisitosSenha.every((requisito) => requisito.valido);
 
@@ -84,6 +153,9 @@ export function Conta() {
     const novoModo = searchParams.get('modo');
 
     if (novoModo === 'login' || novoModo === 'cadastro') {
+      abandonarTentativa();
+      setCadastroConfirmacao(false);
+      setEtapaRecuperacao('email');
       setModo(novoModo);
     }
   }, [searchParams]);
@@ -126,10 +198,7 @@ export function Conta() {
       true,
     );
 
-    window.addEventListener(
-      'focus',
-      sincronizarPreenchimentoAutomatico,
-    );
+    window.addEventListener('focus', sincronizarPreenchimentoAutomatico);
 
     return () => {
       window.clearInterval(intervalo);
@@ -140,10 +209,7 @@ export function Conta() {
         true,
       );
 
-      window.removeEventListener(
-        'focus',
-        sincronizarPreenchimentoAutomatico,
-      );
+      window.removeEventListener('focus', sincronizarPreenchimentoAutomatico);
     };
   }, []);
 
@@ -176,26 +242,13 @@ export function Conta() {
   ) {
     const visivel = Boolean(senhasVisiveis[id]);
 
-    const frutas = [
-      '🍎',
-      '🍐',
-      '🍋',
-      '🍇',
-      '🍓',
-      '🍒',
-      '🍑',
-      '🍅',
-      '🍆',
-    ];
+    const frutas = ['🍎', '🍐', '🍋', '🍇', '🍓', '🍒', '🍑', '🍅', '🍆'];
 
     return (
       <div
         className="wrapper-senha"
         onMouseDown={() => {
-          if (
-            id === 'usr-redefined-senha' ||
-            id === 'repete-nova-senha'
-          ) {
+          if (id === 'usr-redefined-senha' || id === 'repete-nova-senha') {
             setMostrarAvisoConfirmacao(false);
           }
 
@@ -209,9 +262,7 @@ export function Conta() {
             referenciasSenha.current[id] = input;
           }}
           id={id}
-          className={`input-senha-estilizado ${
-            visivel ? 'senha-visivel' : ''
-          }`}
+          className={`input-senha-estilizado ${visivel ? 'senha-visivel' : ''}`}
           type={visivel ? 'text' : 'password'}
           value={valor}
           onInput={(event) => onChange(event.currentTarget.value)}
@@ -222,14 +273,12 @@ export function Conta() {
               setMostrarAvisoLogin(false);
             }
 
-            if (
-              id === 'usr-redefined-senha' ||
-              id === 'repete-nova-senha'
-            ) {
+            if (id === 'usr-redefined-senha' || id === 'repete-nova-senha') {
               setMostrarAvisoConfirmacao(false);
             }
           }}
           autoComplete={autoComplete}
+          maxLength={128}
           required
         />
 
@@ -256,6 +305,7 @@ export function Conta() {
   }
 
   function trocarModo(novoModo: Modo) {
+    abandonarTentativa();
     setModo(novoModo);
     setEtapaRecuperacao('email');
     setFormulario(inicial);
@@ -280,8 +330,10 @@ export function Conta() {
     try {
       const email = formulario.email.trim().toLowerCase();
 
-      if (cadastro && formulario.nome.trim().length < 2) {
-        throw new Error('Informe seu nome e sobrenome.');
+      if (cadastro && !nomeValido(formulario.nome)) {
+        throw new Error(
+          'Use Nome e Sobrenome, com um único espaço e até 21 caracteres.',
+        );
       }
 
       if (!EMAIL_VALIDO.test(email)) {
@@ -301,17 +353,7 @@ export function Conta() {
       }
 
       if (cadastro) {
-        const codigoGerado = await iniciarCadastro(
-          formulario.nome,
-          email,
-          formulario.senha,
-        );
-
-        await enviarCodigoCadastro({
-          email,
-          nome: formulario.nome.trim(),
-          codigo: codigoGerado,
-        });
+        if (!(await iniciarTentativa('cadastro', email))) return;
 
         setCodigoCadastro('');
         setCadastroConfirmacao(true);
@@ -319,12 +361,8 @@ export function Conta() {
         return;
       }
 
-      const usuario = await autenticarUsuario(
-        email,
-        formulario.senha,
-      );
+      await autenticarUsuario(email, formulario.senha);
 
-      salvarSessao(usuario.nome, usuario.email);
       navigate('/');
     } catch (error) {
       if (
@@ -356,7 +394,17 @@ export function Conta() {
         throw new Error('Informe o código de 4 dígitos.');
       }
 
-      confirmarCadastro(formulario.email, codigoCadastro);
+      if (!tentativa.current)
+        throw new Error('Inicie uma nova tentativa de cadastro.');
+      await solicitarAuth({
+        action: 'confirm-signup',
+        ...tentativa.current,
+        email: formulario.email,
+        name: formulario.nome.normalize('NFC'),
+        password: formulario.senha,
+        code: codigoCadastro,
+      });
+      tentativa.current = null;
 
       setCadastroConfirmacao(false);
       setCodigoCadastro('');
@@ -368,11 +416,7 @@ export function Conta() {
       setModo('login');
       setMensagem('Cadastro confirmado. Faça login para continuar.');
     } catch (error) {
-      setErro(
-        error instanceof Error
-          ? error.message
-          : 'Código de confirmação inválido.',
-      );
+      tratarErro(error, 'Código de confirmação inválido.');
     } finally {
       setProcessando(false);
     }
@@ -380,23 +424,17 @@ export function Conta() {
 
   function alterarDigitoCadastro(indice: number, valor: string) {
     const digito = valor.replace(/\D/g, '').slice(-1);
-    const codigoAtualizado = codigoCadastro
-      .padEnd(4, ' ')
-      .split('');
+    const codigoAtualizado = codigoCadastro.padEnd(4, ' ').split('');
 
     codigoAtualizado[indice] = digito;
     setCodigoCadastro(codigoAtualizado.join('').trimEnd());
 
     if (digito && indice < 3) {
-      document
-        .getElementById(`codigo-cadastro-${indice + 2}`)
-        ?.focus();
+      document.getElementById(`codigo-cadastro-${indice + 2}`)?.focus();
     }
   }
 
-  function colarCodigoCadastro(
-    event: React.ClipboardEvent<HTMLInputElement>,
-  ) {
+  function colarCodigoCadastro(event: React.ClipboardEvent<HTMLInputElement>) {
     event.preventDefault();
     const codigoColado = event.clipboardData
       .getData('text')
@@ -406,9 +444,7 @@ export function Conta() {
     setCodigoCadastro(codigoColado);
 
     const indiceFoco = Math.min(codigoColado.length, 3) + 1;
-    document
-      .getElementById(`codigo-cadastro-${indiceFoco}`)
-      ?.focus();
+    document.getElementById(`codigo-cadastro-${indiceFoco}`)?.focus();
   }
 
   function tratarBackspaceCadastro(
@@ -420,14 +456,10 @@ export function Conta() {
     const valorAtual = codigoCadastro[indice] ?? '';
 
     if (!valorAtual.trim()) {
-      const codigoAtualizado = codigoCadastro
-        .padEnd(4, ' ')
-        .split('');
+      const codigoAtualizado = codigoCadastro.padEnd(4, ' ').split('');
       codigoAtualizado[indice - 1] = '';
       setCodigoCadastro(codigoAtualizado.join('').trimEnd());
-      document
-        .getElementById(`codigo-cadastro-${indice}`)
-        ?.focus();
+      document.getElementById(`codigo-cadastro-${indice}`)?.focus();
     }
   }
 
@@ -444,19 +476,7 @@ export function Conta() {
           throw new Error('Informe um e-mail válido.');
         }
 
-        const codigoGerado = iniciarRecuperacao(email);
-
-        if (!codigoGerado) {
-          throw new Error(
-            'Nenhuma conta foi encontrada com esse e-mail.',
-          );
-        }
-
-        await enviarCodigoRecuperacao({
-          email,
-          nome: obterNomeUsuario(email),
-          codigo: codigoGerado,
-        });
+        if (!(await iniciarTentativa('recuperacao', email))) return;
 
         setEtapaRecuperacao('codigo');
         setMensagem('Código enviado para seu e-mail.');
@@ -468,7 +488,20 @@ export function Conta() {
           throw new Error('Informe o código de 4 dígitos.');
         }
 
-        confirmarRecuperacao(formulario.email, codigo);
+        if (!tentativa.current)
+          throw new Error('Inicie uma nova tentativa de recuperação.');
+        const versao = geracao.current;
+        const autorizacao = await solicitarAuth<Tentativa>({
+          action: 'verify-recovery',
+          ...tentativa.current,
+          email: formulario.email,
+          code: codigo,
+        });
+        if (!montado.current || versao !== geracao.current) {
+          cancelarTentativa(autorizacao);
+          return;
+        }
+        tentativa.current = autorizacao;
         setEtapaRecuperacao('senha');
         setCodigo('');
         setMensagem('Código confirmado. Defina sua nova senha.');
@@ -487,7 +520,15 @@ export function Conta() {
         return;
       }
 
-      await redefinirSenha(formulario.email, formulario.senha);
+      if (!tentativa.current)
+        throw new Error('Confirme o código antes de redefinir a senha.');
+      await solicitarAuth({
+        action: 'reset-password',
+        ...tentativa.current,
+        email: formulario.email,
+        password: formulario.senha,
+      });
+      tentativa.current = null;
 
       setModo('login');
       setEtapaRecuperacao('email');
@@ -496,11 +537,7 @@ export function Conta() {
       setSenhasVisiveis({});
       setMensagem('Senha redefinida com sucesso.');
     } catch (error) {
-      setErro(
-        error instanceof Error
-          ? error.message
-          : 'Não foi possível concluir a recuperação.',
-      );
+      tratarErro(error, 'Não foi possível concluir a recuperação.');
     } finally {
       setProcessando(false);
     }
@@ -526,9 +563,7 @@ export function Conta() {
             <div className="abas-formulario">
               <button
                 type="button"
-                className={`aba-item ${
-                  modo === 'login' ? 'ativa' : ''
-                }`}
+                className={`aba-item ${modo === 'login' ? 'ativa' : ''}`}
                 onClick={() => trocarModo('login')}
                 disabled={processando}
               >
@@ -537,9 +572,7 @@ export function Conta() {
 
               <button
                 type="button"
-                className={`aba-item ${
-                  cadastro ? 'ativa' : ''
-                }`}
+                className={`aba-item ${cadastro ? 'ativa' : ''}`}
                 onClick={() => trocarModo('cadastro')}
                 disabled={processando}
               >
@@ -568,7 +601,12 @@ export function Conta() {
                   <button
                     type="button"
                     className="link-corrigir"
-                    onClick={() => setCadastroConfirmacao(false)}
+                    onClick={() => {
+                      abandonarTentativa();
+                      setCadastroConfirmacao(false);
+                      setCodigoCadastro('');
+                      setErro('');
+                    }}
                     disabled={processando}
                   >
                     clique aqui
@@ -589,27 +627,20 @@ export function Conta() {
                       maxLength={1}
                       value={codigoCadastro[indice] ?? ''}
                       onChange={(event) =>
-                        alterarDigitoCadastro(
-                          indice,
-                          event.currentTarget.value,
-                        )
+                        alterarDigitoCadastro(indice, event.currentTarget.value)
                       }
                       onPaste={colarCodigoCadastro}
                       onKeyDown={(event) =>
                         tratarBackspaceCadastro(event, indice)
                       }
-                      autoComplete={
-                        indice === 0 ? 'one-time-code' : 'off'
-                      }
+                      autoComplete={indice === 0 ? 'one-time-code' : 'off'}
                       aria-label={`Dígito ${indice + 1} do código`}
                     />
                   ))}
                 </div>
               </div>
 
-              {erro && (
-                <span className="texto-erro-senha">{erro}</span>
-              )}
+              {erro && <span className="texto-erro-senha">{erro}</span>}
 
               <button
                 type="button"
@@ -629,7 +660,7 @@ export function Conta() {
             >
               {cadastro && (
                 <div className="grupo-campo">
-                  <label htmlFor="usr-nome">Nome e sobrenome</label>
+                  <label htmlFor="usr-nome">Nome e Sobrenome</label>
 
                   <input
                     id="usr-nome"
@@ -639,8 +670,13 @@ export function Conta() {
                       alterarCampo('nome', event.target.value)
                     }
                     autoComplete="name"
+                    maxLength={21}
+                    aria-describedby="nome-regra"
                     required
                   />
+                  <small id="nome-regra">
+                    Até 21 caracteres, com apenas um espaço. Ex.: Maria Silva.
+                  </small>
                 </div>
               )}
 
@@ -671,10 +707,7 @@ export function Conta() {
 
                 {cadastro && (
                   <>
-                    <div
-                      key={animacaoRequisitos}
-                      className="requisitos-lista"
-                    >
+                    <div key={animacaoRequisitos} className="requisitos-lista">
                       {requisitosSenha.map((requisito) => (
                         <p
                           key={requisito.id}
@@ -693,9 +726,7 @@ export function Conta() {
 
                     {mostrarAvisoSenha && (
                       <div className="balao-notificacao-esquerda-pura balao-senha">
-                        <span className="triangulo-alerta-laranja">
-                          ⚠️
-                        </span>
+                        <span className="triangulo-alerta-laranja">⚠️</span>
                         <div className="setinha-balao-esquerda" />
                       </div>
                     )}
@@ -726,15 +757,12 @@ export function Conta() {
 
               {cadastro && (
                 <div className="grupo-campo">
-                  <label htmlFor="usr-redefined-senha">
-                    Repita sua senha
-                  </label>
+                  <label htmlFor="usr-redefined-senha">Repita sua senha</label>
 
                   {campoSenha(
                     'usr-redefined-senha',
                     formulario.confirmarSenha,
-                    (valor) =>
-                      alterarCampo('confirmarSenha', valor),
+                    (valor) => alterarCampo('confirmarSenha', valor),
                     'new-password',
                   )}
 
@@ -743,9 +771,7 @@ export function Conta() {
                       key={animacaoConfirmacao}
                       className="balao-notificacao-esquerda-pura balao-confirmacao"
                     >
-                      <span className="triangulo-alerta-laranja">
-                        ⚠️
-                      </span>
+                      <span className="triangulo-alerta-laranja">⚠️</span>
                       <div className="setinha-balao-esquerda" />
                     </div>
                   )}
@@ -764,24 +790,18 @@ export function Conta() {
                 </div>
               )}
 
-              {erro && (cadastro || recuperacao) && (
+              {erro && !mostrarAvisoLogin && (
                 <span className="texto-erro-senha">{erro}</span>
               )}
 
-              {mensagem && (
-                <span className="texto-sucesso">{mensagem}</span>
-              )}
+              {mensagem && <span className="texto-sucesso">{mensagem}</span>}
 
               <button
                 type="submit"
                 className="botao-enviar"
                 disabled={processando}
               >
-                {processando
-                  ? 'Aguarde...'
-                  : cadastro
-                    ? 'Cadastrar'
-                    : 'Entrar'}
+                {processando ? 'Aguarde...' : cadastro ? 'Cadastrar' : 'Entrar'}
               </button>
             </form>
           )}
@@ -805,9 +825,7 @@ export function Conta() {
           <div className="form-conteudo">
             {etapaRecuperacao === 'email' && (
               <div className="grupo-campo">
-                <label htmlFor="rec-email">
-                  E-mail cadastrado
-                </label>
+                <label htmlFor="rec-email">E-mail cadastrado</label>
 
                 <input
                   id="rec-email"
@@ -833,9 +851,7 @@ export function Conta() {
                   maxLength={4}
                   value={codigo}
                   onChange={(event) =>
-                    setCodigo(
-                      event.target.value.replace(/\D/g, ''),
-                    )
+                    setCodigo(event.target.value.replace(/\D/g, ''))
                   }
                   autoComplete="one-time-code"
                   required
@@ -855,10 +871,7 @@ export function Conta() {
                     'new-password',
                   )}
 
-                  <div
-                    key={animacaoRequisitos}
-                    className="requisitos-lista"
-                  >
+                  <div key={animacaoRequisitos} className="requisitos-lista">
                     {requisitosSenha.map((requisito) => (
                       <p
                         key={requisito.id}
@@ -884,15 +897,12 @@ export function Conta() {
                 </div>
 
                 <div className="grupo-campo">
-                  <label htmlFor="repete-nova-senha">
-                    Repita a nova senha
-                  </label>
+                  <label htmlFor="repete-nova-senha">Repita a nova senha</label>
 
                   {campoSenha(
                     'repete-nova-senha',
                     formulario.confirmarSenha,
-                    (valor) =>
-                      alterarCampo('confirmarSenha', valor),
+                    (valor) => alterarCampo('confirmarSenha', valor),
                     'new-password',
                   )}
 
@@ -921,13 +931,9 @@ export function Conta() {
               </>
             )}
 
-            {erro && (
-              <span className="texto-erro-senha">{erro}</span>
-            )}
+            {erro && <span className="texto-erro-senha">{erro}</span>}
 
-            {mensagem && (
-              <span className="texto-sucesso">{mensagem}</span>
-            )}
+            {mensagem && <span className="texto-sucesso">{mensagem}</span>}
 
             <button
               type="button"

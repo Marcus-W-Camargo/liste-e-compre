@@ -1,0 +1,37 @@
+.cloud-status {
+  position: relative;
+  z-index: 20;
+  max-width: 900px;
+  margin: 12px auto;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: #fff;
+  color: #1a263b;
+  font-size: 0.85rem;
+  text-align: center;
+}
+.cloud-status.cloud-failed {
+  border: 2px solid #b93813;
+  padding: 16px;
+}
+.cloud-status button {
+  margin: 6px;
+  padding: 8px 12px;
+  border: 1px solid #1a263b;
+  border-radius: 8px;
+  background: white;
+  color: #1a263b;
+  cursor: pointer;
+}
+.cloud-loading {
+  margin: 100px auto;
+  padding: 24px;
+  max-width: 600px;
+  text-align: center;
+  background: #fff;
+  border-radius: 14px;
+  color: #1a263b;
+}
+.cloud-view {
+  display: contents;
+}
