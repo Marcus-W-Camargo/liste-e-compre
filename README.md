@@ -11,8 +11,11 @@ Scripts SQL prontos, nesta ordem:
 1. [Contas e verificações](supabase/01-auth.sql)
 2. [Listas, itens e compras](supabase/02-lists.sql)
 3. [Limpeza automática do controle de envios](supabase/03-cleanup.sql)
+4. [Consulta de e-mail antes do envio de cadastro](supabase/04-email-precheck.sql)
 
-Use um projeto novo do Supabase. Os scripts não criam usuários de teste nem alteram dados de projetos antigos. A criação pública de usuários no Supabase precisa ficar desativada: a API da Vercel cria a conta somente depois de confirmar o código.
+Na instalação inicial, use um projeto novo do Supabase. Os scripts não criam usuários de teste nem alteram dados de projetos antigos. A criação pública de usuários no Supabase precisa ficar desativada: a API da Vercel cria a conta somente depois de confirmar o código.
+
+**Já instalou a integração?** Não crie outro projeto nem refaça as configurações. Para adicionar a consulta antecipada, execute somente o script 04 no projeto existente, antes de publicar esta atualização. Veja [como atualizar](docs/CONFIGURACAO.md#atualização-consulta-antes-do-envio).
 
 ## Desenvolvimento
 
@@ -50,6 +53,7 @@ Os testes usam PostgreSQL local em PGlite e rede simulada. Não enviam e-mails, 
 - Código de quatro dígitos, uso único, sem expiração por tempo e sem botão de reenvio.
 - Cinco erros encerram a tentativa. Três solicitações de envio por e-mail em 45 minutos, somando cadastro e recuperação.
 - Nome em um único campo: duas partes, um espaço, até 21 caracteres. Nomes podem se repetir; a identidade é o e-mail no Supabase Auth.
+- Cadastro consulta o e-mail no servidor antes de gerar código ou reservar envio. Se a conta já existe, permanece no formulário sem chamar o EmailJS. Se a consulta falha, também não envia.
 - Sair da verificação solicita o cancelamento; abrir o app de e-mail não cancela. Fechamento abrupto não garante entrega do cancelamento ao servidor.
 - Senhas não são salvas em tabelas próprias: Supabase Auth faz o hashing. O cadastro só é criado após a confirmação.
 - RLS e funções SQL restringem os dados ao usuário autenticado; flags antigas de localStorage não concedem acesso.

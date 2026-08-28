@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { Conta } from '../src/pages/Conta';
@@ -53,11 +54,14 @@ function open(mode = 'cadastro') {
 function fill(label: string, value: string) {
   fireEvent.change(screen.getByLabelText(label), { target: { value } });
 }
-async function startSignup() {
+function fillSignup() {
   fill('Nome e Sobrenome', 'Teste Local');
   fill('E-mail', 'teste@example.com');
   fill('Senha', 'Teste123!');
   fill('Repita sua senha', 'Teste123!');
+}
+async function startSignup() {
+  fillSignup();
   fireEvent.submit(screen.getByLabelText('E-mail').closest('form')!);
   await screen.findByRole('heading', { name: 'Verifique seu e-mail' });
 }
@@ -66,6 +70,53 @@ function fillCode() {
 }
 
 describe('formulário real, com rede simulada', () => {
+  it('e-mail existente permanece no formulário; corrigir o endereço permite nova tentativa', async () => {
+    handler = () => ({
+      status: 409,
+      body: {
+        code: 'CONTA_EXISTENTE',
+        error: 'Este e-mail já possui uma conta. Entre ou recupere sua senha.',
+      },
+    });
+    open();
+    fillSignup();
+    fireEvent.submit(screen.getByLabelText('E-mail').closest('form')!);
+    await screen.findByText(
+      'Este e-mail já possui uma conta. Entre ou recupere sua senha.',
+    );
+    expect(
+      screen.queryByRole('heading', { name: 'Verifique seu e-mail' }),
+    ).toBeNull();
+    expect(screen.queryByLabelText('Dígito 1 do código')).toBeNull();
+    expect((screen.getByLabelText('E-mail') as HTMLInputElement).value).toBe(
+      'teste@example.com',
+    );
+    expect(
+      (screen.getByLabelText('Nome e Sobrenome') as HTMLInputElement).value,
+    ).toBe('Teste Local');
+    const form = screen.getByLabelText('E-mail').closest('form')!;
+    expect(
+      (within(form).getByRole('button', { name: 'Cadastrar' }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+    expect(requests).toEqual([{
+      action: 'start',
+      purpose: 'cadastro',
+      email: 'teste@example.com',
+      name: 'Teste Local',
+    }]);
+    handler = () => ({ body: attempt });
+    fill('E-mail', 'novo@example.com');
+    fireEvent.submit(screen.getByLabelText('E-mail').closest('form')!);
+    await screen.findByRole('heading', { name: 'Verifique seu e-mail' });
+    expect(requests).toHaveLength(2);
+    expect(requests[1]).toEqual({
+      action: 'start',
+      purpose: 'cadastro',
+      email: 'novo@example.com',
+      name: 'Teste Local',
+    });
+  });
+
   it('não envia a senha ao iniciar; confirma exclusivamente pela API, sem reenvio/contador', async () => {
     open();
     await startSignup();

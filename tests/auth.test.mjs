@@ -6,7 +6,7 @@ import { createAuthController } from '../server/auth-controller.mjs';
 import { createHandler } from '../server/auth-handler.mjs';
 import { AppError } from '../server/errors.mjs';
 import { configProblems } from '../server/config.mjs';
-import { classifyEmailError } from '../server/providers.mjs';
+import { classifyEmailError, createProviders } from '../server/providers.mjs';
 import {
   nomeValido,
   senhaValida,
@@ -36,6 +36,7 @@ function fixture(overrides = {}) {
     },
     rpc: async (fn, p) => {
       calls.push(fn);
+      if (fn === 'lc_auth_email_exists') return false;
       if (fn === 'lc_auth_start') {
         attempts.set(p.p_id, { ...p, stage: 'sending', errors: 0 });
         return { ok: true };
@@ -88,11 +89,184 @@ function fixture(overrides = {}) {
     handle: createAuthController({
       secret,
       providers,
-      generateCode: () => '0042',
+      generateCode: () => {
+        calls.push('generate');
+        return '0042';
+      },
     }),
   };
 }
 const startBody = { action: 'start', purpose: 'cadastro', email, name };
+test('e-mail existente é consultado normalizado e bloqueado antes de código, reserva, envio ou conta', async () => {
+  const lookups = [];
+  const f = fixture({
+    rpc: async (fn, params) => {
+      lookups.push({ fn, params });
+      assert.equal(fn, 'lc_auth_email_exists');
+      return true;
+    },
+  });
+  const response = await http({
+    body: JSON.stringify({
+      ...startBody,
+      email: ' ALICE@EXAMPLE.COM ',
+      emailExists: false,
+      verified: true,
+    }),
+    controller: f.handle,
+  });
+  assert.equal(response.statusCode, 409);
+  assert.deepEqual(response.body, {
+    ok: false,
+    code: 'CONTA_EXISTENTE',
+    error: 'Este e-mail já possui uma conta. Entre ou recupere sua senha.',
+  });
+  assert.deepEqual(lookups, [
+    { fn: 'lc_auth_email_exists', params: { p_email: email } },
+  ]);
+  assert.deepEqual(f.calls, ['ready']);
+  assert.equal(f.sent.length, 0);
+  assert.equal(f.attempts.size, 0);
+});
+test('e-mail novo é consultado antes de gerar e reservar; fluxo original continua', async () => {
+  const f = fixture();
+  await f.handle(startBody);
+  assert.deepEqual(f.calls, [
+    'ready',
+    'lc_auth_email_exists',
+    'generate',
+    'lc_auth_start',
+    'send',
+    'lc_auth_activate',
+  ]);
+  assert.equal(f.sent.length, 1);
+  assert.equal(f.attempts.size, 1);
+});
+test('consulta com falha ou resposta não booleana não gera código nem gasta envio', async () => {
+  for (const value of [null, undefined, 0, 'false', { exists: false }, []]) {
+    const f = fixture({ rpc: async () => value });
+    await assert.rejects(
+      f.handle(startBody),
+      (e) => e.status === 503 && e.code === 'CONSULTA_EMAIL_FALHOU',
+    );
+    assert.deepEqual(f.calls, ['ready']);
+    assert.equal(f.sent.length, 0);
+    assert.equal(f.attempts.size, 0);
+  }
+  const f = fixture({
+    rpc: async () => {
+      throw new AppError(503, 'BANCO_INDISPONIVEL', 'Falha');
+    },
+  });
+  await assert.rejects(
+    f.handle(startBody),
+    (e) => e.code === 'BANCO_INDISPONIVEL',
+  );
+  assert.deepEqual(f.calls, ['ready']);
+  assert.equal(f.sent.length, 0);
+  assert.equal(f.attempts.size, 0);
+});
+test('recuperação não usa o bloqueio de e-mail existente do cadastro', async () => {
+  const f = fixture();
+  await f.handle({ ...startBody, purpose: 'recuperacao' });
+  assert.ok(!f.calls.includes('lc_auth_email_exists'));
+  assert.equal(f.sent.length, 1);
+  assert.equal(f.sent[0].purpose, 'recuperacao');
+});
+test('conta criada após a pré-consulta continua sendo rejeitada na confirmação final', async () => {
+  let signups = 0;
+  const f = fixture({
+    signup: async () => {
+      signups++;
+      throw new AppError(
+        409,
+        'CONTA_EXISTENTE',
+        'Este e-mail já possui uma conta.',
+      );
+    },
+  });
+  const a = await f.handle(startBody);
+  const body = {
+    action: 'confirm-signup', ...a, email, name, password, code: '0042',
+  };
+  await assert.rejects(f.handle(body), (e) => e.code === 'CONTA_EXISTENTE');
+  assert.equal(signups, 1);
+  assert.equal(f.attempts.size, 0);
+  await assert.rejects(
+    f.handle(body),
+    (e) => e.code === 'TENTATIVA_INVALIDA',
+  );
+  assert.equal(signups, 1);
+});
+test('RPC ausente produz diagnóstico seguro e mantém o corpo do provedor fora dos logs', async () => {
+  const logs = [];
+  const warn = console.warn;
+  console.warn = (...args) => logs.push(args);
+  try {
+    const providers = createProviders(
+      {
+        SUPABASE_URL: 'https://example.supabase.co',
+        SUPABASE_SECRET_KEY: 'test-server-key',
+      },
+      async (url, init) => {
+        assert.equal(
+          String(url),
+          'https://example.supabase.co/rest/v1/rpc/lc_auth_email_exists',
+        );
+        assert.deepEqual(JSON.parse(init.body), { p_email: null });
+        return new Response(
+          JSON.stringify({
+            code: 'PGRST202',
+            message: 'private-provider-detail',
+            details: email,
+          }),
+          { status: 404, headers: { 'Content-Type': 'application/json' } },
+        );
+      },
+    );
+    await assert.rejects(
+      providers.rpc('lc_auth_email_exists', { p_email: null }),
+      (e) => e.status === 503 &&
+        e.code === 'CONSULTA_EMAIL_NAO_CONFIGURADA' &&
+        !e.message.includes(email),
+    );
+    assert.equal(logs.length, 1);
+    assert.ok(!JSON.stringify(logs).includes('private-provider-detail'));
+    assert.ok(!JSON.stringify(logs).includes(email));
+  } finally {
+    console.warn = warn;
+  }
+});
+test('provedor mantém o tratamento de e-mail duplicado do Supabase Auth', async () => {
+  for (const code of ['email_exists', 'user_already_exists']) {
+    const providers = createProviders(
+      {
+        SUPABASE_URL: 'https://example.supabase.co',
+        SUPABASE_SECRET_KEY: 'test-server-key',
+      },
+      async (url) => {
+        assert.equal(
+          String(url),
+          'https://example.supabase.co/auth/v1/admin/users',
+        );
+        return new Response(
+          JSON.stringify({ code, msg: 'Email already registered' }),
+          {
+            status: 422,
+            headers: {
+              'Content-Type': 'application/json',
+              'x-supabase-api-version': '2024-01-01',
+            },
+          },
+        );
+      },
+    );
+    await assert.rejects(
+      providers.signup(email, password, name),
+      (e) => e.status === 409 && e.code === 'CONTA_EXISTENTE',
+    );
+  }
+});
 test('nome único input: exatamente duas partes e até 21 caracteres; senha mantém requisitos', () => {
   for (const n of ['Maria Silva', 'João José', 'ABCDEFGHIJ ABCDEFGHIJ'])
     assert.equal(nomeValido(n), true, n);
@@ -209,7 +383,9 @@ test('falha do EmailJS cancela a tentativa, sem criar conta', async () => {
 });
 test('limite de envio devolve Retry-After e não chama EmailJS', async () => {
   const f = fixture({
-    rpc: async () => ({ ok: false, reason: 'rate_limit', retryAfter: 2700 }),
+    rpc: async (fn) => fn === 'lc_auth_email_exists'
+      ? false
+      : { ok: false, reason: 'rate_limit', retryAfter: 2700 },
   });
   await assert.rejects(
     f.handle(startBody),

@@ -75,6 +75,25 @@ export function createAuthController({
         );
       }
       await providers.assertReady();
+      if (body.purpose === 'cadastro') {
+        // Consulta somente no servidor, antes de gerar código ou reservar envio.
+        const exists = await providers.rpc('lc_auth_email_exists', {
+          p_email: email,
+        });
+        if (exists === true)
+          throw new AppError(
+            409,
+            'CONTA_EXISTENTE',
+            'Este e-mail já possui uma conta. Entre ou recupere sua senha.',
+          );
+        // Uma resposta inválida nunca significa que o endereço está disponível.
+        if (exists !== false)
+          throw new AppError(
+            503,
+            'CONSULTA_EMAIL_FALHOU',
+            'Não foi possível conferir este e-mail. Tente novamente mais tarde.',
+          );
+      }
       const id = randomUUID();
       const token = randomBytes(32).toString('hex');
       const binding = { p_id: id, p_token_mac: mac('token', token) };

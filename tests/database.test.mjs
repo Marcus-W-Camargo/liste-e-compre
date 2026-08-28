@@ -14,7 +14,7 @@ before(async () => {
     create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
     grant usage on schema auth to authenticated;
     grant execute on function auth.uid() to authenticated;`);
-  for (const file of ['01-auth.sql', '02-lists.sql']) {
+  for (const file of ['01-auth.sql', '02-lists.sql', '04-email-precheck.sql']) {
     const sql = await readFile(
       new URL(`../supabase/${file}`, import.meta.url),
       'utf8',
@@ -103,6 +103,14 @@ test('schema privado e RPCs administrativas negam acesso a anon e authenticated'
       ),
       /permission denied/,
     );
+    await assert.rejects(
+      roleQuery(
+        role,
+        alice,
+        "select public.lc_auth_email_exists('alice@example.com')",
+      ),
+      /permission denied/,
+    );
   }
   await assert.rejects(
     roleQuery('anon', null, 'select public.lc_load_data()'),
@@ -122,6 +130,36 @@ test('schema privado e RPCs administrativas negam acesso a anon e authenticated'
     ).rows[0].ok,
     true,
   );
+});
+test('consulta privada retorna apenas booleano, inclui contas não confirmadas e não grava dados', async () => {
+  await db.query('insert into auth.users values($1,$2,null,$3)', [
+    randomUUID(),
+    'pending@example.com',
+    JSON.stringify({ full_name: 'Teste Pendente' }),
+  ]);
+  await db.transaction(async (tx) => {
+    // PostgreSQL rejeitaria qualquer escrita nesta transação.
+    await tx.exec('set transaction read only; set local role service_role;');
+    for (const [email, expected] of [
+      ['alice@example.com', true],
+      [' ALICE@EXAMPLE.COM ', true],
+      ['pending@example.com', true],
+      ['new@example.com', false],
+      [null, false],
+      ['', false],
+    ]) {
+      const result = await tx.query(
+        'select public.lc_auth_email_exists($1) as present',
+        [email],
+      );
+      assert.deepEqual(result.rows, [{ present: expected }]);
+    }
+    // Não altera a semântica de recuperação: exige conta confirmada.
+    assert.equal(
+      (await tx.query("select public.lc_auth_find_user('pending@example.com') as id")).rows[0].id,
+      null,
+    );
+  });
 });
 test('listas, rascunho e compra em andamento fazem round-trip sem misturar donos', async () => {
   const data = {

@@ -1,8 +1,24 @@
 # Ativar Supabase + Vercel + EmailJS
 
-O código está na branch `feat/supabase-integracao-v2`. Não faça merge na `main` antes de configurar e testar. A versão atual de produção deve continuar na `main` enquanto isso.
+A integração base já está na `main`. A atualização da consulta antecipada está na branch `feat/verificar-email-antes-envio`. Configure e teste a atualização antes de fazer merge; a produção deve continuar na `main` enquanto isso.
 
 Você precisa somente das suas contas do Supabase, EmailJS e Vercel. Não é necessário Upstash, servidor separado, SMTP novo ou o código de seis dígitos do Supabase.
+
+## Atualização: consulta antes do envio
+
+Se a integração já está configurada, **não recrie o projeto nem execute a instalação do zero**:
+
+1. No projeto Supabase já usado pelo site, abra **SQL Editor → New query** e execute o conteúdo inteiro de [04-email-precheck.sql](../supabase/04-email-precheck.sql), como `postgres`. O script é reexecutável, adiciona somente uma função de consulta e não cria/remove contas, tentativas ou registros de envio.
+2. Atualize seu código para `feat/verificar-email-antes-envio` e rode `npm run check:config` com o `.env.local` existente. A checagem agora também confirma o acesso à nova função, sem enviar e-mail e sem consultar um endereço real. Não precisa de novas variáveis, tabelas ou serviços.
+3. No Preview dessa branch, tente cadastrar um e-mail **seu que já possui conta**. Deve aparecer “Este e-mail já possui uma conta. Entre ou recupere sua senha.” no próprio formulário, sem abrir a tela do código e sem novo envio no EmailJS. A consulta também considera contas ainda não confirmadas no Auth.
+4. Corrija para outro endereço **seu, ainda não cadastrado**. Somente nesse caso deve abrir a tela do código e enviar o e-mail. Esse teste usa um envio real. Confira também que a recuperação de senha continua disponível para a conta existente.
+5. Depois de testar, faça merge do PR na `main` para publicar. Se Preview e Production usam projetos Supabase diferentes, execute o script 04 nos dois **antes** dos respectivos deployments.
+
+Se a função não estiver instalada, o novo cadastro para com `CONSULTA_EMAIL_NAO_CONFIGURADA`, sem gastar envio. Uma falha de consulta nunca é tratada como “e-mail disponível”. A função é compatível com o código anterior; pode ser instalada antes do merge.
+
+A checagem final de duplicidade continua ativa: se outra tentativa criar a conta entre a consulta inicial e a confirmação, o cadastro final será recusado. Essa condição de concorrência ainda pode consumir um envio; a consulta antecipada evita o gasto quando a conta já existe no momento da consulta.
+
+As próximas seções descrevem a **instalação completa**, para quem ainda não configurou a integração.
 
 ## 1. Criar o projeto Supabase
 
@@ -14,6 +30,7 @@ Você precisa somente das suas contas do Supabase, EmailJS e Vercel. Não é nec
    | 1     | [01-auth.sql](../supabase/01-auth.sql)       | Perfil, controle privado das tentativas e funções de confirmação          |
    | 2     | [02-lists.sql](../supabase/02-lists.sql)     | Listas, itens, compras, histórico, isolamento por usuário e sincronização |
    | 3     | [03-cleanup.sql](../supabase/03-cleanup.sql) | Limpeza automática dos registros de envio após a janela de 45 minutos     |
+   | 4     | [04-email-precheck.sql](../supabase/04-email-precheck.sql) | Consulta privada de existência de conta, antes do envio de cadastro |
 
    Não substitua valores dentro dos scripts. Eles já estão prontos. Execute como o usuário `postgres` do SQL Editor, não como `anon` ou `authenticated`.
 
@@ -54,11 +71,11 @@ Use Node.js **24** e abra o terminal PowerShell na pasta do projeto.
 ```powershell
 git status
 git fetch origin
-git switch --track origin/feat/supabase-integracao-v2
+git switch --track origin/feat/verificar-email-antes-envio
 npm ci
 ```
 
-Se a branch já existir localmente, use `git switch feat/supabase-integracao-v2` e depois `git pull --ff-only`. Se `git status` mostrar alterações suas não salvas, preserve-as antes de trocar de branch; não use `reset --hard` ou exclusões para contornar isso.
+Se a branch já existir localmente, use `git switch feat/verificar-email-antes-envio` e depois `git pull --ff-only`. Se `git status` mostrar alterações suas não salvas, preserve-as antes de trocar de branch; não use `reset --hard` ou exclusões para contornar isso.
 
 Se ainda não existir um `.env.local`, crie uma cópia do modelo:
 
@@ -100,7 +117,7 @@ Execute a checagem:
 npm run check:config
 ```
 
-Ela verifica variáveis, conexão com Supabase Auth, bloqueio de cadastro público e disponibilidade da função de diagnóstico do SQL de autenticação. **Não envia e-mail, não cria conta e não comprova a validade das credenciais EmailJS.** Não substitui os testes abaixo.
+Ela verifica variáveis, conexão com Supabase Auth, bloqueio de cadastro público e disponibilidade das funções de diagnóstico e consulta de e-mail. **Não envia e-mail, não cria conta e não comprova a validade das credenciais EmailJS.** Não substitui os testes abaixo.
 
 Inicie o servidor em um terminal:
 
@@ -128,6 +145,7 @@ Use somente endereços de e-mail que você controla. A janela de 3 envios/45 min
 6. Teste recuperação quando houver cota: receba o código, confirme, defina outra senha e entre novamente.
 7. Em outra tentativa, use **clique aqui para corrigir** ou volte à home. O código anterior deve ser cancelado. Ao começar novamente, o anterior não pode confirmar a nova tentativa. Apenas abrir o app de e-mail não deve cancelar.
 8. Confira que não há contador de expiração nem botão de reenvio. Cinco códigos incorretos encerram a tentativa; a quarta solicitação de envio dentro da janela é recusada.
+9. Tente cadastrar novamente o e-mail da conta já criada: deve permanecer no formulário, mostrar que a conta existe e não gerar novo envio. Corrigir o endereço para outro ainda não cadastrado deve permitir o fluxo normal.
 
 Há consultas prontas de conferência no final deste guia, sem exibir e-mails, senhas ou códigos.
 
@@ -151,6 +169,8 @@ Não promova um build de Preview apontado para um banco de testes como se fosse 
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | Autenticação não configurada                | `npm run check:config`, nomes das variáveis e placeholders; reinicie/redeploy                           |
 | Cadastro seguro não configurado             | **Allow new users to sign up** precisa estar desligado; confira URL/chave e disponibilidade do Supabase |
+| `CONSULTA_EMAIL_NAO_CONFIGURADA`             | Execute o script 04 no mesmo projeto Supabase usado pela API; rode `npm run check:config` novamente |
+| `CONSULTA_EMAIL_FALHOU`                     | A consulta retornou algo diferente de booleano; confira o script 04. Nenhum envio foi reservado |
 | API não disponível ou HTML no lugar de JSON | Dois processos locais, proxy do Vite; na Vercel, função `/api/auth` e roteamento                        |
 | Origem não permitida                        | `APP_ORIGIN` precisa corresponder ao endereço aberto, sem barra final                                   |
 | EmailJS `CONTA_EMAILJS` / 404               | Chave pública, serviço e templates devem pertencer à mesma conta; leia só a categoria do log            |
@@ -161,7 +181,7 @@ Não promova um build de Preview apontado para um banco de testes como se fosse 
 | Falha ao carregar/sincronizar listas        | Script 02, URL/chave pública do mesmo projeto, conexão e sessão                                         |
 | Conflito entre dispositivos                 | Baixe a edição antes de escolher carregar a nuvem                                                       |
 
-Falhas de envio após a reserva da tentativa **contam para a janela de 45 minutos**: um timeout não prova que o provedor deixou de enviar. Erros detectados na pré-checagem de configuração não gastam a cota. Não há um limite arbitrário adicional de 1 minuto.
+Falhas de envio após a reserva da tentativa **contam para a janela de 45 minutos**: um timeout não prova que o provedor deixou de enviar. Erros detectados na pré-checagem de configuração, falhas da consulta inicial e bloqueios por conta já existente não reservam envio nem gastam a cota. Não há um limite arbitrário adicional de 1 minuto.
 
 Os logs da função mostram apenas categoria e status; não imprimem código, corpo do formulário ou credenciais. Ao pedir ajuda, envie a categoria/HTTP e o passo que falhou, nunca seu `.env.local` completo.
 
