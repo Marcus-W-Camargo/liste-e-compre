@@ -1,214 +1,187 @@
-import type { CompraFinalizada, Item, ItemCompra, ListaSalva, SessaoCompra } from '../types';
-
-function obterSufixoConta(email: string): string {
-  return encodeURIComponent(email.trim().toLowerCase());
+// Adaptador síncrono para preservar a lógica das telas. A persistência é feita pela fila cloud.
+import type {
+  CompraFinalizada,
+  DadosConta,
+  Item,
+  ItemCompra,
+  ListaSalva,
+  SessaoCompra,
+} from '../types';
+import { cloud } from '../services/cloudData';
+import { obterSessao } from './auth';
+export function gerarId() {
+  return crypto.randomUUID();
 }
-
-function obterChavesConta(email: string) {
-  const sufixo = obterSufixoConta(email);
-
-  return {
-    carrinho: `carrinho_compras_${sufixo}`,
-    historico: `historico_listas_${sufixo}`,
-    sessaoCompra: `sessao_compra_${sufixo}`,
-    comprasFinalizadas: `compras_finalizadas_${sufixo}`,
-  };
+function dados(email: string): DadosConta {
+  const state = cloud.getSnapshot(),
+    session = obterSessao();
+  if (!session.logado || state.owner !== session.id || email !== session.email)
+    throw new Error('Dados da conta ainda não carregados.');
+  return structuredClone(state.data);
 }
-
-export function gerarId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+function mudar(email: string, fn: (data: DadosConta) => void) {
+  dados(email);
+  cloud.mutate(fn);
 }
-
-function normalizarItem(item: any): Item {
-  return {
-    id: item.id ?? gerarId(),
-    nome: item.nome,
-    quantidade: item.quantidade,
-    tipo: item.tipo === 'Kg' ? 'Kg' : 'un',
-    categoria: item.categoria,
-    preco: item.preco,
-    comprado: item.comprado ?? false,
-  };
+export function carregarListaAtual(email: string) {
+  return dados(email).itens;
 }
-
-export function carregarListaAtual(email: string): Item[] {
-  try {
-    if (!email) return [];
-
-    const raw = localStorage.getItem(obterChavesConta(email).carrinho);
-    if (!raw) return [];
-
-    const parsed = JSON.parse(raw) as any[];
-    return parsed.map(normalizarItem);
-  } catch {
-    return [];
-  }
+export function carregarEdicaoAtual(email: string) {
+  return dados(email).edicaoId;
 }
-
-export function salvarListaAtual(email: string, lista: Item[]): void {
-  if (!email) return;
-
-  localStorage.setItem(
-    obterChavesConta(email).carrinho,
-    JSON.stringify(lista),
-  );
-}
-
-export function limparListaAtual(email: string): void {
-  if (!email) return;
-
-  localStorage.removeItem(obterChavesConta(email).carrinho);
-}
-
-export function carregarHistoricoListas(email: string): ListaSalva[] {
-  try {
-    if (!email) return [];
-
-    const raw = localStorage.getItem(obterChavesConta(email).historico);
-    if (!raw) return [];
-
-    const parsed = JSON.parse(raw) as any[];
-
-    return parsed.map((lista) => ({
-      id: lista.id ?? gerarId(),
-      nome: lista.nome,
-      itens: (lista.itens ?? []).map(normalizarItem),
-      data: lista.data ?? new Date().toISOString(),
-      dataPrevista:
-        typeof lista.dataPrevista === 'string' ? lista.dataPrevista : undefined,
-    }));
-  } catch {
-    return [];
-  }
-}
-
-export function salvarHistoricoListas(
+export function salvarListaAtual(
   email: string,
-  historico: ListaSalva[],
-): void {
-  if (!email) return;
-
-  localStorage.setItem(
-    obterChavesConta(email).historico,
-    JSON.stringify(historico),
-  );
+  itens: Item[],
+  edicaoId: string | null = null,
+) {
+  mudar(email, (d) => {
+    d.itens = structuredClone(itens);
+    d.edicaoId = edicaoId;
+  });
 }
-
+export function limparListaAtual(email: string) {
+  mudar(email, (d) => {
+    d.itens = [];
+    d.edicaoId = null;
+  });
+}
+export function carregarHistoricoListas(email: string) {
+  return dados(email).historico;
+}
+export function salvarHistoricoListas(email: string, historico: ListaSalva[]) {
+  mudar(email, (d) => {
+    d.historico = structuredClone(historico);
+  });
+}
 export function adicionarListaAoHistorico(
   email: string,
   nome: string,
   itens: Item[],
 ): ListaSalva {
-  const historico = carregarHistoricoListas(email);
-
-  const novaLista: ListaSalva = {
+  const lista = {
     id: gerarId(),
     nome,
-    itens: [...itens],
+    itens: structuredClone(itens),
     data: new Date().toISOString(),
   };
-
-  salvarHistoricoListas(email, [...historico, novaLista]);
-
-  return novaLista;
+  mudar(email, (d) => {
+    d.historico.push(lista);
+  });
+  return lista;
 }
-
 export function atualizarListaNoHistorico(
   email: string,
   id: string,
   itens: Item[],
 ): ListaSalva | null {
-  const historico = carregarHistoricoListas(email);
-  const listaEncontrada = historico.find((lista) => lista.id === id);
-
-  if (!listaEncontrada) return null;
-
-  const listaAtualizada: ListaSalva = {
-    ...listaEncontrada,
-    itens: [...itens],
+  const old = dados(email).historico.find((l) => l.id === id);
+  if (!old) return null;
+  const updated = {
+    ...old,
+    itens: structuredClone(itens),
     data: new Date().toISOString(),
   };
-
-  salvarHistoricoListas(
-    email,
-    historico.map((lista) =>
-      lista.id === id ? listaAtualizada : lista,
-    ),
-  );
-
-  return listaAtualizada;
+  mudar(email, (d) => {
+    d.historico = d.historico.map((l) => (l.id === id ? updated : l));
+  });
+  return updated;
 }
-
-export function removerListaDoHistorico(email: string, id: string): void {
-  const historico = carregarHistoricoListas(email).filter(
-    (lista) => lista.id !== id,
-  );
-
-  salvarHistoricoListas(email, historico);
+export function removerListaDoHistorico(email: string, id: string) {
+  mudar(email, (d) => {
+    d.historico = d.historico.filter((l) => l.id !== id);
+    if (d.edicaoId === id) d.edicaoId = null;
+    if (d.sessao?.listaId === id) d.sessao = null;
+  });
 }
-
 export function renomearListaNoHistorico(
   email: string,
   id: string,
   nome: string,
-): void {
-  const historico = carregarHistoricoListas(email).map((lista) =>
-    lista.id === id ? { ...lista, nome } : lista,
-  );
-
-  salvarHistoricoListas(email, historico);
+) {
+  mudar(email, (d) => {
+    d.historico = d.historico.map((l) => (l.id === id ? { ...l, nome } : l));
+    if (d.sessao?.listaId === id) d.sessao.nomeLista = nome;
+  });
 }
-
 export function atualizarDataPrevistaNoHistorico(
   email: string,
   id: string,
   dataPrevista?: string,
 ): ListaSalva | null {
-  const historico = carregarHistoricoListas(email);
-  const listaEncontrada = historico.find((lista) => lista.id === id);
-
-  if (!listaEncontrada) return null;
-
-  const listaAtualizada: ListaSalva = {
-    ...listaEncontrada,
-    dataPrevista,
-    data: new Date().toISOString(),
-  };
-
-  salvarHistoricoListas(
-    email,
-    historico.map((lista) =>
-      lista.id === id ? listaAtualizada : lista,
-    ),
-  );
-
-  return listaAtualizada;
+  const old = dados(email).historico.find((l) => l.id === id);
+  if (!old) return null;
+  const updated = { ...old, dataPrevista, data: new Date().toISOString() };
+  mudar(email, (d) => {
+    d.historico = d.historico.map((l) => (l.id === id ? updated : l));
+    if (d.sessao?.listaId === id) d.sessao.dataPrevista = dataPrevista;
+  });
+  return updated;
 }
-
-export function criarSessaoCompra(email: string, lista: ListaSalva): SessaoCompra {
-  const existente = carregarSessaoCompra(email);
-  if (existente?.listaId === lista.id) return existente;
-  const sessao: SessaoCompra = { id: gerarId(), listaId: lista.id, nomeLista: lista.nome, dataInicio: new Date().toISOString(), dataPrevista: lista.dataPrevista, itens: lista.itens.map((item): ItemCompra => ({ ...item, precoUnitario: item.preco ?? 0, pego: false, origem: 'planejado', quantidadePlanejada: item.quantidade })) };
+export function criarSessaoCompra(
+  email: string,
+  lista: ListaSalva,
+): SessaoCompra {
+  const existing = dados(email).sessao;
+  if (existing?.listaId === lista.id) return existing;
+  const sessao: SessaoCompra = {
+    id: gerarId(),
+    listaId: lista.id,
+    nomeLista: lista.nome,
+    dataInicio: new Date().toISOString(),
+    dataPrevista: lista.dataPrevista,
+    itens: lista.itens.map((i): ItemCompra => ({
+      ...i,
+      precoUnitario: i.preco ?? 0,
+      pego: false,
+      origem: 'planejado',
+      quantidadePlanejada: i.quantidade,
+    })),
+  };
   salvarSessaoCompra(email, sessao);
   return sessao;
 }
-
-export function carregarSessaoCompra(email: string): SessaoCompra | null {
-  try { const raw = localStorage.getItem(obterChavesConta(email).sessaoCompra); return raw ? JSON.parse(raw) as SessaoCompra : null; } catch { return null; }
+export function carregarSessaoCompra(email: string) {
+  return dados(email).sessao;
 }
-export function salvarSessaoCompra(email: string, sessao: SessaoCompra): void { if (email) localStorage.setItem(obterChavesConta(email).sessaoCompra, JSON.stringify(sessao)); }
-export function limparSessaoCompra(email: string): void { if (email) localStorage.removeItem(obterChavesConta(email).sessaoCompra); }
-export function adicionarItensAListaSalva(email: string, id: string, itens: Item[]): void {
-  const listas = carregarHistoricoListas(email).map((lista) => lista.id === id ? { ...lista, itens: [...lista.itens, ...itens], data: new Date().toISOString() } : lista);
-  salvarHistoricoListas(email, listas);
+export function salvarSessaoCompra(email: string, sessao: SessaoCompra) {
+  mudar(email, (d) => {
+    d.sessao = structuredClone(sessao);
+  });
 }
-export function finalizarCompra(email: string, compra: CompraFinalizada): void {
-  const chaves = obterChavesConta(email);
-  const anteriores = carregarComprasFinalizadas(email);
-  localStorage.setItem(chaves.comprasFinalizadas, JSON.stringify([...anteriores, compra]));
-  removerListaDoHistorico(email, compra.listaId);
-  limparSessaoCompra(email);
+export function limparSessaoCompra(email: string) {
+  mudar(email, (d) => {
+    d.sessao = null;
+  });
 }
-export function carregarComprasFinalizadas(email: string): CompraFinalizada[] {
-  try { const raw = localStorage.getItem(obterChavesConta(email).comprasFinalizadas); return raw ? JSON.parse(raw) as CompraFinalizada[] : []; } catch { return []; }
+export function adicionarItensAListaSalva(
+  email: string,
+  id: string,
+  itens: Item[],
+) {
+  mudar(email, (d) => {
+    d.historico = d.historico.map((l) =>
+      l.id === id
+        ? {
+            ...l,
+            itens: [...l.itens, ...itens.map((i) => ({ ...i, id: gerarId() }))],
+            data: new Date().toISOString(),
+          }
+        : l,
+    );
+  });
+}
+export function finalizarCompra(email: string, compra: CompraFinalizada) {
+  mudar(email, (d) => {
+    if (!d.compras.some((c) => c.id === compra.id))
+      d.compras.push(structuredClone(compra));
+    d.historico = d.historico.filter((l) => l.id !== compra.listaId);
+    d.sessao = null;
+    if (d.edicaoId === compra.listaId) {
+      d.edicaoId = null;
+      d.itens = [];
+    }
+  });
+}
+export function carregarComprasFinalizadas(email: string) {
+  return dados(email).compras;
 }

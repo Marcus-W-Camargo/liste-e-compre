@@ -1,9 +1,4 @@
-import {
-  useEffect,
-  useLayoutEffect,
-  useState,
-  type ReactNode,
-} from 'react';
+import { useEffect, useLayoutEffect, useState, type ReactNode } from 'react';
 import './Modal.css';
 import './Header.css';
 import { Link, useLocation } from 'react-router-dom';
@@ -15,6 +10,8 @@ export function Header() {
   const location = useLocation();
   const [dropdownAberto, setDropdownAberto] = useState(false);
   const [modalLogout, setModalLogout] = useState(false);
+  const [erroLogout, setErroLogout] = useState('');
+  const [saindo, setSaindo] = useState(false);
 
   useLayoutEffect(() => {
     atualizarSessao();
@@ -32,10 +29,20 @@ export function Header() {
     return () => document.removeEventListener('click', fecharDropdown);
   }, [dropdownAberto]);
 
-  function confirmarLogout() {
-    logout();
-    setModalLogout(false);
-    setDropdownAberto(false);
+  async function confirmarLogout() {
+    setSaindo(true);
+    setErroLogout('');
+    try {
+      await logout();
+      setModalLogout(false);
+      setDropdownAberto(false);
+    } catch (error) {
+      setErroLogout(
+        error instanceof Error ? error.message : 'Não foi possível sair.',
+      );
+    } finally {
+      setSaindo(false);
+    }
   }
 
   if (location.pathname === '/conta') return null;
@@ -78,7 +85,11 @@ export function Header() {
           aria-label="Menu da conta"
           aria-expanded={logado ? dropdownAberto : undefined}
         >
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
             <path
               d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z"
               fill="#1a263b"
@@ -87,16 +98,31 @@ export function Header() {
         </button>
 
         {logado && dropdownAberto && (
-          <div className="dropdown-conta" onClick={(event) => event.stopPropagation()}>
+          <div
+            className="dropdown-conta"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="setinha-dropdown" />
             <div className="dropdown-conteudo">
-              <Link to="/perfil" className="item-dropdown" onClick={() => setDropdownAberto(false)}>
+              <Link
+                to="/perfil"
+                className="item-dropdown"
+                onClick={() => setDropdownAberto(false)}
+              >
                 👤 Minha conta
               </Link>
-              <Link to="/ajuda" className="item-dropdown" onClick={() => setDropdownAberto(false)}>
+              <Link
+                to="/ajuda"
+                className="item-dropdown"
+                onClick={() => setDropdownAberto(false)}
+              >
                 💡 Ajuda
               </Link>
-              <a href="#" className="item-dropdown" onClick={(event) => event.preventDefault()}>
+              <a
+                href="#"
+                className="item-dropdown"
+                onClick={(event) => event.preventDefault()}
+              >
                 🌐 Sobre
               </a>
               <hr className="divisor-dropdown" />
@@ -115,18 +141,40 @@ export function Header() {
         )}
       </header>
 
-      <Modal aberto={modalLogout} onFechar={() => setModalLogout(false)} zIndex={2000}>
+      <Modal
+        aberto={modalLogout}
+        onFechar={() => setModalLogout(false)}
+        zIndex={2000}
+      >
         <div className="conteudo-sucesso">
-          <div className="icone-sucesso-laranja" style={{ fontSize: 24, paddingBottom: 2 }}>
+          <div
+            className="icone-sucesso-laranja"
+            style={{ fontSize: 24, paddingBottom: 2 }}
+          >
             🚪
           </div>
           <h2>Sair da Conta?</h2>
-          <p>Tem certeza que deseja encerrar a sua sessão atual? Suas listas locais continuarão salvas em segurança.</p>
+          <p>
+            Tem certeza que deseja sair? Aguardaremos a sincronização das suas
+            listas antes de encerrar a sessão.
+          </p>
+          {erroLogout && <p role="alert">{erroLogout}</p>}
           <div className="grupo-botoes-bloqueio" style={{ gap: 10 }}>
-            <button type="button" className="botao-enviar" style={{ width: '100%', marginTop: 5 }} onClick={confirmarLogout}>
-              Sim, Sair
+            <button
+              type="button"
+              className="botao-enviar"
+              style={{ width: '100%', marginTop: 5 }}
+              onClick={confirmarLogout}
+              disabled={saindo}
+            >
+              {saindo ? 'Sincronizando…' : 'Sim, Sair'}
             </button>
-            <button type="button" className="link-corrigir" style={{ marginTop: 5 }} onClick={() => setModalLogout(false)}>
+            <button
+              type="button"
+              className="link-corrigir"
+              style={{ marginTop: 5 }}
+              onClick={() => setModalLogout(false)}
+            >
               Cancelar
             </button>
           </div>
