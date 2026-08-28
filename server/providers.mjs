@@ -33,6 +33,12 @@ export function createProviders(config, request = fetch) {
         name,
         /^[A-Z0-9_]+$/.test(error.code ?? '') ? error.code : 'RPC',
       );
+      if (name === 'lc_auth_email_exists' && error.code === 'PGRST202')
+        throw new AppError(
+          503,
+          'CONSULTA_EMAIL_NAO_CONFIGURADA',
+          'A consulta de e-mail ainda não foi configurada. O responsável deve executar supabase/04-email-precheck.sql no Supabase.',
+        );
       throw new AppError(
         503,
         'BANCO_INDISPONIVEL',

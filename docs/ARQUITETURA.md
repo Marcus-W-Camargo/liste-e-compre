@@ -13,11 +13,17 @@
 
 ## Cadastro e recuperação
 
-`start` recebe e-mail e nome, nunca senha. A Vercel gera o código com `crypto.randomInt` e um token aleatório de 256 bits. A API devolve só o identificador da tentativa e esse token; o código segue apenas no e-mail.
+`start` recebe e-mail e nome, nunca senha. Após validar os dados e a configuração, no cadastro a Vercel consulta `lc_auth_email_exists` com o e-mail normalizado. A função retorna somente um booleano, lê `auth.users` (incluindo contas ainda não confirmadas) e só permite execução por `service_role`; `anon` e `authenticated` não têm acesso. Não grava conta, tentativa, histórico de envio ou último código, nem retorna UUID/perfil. A senha não participa da consulta.
+
+Se a conta já existe, a API responde HTTP 409 / `CONTA_EXISTENTE` antes de gerar código ou reservar envio. O formulário mostra a mensagem sem abrir a verificação. Se a consulta falha ou retorna algo diferente de booleano, a API interrompe o processo sem chamar o EmailJS. Corrigir o endereço permite iniciar outra tentativa normalmente.
+
+Para e-mail novo, a Vercel gera o código com `crypto.randomInt` e um token aleatório de 256 bits e segue a reserva/envio original. A API devolve só o identificador da tentativa e esse token; o código segue apenas no e-mail. A recuperação não passa pelo bloqueio de conta existente; sua lógica permanece inalterada.
 
 No banco privado ficam HMACs com um segredo exclusivo do servidor, não hashes simples de quatro dígitos. O código é vinculado ao identificador, e-mail normalizado e propósito. O HMAC do token também é conferido. O e-mail legível, nome e senha não são persistidos nessas tabelas. O e-mail é, inevitavelmente, processado pelo provedor para fazer a entrega.
 
 `confirm-signup` valida a senha e o nome, consome a autorização no SQL e só então cria a conta confirmada usando Supabase Auth. Nome e senha permanecem apenas no formulário até a confirmação; a senha trafega por HTTPS e não é salva em tabelas próprias.
+
+A proteção de unicidade e o tratamento de conta duplicada na criação final permanecem: a consulta inicial não impede que outra tentativa crie a conta antes da confirmação. Nesse caso raro, um envio já pode ter sido consumido, mas a conta não é duplicada.
 
 Na recuperação, `verify-recovery` consome o código e troca o token por uma autorização aleatória para `reset-password`. Esse segundo token também é de uso único e desaparece ao cancelar ou concluir. O código antigo não serve para redefinir a senha de novo.
 
@@ -49,6 +55,8 @@ Fechar o processo do navegador, ficar sem rede ou desligar o celular pode impedi
 Uma aba modificada por quem a controla pode omitir o cancelamento ou guardar seu próprio token. Ela **não pode inventar uma confirmação válida** sem o código correto nem criar contas pelo cadastro público, que precisa ficar desativado. A validade não é decidida por flags do navegador. Quatro dígitos sem prazo continuam sendo uma escolha de segurança reduzida, não um modelo recomendado para aplicações sensíveis.
 
 Não foram adicionados CAPTCHA, controle global de gasto ou um limite próprio por IP. O limite por e-mail não impede abuso distribuído usando muitos endereços. Para um lançamento amplo, reveja esses pontos e os limites do EmailJS/Vercel. Não registre senhas, códigos ou cabeçalhos de autenticação em observabilidade adicional.
+
+Informar “conta existente” permite descobrir quais endereços possuem cadastro (enumeração de contas), uma escolha explícita deste fluxo. A consulta não é pública diretamente no Supabase, mas a resposta da API do site revela esse resultado. O limite de 3 envios/45 minutos **não limita essas consultas recusadas**, pois elas não reservam envio. Não há um novo limitador de consultas nesta alteração; o controle de abuso desse endpoint deve ser revisto antes de ampliar a exposição do projeto.
 
 ## Listas e sincronização
 
