@@ -1,46 +1,48 @@
 /* Ajuste mobile da linha de compra: reserva espaço para valores maiores sem alterar o switch. */
 @media (max-width: 760px) {
-  .linha-compra {
+  .pagina-sessao-compra .linha-compra {
     grid-template-columns:
-      16px 18px minmax(34px, 1fr) 58px 44px 42px 52px 18px;
+      16px 18px minmax(28px, 1fr) 64px 44px 46px 54px 18px;
     gap: 2px;
   }
 
-  .campo-tracejado {
+  .pagina-sessao-compra .campo-tracejado {
     padding-inline: 3px;
   }
 
-  .campo-tracejado span {
+  .pagina-sessao-compra .campo-tracejado span {
     font-size: 8px;
   }
 
-  .campo-tracejado input {
+  .pagina-sessao-compra .campo-tracejado input {
+    min-width: 0;
     font-size: 9px;
   }
 
-  .campo-qtd input {
+  .pagina-sessao-compra .campo-qtd input {
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.2px;
   }
 
-  .total-linha-compra {
+  .pagina-sessao-compra .total-linha-compra {
+    min-width: 0;
     font-size: 9px;
   }
 }
 
 @media (max-width: 380px) {
-  .linha-compra {
+  .pagina-sessao-compra .linha-compra {
     grid-template-columns:
-      15px 17px minmax(28px, 1fr) 55px 42px 40px 50px 17px;
+      15px 17px minmax(22px, 1fr) 61px 42px 44px 52px 17px;
     gap: 1px;
     padding-inline: 2px;
   }
 
-  .campo-tracejado input {
+  .pagina-sessao-compra .campo-tracejado input {
     font-size: 8.5px;
   }
 
-  .total-linha-compra {
+  .pagina-sessao-compra .total-linha-compra {
     font-size: 8.5px;
   }
 }
