@@ -23,7 +23,8 @@
   white-space: nowrap;
 }
 
-.formulario-item__campo > input {
+.formulario-item__campo > input,
+.formulario-item__campo .autocomplete-produto__input {
   width: 100%;
   height: 46px;
   padding: 0 14px;
@@ -39,12 +40,14 @@
     box-shadow 0.2s ease;
 }
 
-.formulario-item__campo > input:focus {
+.formulario-item__campo > input:focus,
+.formulario-item__campo .autocomplete-produto__input:focus {
   border-color: #f7501b;
   box-shadow: 0 0 0 3px rgb(247 80 27 / 20%);
 }
 
-.formulario-item__campo > input::placeholder {
+.formulario-item__campo > input::placeholder,
+.formulario-item__campo .autocomplete-produto__input::placeholder {
   color: #68758a;
   opacity: 1;
 }

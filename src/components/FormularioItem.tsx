@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { CATEGORIAS, type TipoMedida } from '../types';
+import { AutocompleteProduto } from './AutocompleteProduto';
 import './FormularioItem.css';
 
 interface FormularioItemProps {
@@ -139,13 +140,11 @@ export function FormularioItem({ onAdicionar }: FormularioItemProps) {
         <div className="formulario-item__campo">
           <label htmlFor="nome-produto">Nome do Produto</label>
 
-          <input
+          <AutocompleteProduto
             id="nome-produto"
-            type="text"
             placeholder="Ex: Arroz, Feijão, Sabonete..."
             value={nome}
-            onChange={(event) => setNome(event.target.value)}
-            autoComplete="off"
+            onValueChange={setNome}
             required
           />
         </div>

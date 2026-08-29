@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "catalog:generate": "node scripts/gerar-catalogo-produtos.mjs",
     "lint": "oxlint",
     "preview": "vite preview",
     "dev:api": "node --env-file=.env.local scripts/dev-api.mjs",
