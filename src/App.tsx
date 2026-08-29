@@ -6,6 +6,7 @@ import { Compras } from './pages/Compras';
 import { ComprasSessao } from './pages/ComprasSessao';
 import { HistoricoCompras } from './pages/HistoricoCompras';
 import { Perfil } from './pages/Perfil';
+import { Ajuda } from './pages/Ajuda';
 import { Header } from './components/Header';
 import { CloudAccess, CloudStatus } from './components/CloudAccess';
 import { useDesktopKeyboardNavigation } from './hooks/useDesktopKeyboardNavigation';
@@ -54,7 +55,7 @@ function App() {
               <Route path="/compre/:listaId" element={<ComprasSessao />} />
               <Route path="/historico" element={<HistoricoCompras />} />
               <Route path="/perfil" element={<Perfil />} />
-              <Route path="/ajuda" element={<Placeholder titulo="Ajuda" />} />
+              <Route path="/ajuda" element={<Ajuda />} />
             </Route>
           </Routes>
         </div>
