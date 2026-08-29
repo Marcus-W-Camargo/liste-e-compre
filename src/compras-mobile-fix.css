@@ -1,48 +1,64 @@
-/* Ajuste mobile da linha de compra: reserva espaço para valores maiores sem alterar o switch. */
+/* Ajustes mobile da compra. O switch mantém exatamente as dimensões definidas em ComprasSessao.css. */
 @media (max-width: 760px) {
+  .pagina-sessao-compra {
+    flex: 1 0 auto;
+    min-height: calc(100dvh - 84px);
+    margin-bottom: 0;
+    touch-action: pan-y;
+  }
+
   .pagina-sessao-compra .linha-compra {
     grid-template-columns:
-      16px 18px minmax(28px, 1fr) 64px 44px 46px 54px 18px;
+      16px 18px minmax(20px, 1fr) 72px 44px 52px 52px 18px;
     gap: 2px;
   }
 
   .pagina-sessao-compra .campo-tracejado {
+    min-width: 0;
     padding-inline: 3px;
   }
 
-  .pagina-sessao-compra .campo-tracejado span {
+  .pagina-sessao-compra .campo-preco span {
+    flex: 0 0 auto;
+    margin-right: 2px;
     font-size: 8px;
   }
 
-  .pagina-sessao-compra .campo-tracejado input {
+  .pagina-sessao-compra .campo-preco input {
+    width: 100%;
     min-width: 0;
-    font-size: 9px;
+    font-size: 8.5px;
+    font-variant-numeric: tabular-nums;
   }
 
   .pagina-sessao-compra .campo-qtd input {
+    width: 100%;
+    min-width: 0;
+    font-size: 9px;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.2px;
+    text-align: center;
   }
 
   .pagina-sessao-compra .total-linha-compra {
     min-width: 0;
-    font-size: 9px;
+    overflow: hidden;
+    font-size: 8.5px;
+    text-overflow: ellipsis;
   }
 }
 
 @media (max-width: 380px) {
   .pagina-sessao-compra .linha-compra {
     grid-template-columns:
-      15px 17px minmax(22px, 1fr) 61px 42px 44px 52px 17px;
+      15px 17px minmax(16px, 1fr) 68px 42px 49px 49px 17px;
     gap: 1px;
     padding-inline: 2px;
   }
 
-  .pagina-sessao-compra .campo-tracejado input {
-    font-size: 8.5px;
-  }
-
+  .pagina-sessao-compra .campo-preco input,
+  .pagina-sessao-compra .campo-qtd input,
   .pagina-sessao-compra .total-linha-compra {
-    font-size: 8.5px;
+    font-size: 8px;
   }
 }
