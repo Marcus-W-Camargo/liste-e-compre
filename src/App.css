@@ -51,21 +51,11 @@
   font-weight: 700;
   text-decoration: none;
   user-select: none;
-  transition:
-    border-color 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease;
+  transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
-.botao-voltar-seta:hover {
-  border-color: #f7501b;
-  transform: scale(1.05);
-}
-
-.botao-voltar-seta:active {
-  color: #f7501b;
-  transform: scale(0.98);
-}
+.botao-voltar-seta:hover { border-color: #f7501b; transform: scale(1.05); }
+.botao-voltar-seta:active { color: #f7501b; transform: scale(0.98); }
 
 .botao-enviar {
   margin-top: 10px;
@@ -77,30 +67,13 @@
   cursor: pointer;
   font-size: 16px;
   font-weight: 700;
-  transition:
-    background-color 0.2s ease,
-    transform 0.1s ease;
+  transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
-.botao-enviar:hover {
-  background-color: #e04312;
-}
-
-.botao-enviar:active {
-  transform: scale(0.98);
-}
-
-.botao-enviar.btn-desativado-cinza {
-  border-color: #7f8c8d;
-  background-color: #bdc3c7;
-  color: #7f8c8d;
-  cursor: default;
-  transform: none;
-}
-
-.botao-enviar.btn-desativado-cinza:hover {
-  background-color: #bdc3c7;
-}
+.botao-enviar:hover { background-color: #e04312; }
+.botao-enviar:active { transform: scale(0.98); }
+.botao-enviar.btn-desativado-cinza { border-color: #7f8c8d; background-color: #bdc3c7; color: #7f8c8d; cursor: default; transform: none; }
+.botao-enviar.btn-desativado-cinza:hover { background-color: #bdc3c7; }
 
 .rodape {
   z-index: 100;
@@ -120,53 +93,18 @@
   position: relative;
 }
 
-.rodape p {
-  width: 100%;
-  margin: 0;
+.rodape p { width: 100%; margin: 0; }
+.cabecalho-aplicacao { display: contents; }
+
+/* A navegação lateral visual foi substituída por A/D no desktop e swipe no mobile. */
+.botao-ir-historico,
+.botao-ir-compras,
+.botao-voltar-lista {
+  display: none !important;
 }
 
-.cabecalho-aplicacao {
-  display: contents;
-}
-
-.botao-ir-historico {
-  position: fixed;
-  top: 50%;
-  right: 18px;
-  z-index: 900;
-  width: auto;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #f7501b;
-  cursor: pointer;
-  font-size: 58px;
-  font-weight: 700;
-  line-height: 1;
-  text-shadow: 0 2px 2px rgb(26 38 59 / 25%);
-  transform: translateY(-50%);
-  transition: color 0.2s ease, transform 0.2s ease;
-}
-
-.botao-ir-historico:hover {
-  color: #e04312;
-  transform: translateY(-50%) scale(1.22);
-}
-
-.botao-ir-historico:disabled {
-  cursor: default;
-}
-
-body.transicao-para-historico .app-layout {
-  animation: deslizar-para-historico 0.36s ease-in forwards;
-}
-
-@keyframes deslizar-para-historico {
-  to {
-    opacity: 0.25;
-    transform: translateX(-100%);
-  }
-}
+body.transicao-para-historico .app-layout { animation: deslizar-para-historico 0.36s ease-in forwards; }
+@keyframes deslizar-para-historico { to { opacity: 0.25; transform: translateX(-100%); } }
 
 .card-formulario {
   width: 100%;
@@ -188,10 +126,7 @@ body.transicao-para-historico .app-layout {
   gap: 6px;
 }
 
-.botoes-autenticacao {
-  display: flex;
-  gap: 3px;
-}
+.botoes-autenticacao { display: flex; gap: 3px; }
 
 .botao-topo {
   display: inline-block;
@@ -203,26 +138,11 @@ body.transicao-para-historico .app-layout {
   font-size: 15px;
   font-weight: 700;
   text-decoration: none;
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
-.botao-topo:hover {
-  border-color: #f7501b;
-  background-color: #ffebd6;
-  color: #f7501b;
-  transform: scale(1.05);
-}
-
-.usuario-logado-topo {
-  color: #1a263b;
-  font-size: 16px;
-  font-weight: 700;
-  user-select: none;
-}
+.botao-topo:hover { border-color: #f7501b; background-color: #ffebd6; color: #f7501b; transform: scale(1.05); }
+.usuario-logado-topo { color: #1a263b; font-size: 16px; font-weight: 700; user-select: none; }
 
 .icone-usuario {
   display: flex;
@@ -235,27 +155,13 @@ body.transicao-para-historico .app-layout {
   border-radius: 50%;
   background-color: #fff;
   cursor: pointer;
-  transition:
-    border-color 0.2s ease,
-    background-color 0.2s ease,
-    transform 0.2s ease;
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
 }
 
 .icone-usuario:hover,
-.icone-usuario.menu-ativo {
-  border-color: #f7501b;
-  background-color: #ffebd6;
-  transform: scale(1.05);
-}
-
-.icone-usuario svg {
-  width: 100%;
-  height: 100%;
-}
-
-.icone-usuario.menu-ativo svg path {
-  fill: #f7501b;
-}
+.icone-usuario.menu-ativo { border-color: #f7501b; background-color: #ffebd6; transform: scale(1.05); }
+.icone-usuario svg { width: 100%; height: 100%; }
+.icone-usuario.menu-ativo svg path { fill: #f7501b; }
 
 .dropdown-conta {
   position: absolute;
@@ -284,69 +190,16 @@ body.transicao-para-historico .app-layout {
   transform: rotate(45deg);
 }
 
-.dropdown-conteudo {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 10px;
-}
-
-.item-dropdown {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding: 10px 12px;
-  border: 0;
-  border-radius: 10px;
-  background-color: transparent;
-  color: #1a263b;
-  cursor: pointer;
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  text-align: left;
-  text-decoration: none;
-  user-select: none;
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
-}
-
+.dropdown-conteudo { display: flex; flex-direction: column; gap: 2px; padding: 10px; }
+.item-dropdown { display: flex; align-items: center; width: 100%; padding: 10px 12px; border: 0; border-radius: 10px; background-color: transparent; color: #1a263b; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 700; text-align: left; text-decoration: none; user-select: none; transition: background-color 0.2s ease, color 0.2s ease; }
 .item-dropdown:hover,
-.btn-sair-dropdown:hover {
-  background-color: #ffe6e0;
-  color: #f7501b;
-}
+.btn-sair-dropdown:hover { background-color: #ffe6e0; color: #f7501b; }
+.divisor-dropdown { margin: 6px 0; border: 0; border-top: 2px solid #1a263b; }
 
-.divisor-dropdown {
-  margin: 6px 0;
-  border: 0;
-  border-top: 2px solid #1a263b;
-}
-
-@keyframes dropdownFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+@keyframes dropdownFadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 480px) {
-  .botao-voltar-seta {
-    top: 10px;
-    left: 10px;
-  }
-}
-
-@media (max-width: 700px) {
-  .botao-ir-historico {
-    display: none;
-  }
+  .botao-voltar-seta { top: 10px; left: 10px; }
 }
 
 @media (max-width: 600px) {
@@ -363,47 +216,13 @@ body.transicao-para-historico .app-layout {
     backdrop-filter: blur(8px);
   }
 
-  .menu-conta {
-    position: absolute;
-    top: 10px;
-    right: 12px;
-    max-width: calc(100vw - 112px);
-  }
-
-  .usuario-logado-topo {
-    min-width: 0;
-    max-width: calc(100vw - 190px);
-    overflow: hidden;
-    font-size: 13px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .usuario-logado-topo span {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .cabecalho-aplicacao:not(:has(.logo-voltar-home)) .usuario-logado-topo {
-    max-width: calc(100vw - 82px);
-  }
-
-  .icone-usuario {
-    flex: 0 0 48px;
-    width: 48px;
-    height: 48px;
-  }
-
-  .dropdown-conta {
-    top: calc(100% + 8px);
-    width: min(220px, calc(100vw - 24px));
-  }
-
-  .botao-topo {
-    padding: 8px 12px;
-    font-size: 13px;
-  }
+  .menu-conta { position: absolute; top: 10px; right: 12px; max-width: calc(100vw - 112px); }
+  .usuario-logado-topo { min-width: 0; max-width: calc(100vw - 190px); overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+  .usuario-logado-topo span { display: block; overflow: hidden; text-overflow: ellipsis; }
+  .cabecalho-aplicacao:not(:has(.logo-voltar-home)) .usuario-logado-topo { max-width: calc(100vw - 82px); }
+  .icone-usuario { flex: 0 0 48px; width: 48px; height: 48px; }
+  .dropdown-conta { top: calc(100% + 8px); width: min(220px, calc(100vw - 24px)); }
+  .botao-topo { padding: 8px 12px; font-size: 13px; }
 
   .rodape {
     width: 100vw;
@@ -416,5 +235,4 @@ body.transicao-para-historico .app-layout {
     letter-spacing: 0;
     white-space: normal;
   }
-
 }
