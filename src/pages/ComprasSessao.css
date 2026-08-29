@@ -189,7 +189,7 @@
 
 .linha-compra {
   display: grid;
-  grid-template-columns: 22px 28px minmax(90px, 1.2fr) 118px 92px 72px 92px 32px;
+  grid-template-columns: 22px 28px minmax(90px, 1.2fr) 118px 92px 80px 92px 32px;
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
@@ -278,6 +278,56 @@
 
 .campo-qtd input {
   text-align: center;
+}
+
+.campo-preco input,
+.campo-qtd input {
+  font-variant-numeric: tabular-nums;
+}
+
+.campo-preco input {
+  text-align: right;
+}
+
+.campo-qtd {
+  padding-right: 0;
+  overflow: hidden;
+}
+
+.campo-qtd--kg {
+  padding-right: 8px;
+}
+
+.botoes-qtd-compra {
+  display: flex;
+  width: 22px;
+  height: 100%;
+  flex: 0 0 22px;
+  flex-direction: column;
+  border-left: 1.5px solid #1a263b;
+}
+
+.botoes-qtd-compra button {
+  display: grid;
+  flex: 1;
+  padding: 0;
+  border: 0;
+  background: #ffebd6;
+  color: #1a263b;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  place-items: center;
+}
+
+.botoes-qtd-compra button:first-child {
+  border-bottom: 1px solid #1a263b;
+}
+
+.botoes-qtd-compra button:disabled {
+  cursor: default;
+  opacity: 0.38;
 }
 
 .campo-tracejado input::-webkit-outer-spin-button,
@@ -478,7 +528,7 @@
   }
 
   .linha-compra {
-    grid-template-columns: 22px 24px minmax(70px, 1fr) 100px 84px 64px 80px 28px;
+    grid-template-columns: 22px 24px minmax(70px, 1fr) 100px 84px 72px 80px 28px;
     gap: 6px;
     padding: 8px 4px;
   }
@@ -537,7 +587,7 @@
 
   .linha-compra {
     grid-template-columns:
-      16px 18px minmax(42px, 1fr) 46px 44px 32px 46px 18px;
+      16px 18px minmax(36px, 1fr) 62px 42px 52px 48px 18px;
     gap: 2px;
     min-height: 46px;
     padding: 6px 3px;
@@ -574,7 +624,25 @@
   }
 
   .campo-tracejado input {
-    font-size: 10px;
+    font-size: 9px;
+  }
+
+  .campo-preco span {
+    font-size: 8px;
+  }
+
+  .campo-qtd--kg {
+    padding-right: 2px;
+  }
+
+  .botoes-qtd-compra {
+    width: 16px;
+    flex-basis: 16px;
+    border-left-width: 1px;
+  }
+
+  .botoes-qtd-compra button {
+    font-size: 8px;
   }
 
   .medida-item-compra {
