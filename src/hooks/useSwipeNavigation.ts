@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useRef,
   type MouseEventHandler,
   type TouchEventHandler,
@@ -31,8 +32,8 @@ export function useSwipeNavigation({
     inicio.current = null;
   }, []);
 
-  const aoIniciar: TouchEventHandler<HTMLElement> = useCallback(
-    (evento) => {
+  const iniciar = useCallback(
+    (evento: TouchEvent) => {
       if (
         evento.touches.length !== 1 ||
         !window.matchMedia(`(max-width: ${larguraMaxima}px)`).matches
@@ -58,8 +59,8 @@ export function useSwipeNavigation({
     [cancelar, larguraMaxima],
   );
 
-  const aoTerminar: TouchEventHandler<HTMLElement> = useCallback(
-    (evento) => {
+  const terminar = useCallback(
+    (evento: TouchEvent) => {
       const origem = inicio.current;
       cancelar();
       if (!origem || evento.changedTouches.length !== 1) return;
@@ -79,13 +80,33 @@ export function useSwipeNavigation({
         deslocamentoX < 0 ? aoDeslizarEsquerda : aoDeslizarDireita;
       if (!navegar) return;
 
-      // Evita que o clique sintético do toque também ative o card ou botão
-      // sobre o qual o usuário iniciou a navegação.
       suprimirCliqueAte.current = Date.now() + 600;
       navegar();
     },
     [aoDeslizarDireita, aoDeslizarEsquerda, cancelar],
   );
+
+  useEffect(() => {
+    // O gesto pertence à página inteira, não apenas ao <main>.
+    // Assim também funciona no espaço vazio e sobre o rodapé.
+    document.addEventListener('touchstart', iniciar, { passive: true });
+    document.addEventListener('touchend', terminar, { passive: true });
+    document.addEventListener('touchcancel', cancelar, { passive: true });
+
+    return () => {
+      document.removeEventListener('touchstart', iniciar);
+      document.removeEventListener('touchend', terminar);
+      document.removeEventListener('touchcancel', cancelar);
+    };
+  }, [cancelar, iniciar, terminar]);
+
+  const aoIniciar: TouchEventHandler<HTMLElement> = useCallback(() => {
+    // Os eventos de toque são tratados no document para incluir o rodapé.
+  }, []);
+
+  const aoTerminar: TouchEventHandler<HTMLElement> = useCallback(() => {
+    // Mantido no retorno para não alterar a API usada pelas páginas.
+  }, []);
 
   const aoClicar: MouseEventHandler<HTMLElement> = useCallback((evento) => {
     if (Date.now() > suprimirCliqueAte.current) return;
