@@ -80,7 +80,13 @@ export function NavigationGuide({ usuarioId }: { usuarioId: string }) {
           </div>
         ) : (
           <div className="guia-navegacao__teclas" aria-hidden="true">
-            <kbd>A</kbd><span>←</span><span className="guia-navegacao__separador">•</span><span>→</span><kbd>D</kbd>
+            <div className="guia-navegacao__grupo-teclas">
+              <kbd>A</kbd><span>ou</span><kbd>←</kbd>
+            </div>
+            <span className="guia-navegacao__separador">•</span>
+            <div className="guia-navegacao__grupo-teclas">
+              <kbd>D</kbd><span>ou</span><kbd>→</kbd>
+            </div>
           </div>
         )}
         <h2 id="titulo-guia-navegacao">
@@ -89,7 +95,7 @@ export function NavigationGuide({ usuarioId }: { usuarioId: string }) {
         <p id="texto-guia-navegacao">
           {mobile
             ? 'Arraste a tela para a esquerda ou para a direita para acessar Listas, Compras e Histórico.'
-            : 'Use A para navegar à esquerda e D para navegar à direita entre Listas, Compras e Histórico.'}
+            : 'Use A ou a seta ← para navegar à esquerda. Use D ou a seta → para navegar à direita entre Listas, Compras e Histórico.'}
         </p>
         <small>
           {mobile
