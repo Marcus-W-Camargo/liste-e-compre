@@ -12,16 +12,6 @@ import { CloudAccess, CloudStatus } from './components/CloudAccess';
 import { useDesktopKeyboardNavigation } from './hooks/useDesktopKeyboardNavigation';
 import './App.css';
 
-function Placeholder({ titulo }: { titulo: string }) {
-  return (
-    <div className="pagina-placeholder">
-      <h1>{titulo}</h1>
-      <p>Página em migração — em breve.</p>
-      <a href="/">← Voltar para a Home</a>
-    </div>
-  );
-}
-
 function Rodape() {
   return (
     <footer className="rodape">
