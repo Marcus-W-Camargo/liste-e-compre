@@ -247,3 +247,23 @@
     width: 142px;
   }
 }
+
+@media (max-width: 360px) {
+  .lista-itens__cabecalho {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .lista-itens__cabecalho h2 {
+    white-space: normal;
+  }
+
+  .filtro-categoria-wrapper {
+    width: 125px;
+  }
+
+  .lista-itens__contador {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+}

@@ -75,51 +75,41 @@ export function CloudStatus() {
   }, [logado, id]);
   if (!logado || state.owner !== id || state.status === 'idle') return null;
   const failed = ['error', 'conflict'].includes(state.status);
+  // A sincronização normal é silenciosa; o aviso aparece apenas quando há
+  // uma falha ou um conflito que exige uma decisão do usuário.
+  if (!failed) return null;
   return (
     <aside
-      className={`cloud-status ${failed ? 'cloud-failed' : ''}`}
-      role={failed ? 'alert' : 'status'}
+      className="cloud-status cloud-failed"
+      role="alert"
     >
-      {failed ? (
-        <>
-          <p>
-            {state.error}{' '}
-            {state.dirty
-              ? 'As alterações não sincronizadas permanecem apenas nesta aba.'
-              : ''}
-          </p>
-          {state.status !== 'conflict' && (
-            <button onClick={() => void cloud.retry().catch(() => {})}>
-              Tentar novamente
-            </button>
-          )}
-          {state.dirty && (
-            <button onClick={baixarCopia}>Baixar cópia desta edição</button>
-          )}
-          <button
-            onClick={() => {
-              if (
-                !state.dirty ||
-                window.confirm(
-                  'Descartar a edição não sincronizada e carregar os dados da nuvem? Baixe uma cópia antes, se necessário.',
-                )
-              )
-                void cloud.reload().catch(() => {});
-            }}
-          >
-            Carregar dados da nuvem
-          </button>
-        </>
-      ) : (
-        <span>
-          {state.status === 'saving'
-            ? 'Salvando na nuvem…'
-            : state.status === 'loading'
-              ? 'Carregando dados…'
-              : 'Dados sincronizados'}
-          {state.notice ? ` — ${state.notice}` : ''}
-        </span>
+      <p>
+        {state.error}{' '}
+        {state.dirty
+          ? 'As alterações não sincronizadas permanecem apenas nesta aba.'
+          : ''}
+      </p>
+      {state.status !== 'conflict' && (
+        <button onClick={() => void cloud.retry().catch(() => {})}>
+          Tentar novamente
+        </button>
       )}
+      {state.dirty && (
+        <button onClick={baixarCopia}>Baixar cópia desta edição</button>
+      )}
+      <button
+        onClick={() => {
+          if (
+            !state.dirty ||
+            window.confirm(
+              'Descartar a edição não sincronizada e carregar os dados da nuvem? Baixe uma cópia antes, se necessário.',
+            )
+          )
+            void cloud.reload().catch(() => {});
+        }}
+      >
+        Carregar dados da nuvem
+      </button>
     </aside>
   );
 }

@@ -23,3 +23,11 @@
   transform: scale(1.05);
 }
 
+@media (max-width: 600px) {
+  .logo-voltar-home {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    max-width: 88px;
+  }
+}

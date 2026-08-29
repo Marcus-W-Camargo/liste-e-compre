@@ -49,97 +49,99 @@ export function Header() {
 
   return (
     <>
-      {location.pathname !== '/' && (
-        <Link
-          to="/"
-          className="logo-voltar-home"
-          aria-label="Voltar para a página inicial"
-        >
-          <img src={logoTitulo} alt="Liste e Compre" />
-        </Link>
-      )}
-
-      <header className="menu-conta">
-        {!logado ? (
-          <div className="botoes-autenticacao">
-            <Link to="/conta?modo=login" className="botao-topo">
-              Entrar
-            </Link>
-            <Link to="/conta?modo=cadastro" className="botao-topo">
-              Cadastrar
-            </Link>
-          </div>
-        ) : (
-          <div className="usuario-logado-topo">
-            <span>Olá, {nome}.</span>
-          </div>
+      <div className="cabecalho-aplicacao">
+        {location.pathname !== '/' && (
+          <Link
+            to="/"
+            className="logo-voltar-home"
+            aria-label="Voltar para a página inicial"
+          >
+            <img src={logoTitulo} alt="Liste e Compre" />
+          </Link>
         )}
 
-        <button
-          type="button"
-          className={`icone-usuario ${dropdownAberto ? 'menu-ativo' : ''}`}
-          onClick={(event) => {
-            event.stopPropagation();
-            if (logado) setDropdownAberto((atual) => !atual);
-          }}
-          aria-label="Menu da conta"
-          aria-expanded={logado ? dropdownAberto : undefined}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z"
-              fill="#1a263b"
-            />
-          </svg>
-        </button>
-
-        {logado && dropdownAberto && (
-          <div
-            className="dropdown-conta"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="setinha-dropdown" />
-            <div className="dropdown-conteudo">
-              <Link
-                to="/perfil"
-                className="item-dropdown"
-                onClick={() => setDropdownAberto(false)}
-              >
-                👤 Minha conta
+        <header className="menu-conta">
+          {!logado ? (
+            <div className="botoes-autenticacao">
+              <Link to="/conta?modo=login" className="botao-topo">
+                Entrar
               </Link>
-              <Link
-                to="/ajuda"
-                className="item-dropdown"
-                onClick={() => setDropdownAberto(false)}
-              >
-                💡 Ajuda
+              <Link to="/conta?modo=cadastro" className="botao-topo">
+                Cadastrar
               </Link>
-              <a
-                href="#"
-                className="item-dropdown"
-                onClick={(event) => event.preventDefault()}
-              >
-                🌐 Sobre
-              </a>
-              <hr className="divisor-dropdown" />
-              <button
-                type="button"
-                className="item-dropdown btn-sair-dropdown"
-                onClick={() => {
-                  setDropdownAberto(false);
-                  setModalLogout(true);
-                }}
-              >
-                🚪 Sair
-              </button>
             </div>
-          </div>
-        )}
-      </header>
+          ) : (
+            <div className="usuario-logado-topo" title={`Olá, ${nome}.`}>
+              <span>Olá, {nome}.</span>
+            </div>
+          )}
+
+          <button
+            type="button"
+            className={`icone-usuario ${dropdownAberto ? 'menu-ativo' : ''}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (logado) setDropdownAberto((atual) => !atual);
+            }}
+            aria-label="Menu da conta"
+            aria-expanded={logado ? dropdownAberto : undefined}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z"
+                fill="#1a263b"
+              />
+            </svg>
+          </button>
+
+          {logado && dropdownAberto && (
+            <div
+              className="dropdown-conta"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="setinha-dropdown" />
+              <div className="dropdown-conteudo">
+                <Link
+                  to="/perfil"
+                  className="item-dropdown"
+                  onClick={() => setDropdownAberto(false)}
+                >
+                  👤 Minha conta
+                </Link>
+                <Link
+                  to="/ajuda"
+                  className="item-dropdown"
+                  onClick={() => setDropdownAberto(false)}
+                >
+                  💡 Ajuda
+                </Link>
+                <a
+                  href="#"
+                  className="item-dropdown"
+                  onClick={(event) => event.preventDefault()}
+                >
+                  🌐 Sobre
+                </a>
+                <hr className="divisor-dropdown" />
+                <button
+                  type="button"
+                  className="item-dropdown btn-sair-dropdown"
+                  onClick={() => {
+                    setDropdownAberto(false);
+                    setModalLogout(true);
+                  }}
+                >
+                  🚪 Sair
+                </button>
+              </div>
+            </div>
+          )}
+        </header>
+      </div>
 
       <Modal
         aberto={modalLogout}

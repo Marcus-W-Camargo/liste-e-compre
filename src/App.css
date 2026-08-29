@@ -109,14 +109,24 @@
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  padding: 20px;
+  padding: 14px 8px;
   margin-top: auto;
   background-color: transparent;
   color: #f7501b;
-  font-size: 14px;
+  font-size: clamp(10px, 1.2vw, 14px);
   text-align: center;
+  white-space: nowrap;
   user-select: none;
   position: relative;
+}
+
+.rodape p {
+  overflow: hidden;
+  text-overflow: clip;
+}
+
+.cabecalho-aplicacao {
+  display: contents;
 }
 
 .card-formulario {
@@ -295,16 +305,63 @@
 }
 
 @media (max-width: 600px) {
+  .cabecalho-aplicacao {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 1500;
+    display: block;
+    width: 100%;
+    height: 72px;
+    border-bottom: 2px solid rgb(26 38 59 / 24%);
+    background: rgb(204 224 255 / 96%);
+    box-shadow: 0 4px 12px rgb(26 38 59 / 10%);
+    backdrop-filter: blur(8px);
+  }
+
   .menu-conta {
-    right: 10px;
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    max-width: calc(100vw - 112px);
   }
 
   .usuario-logado-topo {
-    font-size: 14px;
+    min-width: 0;
+    max-width: calc(100vw - 190px);
+    overflow: hidden;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .usuario-logado-topo span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cabecalho-aplicacao:not(:has(.logo-voltar-home)) .usuario-logado-topo {
+    max-width: calc(100vw - 82px);
+  }
+
+  .icone-usuario {
+    flex: 0 0 48px;
+    width: 48px;
+    height: 48px;
+  }
+
+  .dropdown-conta {
+    top: calc(100% + 8px);
+    width: min(220px, calc(100vw - 24px));
   }
 
   .botao-topo {
     padding: 8px 12px;
     font-size: 13px;
+  }
+
+  .rodape {
+    padding: 10px 4px;
+    font-size: clamp(8px, 2.55vw, 11px);
   }
 }

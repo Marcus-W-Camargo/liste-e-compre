@@ -36,3 +36,70 @@ body.transicao-para-lista .app-layout { animation: deslizar-para-lista .36s ease
 .card-nova-lista span { display: grid; width: 47px; height: 47px; margin-bottom: 12px; border-radius: 50%; place-items: center; background: #ff4f1f; color: #fff; font-size: 32px; font-weight: 400; line-height: 1; }
 .card-nova-lista small { margin-top: 5px; color: #4a5b78; }
 @media (max-width: 600px) { .pagina-compras { padding: 90px 16px 35px; } .grid-listas-compras { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; } .card-lista-compra-wrapper, .card-lista-compra, .card-nova-lista { width: 100%; min-height: 0; aspect-ratio: 1; } .card-lista-compra, .card-nova-lista { padding: 16px; } .card-lista-compra h2 { font-size: 18px; } }
+
+@media (max-width: 700px) {
+  .pagina-compras {
+    padding: 92px 14px 32px;
+  }
+
+  .botao-voltar-lista {
+    top: auto;
+    bottom: 18px;
+    left: 14px;
+    display: grid;
+    width: 48px;
+    height: 48px;
+    border: 2px solid #1a263b;
+    border-radius: 50%;
+    background: #fff;
+    font-size: 38px;
+    place-items: center;
+    text-shadow: none;
+    transform: none;
+  }
+
+  .botao-voltar-lista:hover {
+    transform: scale(1.08);
+  }
+
+  .cabecalho-catalogo {
+    margin-bottom: 20px;
+  }
+
+  .cabecalho-catalogo h1 {
+    font-size: clamp(30px, 10vw, 38px);
+  }
+
+  .grid-listas-compras {
+    grid-template-columns: minmax(0, 340px);
+    gap: 14px;
+  }
+
+  .card-lista-compra-wrapper,
+  .card-lista-compra,
+  .card-nova-lista {
+    width: 100%;
+    min-height: 154px;
+    aspect-ratio: auto;
+  }
+
+  .card-lista-compra,
+  .card-nova-lista {
+    padding: 18px;
+  }
+
+  .menu-acoes-lista {
+    min-height: 154px;
+    padding: 16px;
+  }
+
+  .botao-acao-compra {
+    min-height: 44px;
+    font-size: 17px;
+    white-space: nowrap;
+  }
+
+  .texto-escolha-compra {
+    margin: 5px 0;
+  }
+}

@@ -76,7 +76,34 @@
 }
 
 @media (max-width: 600px) {
+  .body-home-wrapper .container-principal {
+    height: auto;
+    min-height: calc(100dvh - 100px);
+    padding: 76px 14px 16px;
+  }
+
+  .imagem-titulo {
+    width: min(88vw, 340px);
+    margin: 8px 0 14px;
+  }
+
+  .fluxo-botoes {
+    width: min(88vw, 310px);
+  }
+
   .botao-lista {
-    padding: 24px 16px;
+    min-height: 56px;
+    padding: 15px 14px;
+    border-radius: 28px;
+    font-size: 16px;
+  }
+
+  .botao-lista span {
+    font-size: 18px;
+  }
+
+  .seta-abaixo {
+    margin: -4px 0 5px;
+    font-size: 28px;
   }
 }

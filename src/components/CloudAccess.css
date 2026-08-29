@@ -35,3 +35,15 @@
 .cloud-view {
   display: contents;
 }
+
+@media (max-width: 600px) {
+  .cloud-status.cloud-failed {
+    width: calc(100% - 24px);
+    margin-top: 84px;
+  }
+
+  .cloud-loading {
+    width: calc(100% - 24px);
+    margin-top: 92px;
+  }
+}

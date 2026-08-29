@@ -454,8 +454,9 @@
 
 @media (max-width: 760px) {
   .pagina-sessao-compra {
-    width: calc(100% - 24px);
-    padding: 20px 12px 18px;
+    width: calc(100% - 12px);
+    padding: 16px 8px 14px;
+    margin: 84px auto 16px;
     border-radius: 26px;
   }
 
@@ -480,7 +481,8 @@
   }
 
   .cabecalho-secao-compra {
-    padding: 11px 16px;
+    min-height: 52px;
+    padding: 9px 13px;
     font-size: 17px;
   }
 
@@ -499,7 +501,7 @@
       'preco preco medida medida'
       'qtd qtd total total';
     gap: 8px 6px;
-    padding: 10px 8px;
+    padding: 10px 7px;
   }
 
   .check-item-compra { grid-area: check; }
@@ -517,5 +519,6 @@
 
   .acoes-sessao button {
     width: 100%;
+    min-height: 48px;
   }
 }

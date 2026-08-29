@@ -23,10 +23,7 @@ function Placeholder({ titulo }: { titulo: string }) {
 function Rodape() {
   return (
     <footer className="rodape">
-      <p>
-        © 2026 Marcus Camargo. Todos os direitos reservados. Projeto
-        desenvolvido para fins de estudo e portfólio.
-      </p>
+      <p>© 2026 Marcus Camargo • Todos os direitos reservados.</p>
     </footer>
   );
 }
