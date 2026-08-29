@@ -24,13 +24,8 @@ function Rodape() {
   return (
     <footer className="rodape">
       <p>
-        <span className="rodape-texto-completo">
-          © 2026 Marcus Camargo. Todos os direitos reservados. Projeto
-          desenvolvido para fins de estudo e portfólio.
-        </span>
-        <span className="rodape-texto-mobile">
-          © 2026 Marcus Camargo • Estudo e portfólio • Direitos reservados.
-        </span>
+        © 2026 Marcus Camargo. Todos os direitos reservados. Projeto
+        desenvolvido para fins de estudo e portfólio.
       </p>
     </footer>
   );
