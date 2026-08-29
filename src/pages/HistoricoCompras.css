@@ -35,13 +35,43 @@
 }
 
 .lista-historico-compras article {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 18px;
   padding: 18px;
   border: 3px solid #1a263b;
   border-radius: 16px;
   background: #fff;
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.lista-historico-compras article:hover {
+  box-shadow: 0 8px 18px rgb(26 38 59 / 16%);
+  transform: translateY(-2px);
+}
+
+.historico-card-acionador {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 13px;
+  outline: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.historico-card-acionador:focus-visible {
+  outline: 4px solid #f7501b;
+  outline-offset: 3px;
+}
+
+.historico-card-resumo {
+  min-width: 0;
 }
 
 .lista-historico-compras h2 {
@@ -54,7 +84,176 @@
 }
 
 .lista-historico-compras article > strong {
+  flex-shrink: 0;
   color: #f7501b;
+}
+
+.historico-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: #1a263b;
+  text-align: center;
+}
+
+.historico-modal h2,
+.historico-modal h3,
+.historico-modal p {
+  margin: 0;
+}
+
+.historico-modal h2 {
+  font-size: 23px;
+}
+
+.historico-modal > p {
+  color: #4a5b78;
+  line-height: 1.4;
+}
+
+.historico-modal-icone {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  flex: 0 0 54px;
+  border: 2px solid #1a263b;
+  border-radius: 50%;
+  background: #ffebd6;
+  font-size: 25px;
+  place-items: center;
+}
+
+.historico-modal-botoes {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.historico-modal-botoes button,
+.historico-voltar-acoes {
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 2px solid #1a263b;
+  border-radius: 13px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.historico-modal-botoes button span {
+  margin-right: 7px;
+  font-size: 19px;
+}
+
+.historico-acao-principal {
+  background: #f7501b;
+  color: #fff;
+}
+
+.historico-acao-secundaria,
+.historico-acao-cancelar,
+.historico-voltar-acoes {
+  background: #fff;
+  color: #1a263b;
+}
+
+.historico-acao-cancelar {
+  border-color: #c5ced8 !important;
+}
+
+.historico-itens-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+}
+
+.historico-itens-cabecalho p {
+  margin-top: 2px;
+  color: #4a5b78;
+  font-weight: 700;
+}
+
+.historico-itens-lista {
+  width: 100%;
+  max-height: min(55dvh, 460px);
+  padding-right: 4px;
+  overflow-y: auto;
+  text-align: left;
+  scrollbar-color: #88aad8 transparent;
+  scrollbar-width: thin;
+}
+
+.historico-itens-lista section + section {
+  margin-top: 13px;
+}
+
+.historico-itens-lista h3 {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 8px 11px;
+  border-radius: 10px;
+  background: #88aad8;
+  font-size: 16px;
+}
+
+.historico-itens-lista ul {
+  padding: 0;
+  margin: 4px 0 0;
+  list-style: none;
+}
+
+.historico-itens-lista li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 8px;
+  border-radius: 8px;
+}
+
+.historico-itens-lista li:nth-child(odd) {
+  background: rgb(214 225 237 / 62%);
+}
+
+.historico-item-nome {
+  min-width: 0;
+}
+
+.historico-item-nome strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.historico-item-nome small {
+  color: #f7501b;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.historico-item-quantidade,
+.historico-item-total {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.historico-item-quantidade {
+  color: #4a5b78;
+}
+
+.historico-item-total {
+  color: #f7501b;
+}
+
+.historico-voltar-acoes {
+  width: 100%;
+  margin-top: 4px;
 }
 
 .historico-vazio {
@@ -101,5 +300,28 @@ body.transicao-historico-para-compras .app-layout {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
+  }
+
+  .lista-historico-compras article {
+    align-items: flex-start;
+    padding: 15px;
+  }
+
+  .lista-historico-compras article > strong {
+    font-size: 15px;
+  }
+
+  .historico-itens-lista li {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 10px;
+  }
+
+  .historico-item-quantidade {
+    grid-column: 1;
+  }
+
+  .historico-item-total {
+    grid-column: 2;
+    grid-row: 1 / span 2;
   }
 }
