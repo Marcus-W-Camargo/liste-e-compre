@@ -301,26 +301,24 @@
 .botoes-qtd-compra {
   display: flex;
   width: 22px;
+  height: 100%;
   flex: 0 0 22px;
-  align-self: stretch;
   flex-direction: column;
   border-left: 1.5px solid #1a263b;
 }
 
 .botoes-qtd-compra button {
-  display: flex;
+  display: grid;
   flex: 1;
-  min-height: 0;
-  align-items: center;
-  justify-content: center;
   padding: 0;
   border: 0;
-  background: #ffebd680;
+  background: #ffebd6;
   color: #1a263b;
   cursor: pointer;
   font-size: 10px;
   font-weight: 800;
   line-height: 1;
+  place-items: center;
 }
 
 .botoes-qtd-compra button:first-child {
