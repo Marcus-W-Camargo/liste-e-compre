@@ -210,12 +210,10 @@
 
 @media (max-width: 900px) {
   .barra-lateral-listas {
-    position: fixed;
-    top: 70px;
-    left: 50%;
+    position: static;
     width: min(430px, calc(100vw - 30px));
-    max-height: 250px;
+    max-height: 220px;
     margin: 0;
-    transform: translateX(-50%);
+    transform: none;
   }
 }

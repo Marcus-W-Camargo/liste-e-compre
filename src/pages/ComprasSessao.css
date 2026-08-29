@@ -1,4 +1,5 @@
 .pagina-sessao-compra {
+  position: relative;
   box-sizing: border-box;
   flex: 1 0 auto;
   width: min(calc(100% - 34px), 1040px);
@@ -11,12 +12,43 @@
   color: #1a263b;
 }
 
+.fechar-sessao-compra {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  z-index: 10;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #f7501b;
+  cursor: pointer;
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1;
+  place-items: center;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.fechar-sessao-compra:hover {
+  color: #e04312;
+  transform: scale(1.12);
+}
+
+.fechar-sessao-compra:focus-visible {
+  border-radius: 50%;
+  outline: 3px solid #1a263b;
+  outline-offset: 2px;
+}
+
 .topo-sessao {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px 28px;
-  padding: 2px 8px 22px;
+  padding: 2px 52px 22px 8px;
 }
 
 .titulo-sessao {
@@ -454,14 +486,24 @@
 
 @media (max-width: 760px) {
   .pagina-sessao-compra {
-    width: calc(100% - 24px);
-    padding: 20px 12px 18px;
+    width: calc(100% - 8px);
+    padding: 16px 4px 14px;
+    margin: 84px auto 16px;
     border-radius: 26px;
+    touch-action: pan-y;
+  }
+
+  .fechar-sessao-compra {
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    font-size: 34px;
   }
 
   .topo-sessao {
     grid-template-columns: 1fr;
-    padding: 0 4px 16px;
+    padding: 0 44px 16px 4px;
   }
 
   .titulo-sessao img {
@@ -480,7 +522,8 @@
   }
 
   .cabecalho-secao-compra {
-    padding: 11px 16px;
+    min-height: 52px;
+    padding: 9px 13px;
     font-size: 17px;
   }
 
@@ -489,27 +532,103 @@
   }
 
   .itens-compra {
-    padding: 4px 2px 6px;
+    padding: 4px 0 6px;
   }
 
   .linha-compra {
-    grid-template-columns: 20px 22px minmax(0, 1fr) 28px;
-    grid-template-areas:
-      'check icon nome lixo'
-      'preco preco medida medida'
-      'qtd qtd total total';
-    gap: 8px 6px;
-    padding: 10px 8px;
+    grid-template-columns:
+      16px 18px minmax(42px, 1fr) 46px 44px 32px 46px 18px;
+    gap: 2px;
+    min-height: 46px;
+    padding: 6px 3px;
   }
 
-  .check-item-compra { grid-area: check; }
-  .icone-item-compra { grid-area: icon; }
-  .linha-compra strong { grid-area: nome; }
-  .campo-preco { grid-area: preco; }
-  .medida-item-compra { grid-area: medida; justify-content: flex-start; }
-  .campo-qtd { grid-area: qtd; }
-  .total-linha-compra { grid-area: total; }
-  .btn-lixo-compra { grid-area: lixo; justify-self: end; }
+  .check-item-compra {
+    width: 16px;
+    height: 16px;
+    border-width: 1.5px;
+  }
+
+  .icone-item-compra {
+    font-size: 15px;
+  }
+
+  .linha-compra strong {
+    font-size: 11px;
+  }
+
+  .linha-compra strong small {
+    font-size: 7px;
+  }
+
+  .campo-tracejado {
+    height: 30px;
+    padding: 0 2px;
+    border-width: 1.2px;
+    border-radius: 7px;
+  }
+
+  .campo-tracejado span {
+    margin-right: 1px;
+    font-size: 9px;
+  }
+
+  .campo-tracejado input {
+    font-size: 10px;
+  }
+
+  .medida-item-compra {
+    justify-content: center;
+    gap: 1px;
+  }
+
+  .medida-item-compra > span {
+    font-size: 9px;
+  }
+
+  .switch-medida-compra {
+    width: 27px;
+    height: 18px;
+  }
+
+  .bola-switch-compra {
+    width: 12px;
+    height: 12px;
+  }
+
+  .checkbox-switch-compra:checked + .corpo-switch-compra .bola-switch-compra {
+    left: calc(100% - 14px);
+  }
+
+  .texto-un-compra,
+  .texto-kg-compra {
+    font-size: 7px;
+  }
+
+  .texto-un-compra {
+    left: 2px;
+  }
+
+  .texto-kg-compra {
+    right: 2px;
+  }
+
+  .total-linha-compra {
+    overflow: hidden;
+    font-size: 10px;
+    text-overflow: ellipsis;
+  }
+
+  .btn-lixo-compra {
+    width: 18px;
+    height: 24px;
+    padding: 0;
+  }
+
+  .btn-lixo-compra svg {
+    width: 16px;
+    height: 16px;
+  }
 
   .acoes-sessao {
     flex-direction: column;
@@ -517,5 +636,13 @@
 
   .acoes-sessao button {
     width: 100%;
+    min-height: 48px;
+  }
+}
+
+@media (max-width: 700px) {
+  .pagina-sessao-compra {
+    min-height: calc(100dvh - 84px);
+    margin-bottom: 0;
   }
 }

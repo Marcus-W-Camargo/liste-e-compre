@@ -329,3 +329,24 @@
     margin-left: 1px;
   }
 }
+
+@media (max-width: 380px) {
+  .formulario-item__form {
+    padding: 15px;
+  }
+
+  .formulario-item__linha {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 76px;
+  }
+
+  .formulario-item__categoria {
+    grid-column: 1 / -1;
+  }
+
+  .formulario-item__quantidade,
+  .formulario-item__medida {
+    width: 100%;
+    min-width: 0;
+  }
+}

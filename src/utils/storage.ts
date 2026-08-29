@@ -9,6 +9,11 @@ import type {
 } from '../types';
 import { cloud } from '../services/cloudData';
 import { obterSessao } from './auth';
+import {
+  carregarSessaoCompraLocal,
+  limparSessaoCompraLocal,
+  salvarSessaoCompraLocal,
+} from './localPurchaseSession';
 export function gerarId() {
   return crypto.randomUUID();
 }
@@ -22,6 +27,10 @@ function dados(email: string): DadosConta {
 function mudar(email: string, fn: (data: DadosConta) => void) {
   dados(email);
   cloud.mutate(fn);
+}
+function owner(email: string) {
+  dados(email);
+  return obterSessao().id;
 }
 export function carregarListaAtual(email: string) {
   return dados(email).itens;
@@ -87,41 +96,50 @@ export function atualizarListaNoHistorico(
   return updated;
 }
 export function removerListaDoHistorico(email: string, id: string) {
+  const contaId = owner(email);
   mudar(email, (d) => {
     d.historico = d.historico.filter((l) => l.id !== id);
     if (d.edicaoId === id) d.edicaoId = null;
-    if (d.sessao?.listaId === id) d.sessao = null;
   });
+  if (carregarSessaoCompraLocal(contaId)?.listaId === id)
+    limparSessaoCompraLocal(contaId);
 }
 export function renomearListaNoHistorico(
   email: string,
   id: string,
   nome: string,
 ) {
+  const contaId = owner(email);
   mudar(email, (d) => {
     d.historico = d.historico.map((l) => (l.id === id ? { ...l, nome } : l));
-    if (d.sessao?.listaId === id) d.sessao.nomeLista = nome;
   });
+  const sessao = carregarSessaoCompraLocal(contaId);
+  if (sessao?.listaId === id)
+    salvarSessaoCompraLocal(contaId, { ...sessao, nomeLista: nome });
 }
 export function atualizarDataPrevistaNoHistorico(
   email: string,
   id: string,
   dataPrevista?: string,
 ): ListaSalva | null {
+  const contaId = owner(email);
   const old = dados(email).historico.find((l) => l.id === id);
   if (!old) return null;
   const updated = { ...old, dataPrevista, data: new Date().toISOString() };
   mudar(email, (d) => {
     d.historico = d.historico.map((l) => (l.id === id ? updated : l));
-    if (d.sessao?.listaId === id) d.sessao.dataPrevista = dataPrevista;
   });
+  const sessao = carregarSessaoCompraLocal(contaId);
+  if (sessao?.listaId === id)
+    salvarSessaoCompraLocal(contaId, { ...sessao, dataPrevista });
   return updated;
 }
 export function criarSessaoCompra(
   email: string,
   lista: ListaSalva,
 ): SessaoCompra {
-  const existing = dados(email).sessao;
+  const contaId = owner(email);
+  const existing = carregarSessaoCompraLocal(contaId);
   if (existing?.listaId === lista.id) return existing;
   const sessao: SessaoCompra = {
     id: gerarId(),
@@ -141,17 +159,13 @@ export function criarSessaoCompra(
   return sessao;
 }
 export function carregarSessaoCompra(email: string) {
-  return dados(email).sessao;
+  return carregarSessaoCompraLocal(owner(email));
 }
 export function salvarSessaoCompra(email: string, sessao: SessaoCompra) {
-  mudar(email, (d) => {
-    d.sessao = structuredClone(sessao);
-  });
+  salvarSessaoCompraLocal(owner(email), structuredClone(sessao));
 }
 export function limparSessaoCompra(email: string) {
-  mudar(email, (d) => {
-    d.sessao = null;
-  });
+  limparSessaoCompraLocal(owner(email));
 }
 export function adicionarItensAListaSalva(
   email: string,

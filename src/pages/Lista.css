@@ -1,5 +1,6 @@
 .body-lista {
   display: flex;
+  flex: 1 0 auto;
   flex-direction: column;
   align-items: center;
   width: 100%;
@@ -104,11 +105,49 @@
 }
 
 @media (max-width: 900px) {
+  .app-conteudo .body-lista {
+    gap: 16px;
+    padding: 88px 10px 20px;
+  }
+
   .body-lista .container-principal {
     width: min(100%, 450px);
     max-width: 450px;
+    padding: 0;
+    margin-top: 0;
     margin-right: auto;
     margin-left: auto;
+  }
+
+  .botao-ir-compras {
+    top: auto;
+    right: 14px;
+    bottom: 18px;
+    display: grid;
+    width: 48px;
+    height: 48px;
+    border: 2px solid #1a263b;
+    border-radius: 50%;
+    background: #fff;
+    font-size: 38px;
+    place-items: center;
+    text-shadow: none;
+    transform: none;
+  }
+
+  .botao-ir-compras:hover {
+    transform: scale(1.08);
+  }
+}
+
+@media (max-width: 700px) {
+  .body-lista {
+    min-height: calc(100dvh - 72px);
+    touch-action: pan-y;
+  }
+
+  .botao-ir-compras {
+    display: none;
   }
 }
 

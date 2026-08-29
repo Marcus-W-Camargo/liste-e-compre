@@ -59,3 +59,12 @@ button,
 a {
   -webkit-tap-highlight-color: transparent;
 }
+
+@media (max-width: 600px) {
+  body {
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: auto 100dvh;
+  }
+}

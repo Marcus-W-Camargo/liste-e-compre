@@ -3,8 +3,13 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../hooks/useAuth';
 import { useListaCompras } from '../hooks/useListaCompras';
+import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
 import { cloud } from '../services/cloudData';
 import type { ListaSalva } from '../types';
+import {
+  deveMostrarAvisoConexao,
+  marcarAvisoConexaoComoVisto,
+} from '../utils/userNotices';
 
 import { FormularioItem } from '../components/FormularioItem';
 import { ListaItens } from '../components/ListaItens';
@@ -19,6 +24,7 @@ type ModalTipo =
   | 'nomear'
   | 'renomear'
   | 'sucesso'
+  | 'conexao'
   | 'vazia'
   | 'duplicado'
   | 'nao-salva';
@@ -41,7 +47,7 @@ export function Lista() {
     salvarEdicaoAtual,
   } = useListaCompras();
 
-  const { logado } = useAuth();
+  const { logado, id: usuarioId } = useAuth();
   const navigate = useNavigate();
 
   const [modal, setModal] = useState<ModalTipo>(null);
@@ -78,6 +84,10 @@ export function Lista() {
     document.body.classList.add('transicao-para-compras');
     window.setTimeout(() => navigate('/compre'), 360);
   }
+
+  const gestosNavegacao = useSwipeNavigation({
+    aoDeslizarEsquerda: irParaCompras,
+  });
 
   function fecharModal() {
     setModal(null);
@@ -140,6 +150,10 @@ export function Lista() {
   }
 
   async function confirmarNome() {
+    const mostrarAvisoConexao = deveMostrarAvisoConexao(
+      usuarioId,
+      historico.length,
+    );
     const resultado = salvarListaComNome(nomeLista);
 
     if (!resultado.ok) {
@@ -166,7 +180,7 @@ export function Lista() {
     setMensagemSucesso(
       `A lista "${resultado.lista.nome}" foi salva com sucesso.`,
     );
-    setModal('sucesso');
+    setModal(mostrarAvisoConexao ? 'conexao' : 'sucesso');
   }
 
   async function salvarAtualECarregarPendente() {
@@ -217,7 +231,7 @@ export function Lista() {
   }
 
   return (
-    <div className="body-lista">
+    <div className="body-lista" {...gestosNavegacao}>
       <button
         type="button"
         className="botao-ir-compras"
@@ -423,6 +437,33 @@ export function Lista() {
             onClick={() => setModal(null)}
           >
             Perfeito
+          </button>
+        </div>
+      </Modal>
+
+      <Modal aberto={modal === 'conexao'}>
+        <div className="conteudo-sucesso">
+          <div className="icone-sucesso-laranja">📶</div>
+
+          <h2>Mantenha-se conectado</h2>
+
+          <p>{mensagemSucesso}</p>
+
+          <p>
+            Para acessar suas listas e registrar sua compra, mantenha este
+            dispositivo conectado à internet por Wi-Fi ou dados móveis. No
+            momento, o site não funciona offline.
+          </p>
+
+          <button
+            type="button"
+            className="botao-enviar"
+            onClick={() => {
+              marcarAvisoConexaoComoVisto(usuarioId);
+              setModal(null);
+            }}
+          >
+            Entendi, continuar
           </button>
         </div>
       </Modal>
