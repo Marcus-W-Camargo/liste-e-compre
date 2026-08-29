@@ -1,4 +1,7 @@
+import { useState } from 'react';
 import type { ListaSalva } from '../types';
+import { viewportMobile } from '../utils/mobile';
+import { ConfirmacaoExclusaoMobile } from './ConfirmacaoExclusaoMobile';
 import './PainelListasSalvas.css';
 
 interface PainelListasSalvasProps {
@@ -24,6 +27,25 @@ export function PainelListasSalvas({
   onRenomear,
   onSelecionar,
 }: PainelListasSalvasProps) {
+  const [listaParaExcluir, setListaParaExcluir] = useState<ListaSalva | null>(null);
+
+  function solicitarExclusao(lista: ListaSalva) {
+    if (viewportMobile()) {
+      setListaParaExcluir(lista);
+      return;
+    }
+
+    onExcluir(lista.id);
+  }
+
+  function confirmarExclusao() {
+    if (!listaParaExcluir) return;
+
+    const id = listaParaExcluir.id;
+    setListaParaExcluir(null);
+    onExcluir(id);
+  }
+
   return (
     <aside className="barra-lateral-listas">
       <h3>📋 Minhas Listas</h3>
@@ -76,7 +98,7 @@ export function PainelListasSalvas({
                   className="botao-excluir-lista"
                   onClick={(event) => {
                     event.stopPropagation();
-                    onExcluir(lista.id);
+                    solicitarExclusao(lista);
                   }}
                   aria-label={`Excluir lista ${lista.nome}`}
                   title="Excluir lista"
@@ -88,6 +110,14 @@ export function PainelListasSalvas({
           ))
         )}
       </div>
+
+      <ConfirmacaoExclusaoMobile
+        aberto={listaParaExcluir !== null}
+        tipo="lista"
+        nome={listaParaExcluir?.nome ?? ''}
+        onCancelar={() => setListaParaExcluir(null)}
+        onConfirmar={confirmarExclusao}
+      />
     </aside>
   );
 }

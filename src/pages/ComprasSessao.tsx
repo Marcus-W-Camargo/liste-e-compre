@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type CSSProperties } from 'react';
+import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   CATEGORIAS,
@@ -24,6 +24,8 @@ import {
   mascaraPrecoCompra,
   QUANTIDADE_MAXIMA_UN,
 } from '../utils/purchaseInputs';
+import { viewportMobile } from '../utils/mobile';
+import { ConfirmacaoExclusaoMobile } from '../components/ConfirmacaoExclusaoMobile';
 import { Modal } from '../components/Modal';
 import { cloud } from '../services/cloudData';
 import iconeLista from '../assets/Liste.png';
@@ -203,15 +205,78 @@ export function ComprasSessao() {
 
 function LinhaCompra({ item, onPatch, onRemover }: { item: ItemCompra; onPatch: (id: string, patch: Partial<ItemCompra>) => void; onRemover: (id: string) => void; }) {
   const uid = useId();
+  const nomeRef = useRef<HTMLDivElement>(null);
+  const [nomeCompletoAberto, setNomeCompletoAberto] = useState(false);
+  const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
   const idSwitch = `${uid}-tipo`;
+  const idBalaoNome = `${uid}-nome-completo`;
   const tipoKg = item.tipo === 'Kg';
   const linhaTotal = item.precoUnitario * item.quantidade;
   const quantidadeUn = limitarQuantidadeUn(item.quantidade);
+
+  useEffect(() => {
+    if (!nomeCompletoAberto) return;
+
+    function fecharAoTocarFora(event: PointerEvent) {
+      if (nomeRef.current && !nomeRef.current.contains(event.target as Node)) {
+        setNomeCompletoAberto(false);
+      }
+    }
+
+    function fecharComEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') setNomeCompletoAberto(false);
+    }
+
+    document.addEventListener('pointerdown', fecharAoTocarFora);
+    document.addEventListener('keydown', fecharComEscape);
+
+    return () => {
+      document.removeEventListener('pointerdown', fecharAoTocarFora);
+      document.removeEventListener('keydown', fecharComEscape);
+    };
+  }, [nomeCompletoAberto]);
+
+  function solicitarExclusao() {
+    if (viewportMobile()) {
+      setConfirmandoExclusao(true);
+      return;
+    }
+
+    onRemover(item.id);
+  }
+
+  function confirmarExclusao() {
+    setConfirmandoExclusao(false);
+    onRemover(item.id);
+  }
+
+  const nomeMobile = viewportMobile();
+
   return (
     <div className="linha-compra">
       <input type="checkbox" className="check-item-compra" checked={item.pego} onChange={(e) => onPatch(item.id, { pego: e.target.checked })} aria-label={`Concluir ${item.nome}`} />
       <span className="icone-item-compra" aria-hidden="true">{iconeCategoria(item.categoria)}</span>
-      <strong>{item.nome}{item.origem === 'extra' ? <small> Extra</small> : null}</strong>
+      {nomeMobile ? (
+        <div ref={nomeRef} className="nome-item-compra-mobile">
+          <button
+            type="button"
+            className="botao-nome-item-compra"
+            onClick={() => setNomeCompletoAberto((aberto) => !aberto)}
+            aria-expanded={nomeCompletoAberto}
+            aria-describedby={nomeCompletoAberto ? idBalaoNome : undefined}
+          >
+            <span>{item.nome}</span>
+            {item.origem === 'extra' ? <small>Extra</small> : null}
+          </button>
+          {nomeCompletoAberto ? (
+            <span id={idBalaoNome} className="balao-nome-item-compra" role="tooltip">
+              {item.nome}
+            </span>
+          ) : null}
+        </div>
+      ) : (
+        <strong>{item.nome}{item.origem === 'extra' ? <small> Extra</small> : null}</strong>
+      )}
       <label className="campo-tracejado campo-preco"><span>R$</span><input type="text" inputMode="numeric" pattern="[0-9]*" value={formatarPrecoCompra(item.precoUnitario)} onChange={(e) => onPatch(item.id, { precoUnitario: mascaraPrecoCompra(e.target.value) })} aria-label={`Preço de ${item.nome}`} /></label>
       <div className="medida-item-compra"><span>{tipoKg ? 'Kg.' : 'Un.'}</span><div className="switch-medida-compra"><input id={idSwitch} className="checkbox-switch-compra" type="checkbox" checked={tipoKg} onChange={(e) => onPatch(item.id, { tipo: e.target.checked ? 'Kg' : 'un', quantidade: e.target.checked ? item.quantidade : Math.max(1, limitarQuantidadeUn(Math.round(item.quantidade))) })} aria-label={`Unidade de medida de ${item.nome}`} /><label htmlFor={idSwitch} className="corpo-switch-compra"><span className="bola-switch-compra" /><span className="texto-un-compra">📦</span><span className="texto-kg-compra">⚖️</span></label></div></div>
       <div className={`campo-tracejado campo-qtd ${tipoKg ? 'campo-qtd--kg' : ''}`}>
@@ -222,7 +287,14 @@ function LinhaCompra({ item, onPatch, onRemover }: { item: ItemCompra; onPatch: 
         </div>}
       </div>
       <span className="total-linha-compra">{moeda.format(linhaTotal)}</span>
-      <button type="button" className="btn-lixo-compra" onClick={() => onRemover(item.id)} aria-label={`Remover ${item.nome}`}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5.8A1.8 1.8 0 0 1 11.8 4h.4A1.8 1.8 0 0 1 14 5.8V7m-7.2 0 .7 12.1A2 2 0 0 0 9.5 21h5a2 2 0 0 0 2-.9L17.2 7M10 11v6M14 11v6" /></svg></button>
+      <button type="button" className="btn-lixo-compra" onClick={solicitarExclusao} aria-label={`Remover ${item.nome}`}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5.8A1.8 1.8 0 0 1 11.8 4h.4A1.8 1.8 0 0 1 14 5.8V7m-7.2 0 .7 12.1A2 2 0 0 0 9.5 21h5a2 2 0 0 0 2-.9L17.2 7M10 11v6M14 11v6" /></svg></button>
+      <ConfirmacaoExclusaoMobile
+        aberto={confirmandoExclusao}
+        tipo="item"
+        nome={item.nome}
+        onCancelar={() => setConfirmandoExclusao(false)}
+        onConfirmar={confirmarExclusao}
+      />
     </div>
   );
 }
