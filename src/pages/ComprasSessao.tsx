@@ -7,6 +7,7 @@ import {
   type TipoMedida,
 } from '../types';
 import { useAuth } from '../hooks/useAuth';
+import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
 import { obterSessao } from '../utils/auth';
 import {
   adicionarItensAListaSalva,
@@ -14,6 +15,7 @@ import {
   criarSessaoCompra,
   finalizarCompra,
   gerarId,
+  limparSessaoCompra,
   salvarSessaoCompra,
 } from '../utils/storage';
 import { Modal } from '../components/Modal';
@@ -70,6 +72,7 @@ export function ComprasSessao() {
   });
   const [destino, setDestino] = useState('');
   const [finalizando, setFinalizando] = useState(false);
+  const [indoParaHistorico, setIndoParaHistorico] = useState(false);
 
   useEffect(() => {
     if (!logado) {
@@ -85,6 +88,10 @@ export function ComprasSessao() {
     }
     setSessao(criarSessaoCompra(email, lista));
   }, [email, listaId, logado, navigate]);
+
+  useEffect(() => {
+    return () => document.body.classList.remove('transicao-para-historico');
+  }, []);
 
   function atualizarItens(fn: (itens: ItemCompra[]) => ItemCompra[]) {
     if (!sessao) return;
@@ -186,6 +193,7 @@ export function ComprasSessao() {
     });
     try {
       await cloud.flush();
+      limparSessaoCompra(email);
       navigate('/historico');
     } catch {
       /* O aviso global mantém a edição e oferece nova tentativa. */
@@ -239,10 +247,33 @@ export function ComprasSessao() {
     );
   }
 
+  function irParaHistorico() {
+    if (indoParaHistorico) return;
+
+    setIndoParaHistorico(true);
+    document.body.classList.add('transicao-para-historico');
+    window.setTimeout(() => navigate('/historico'), 360);
+  }
+
+  const gestosNavegacao = useSwipeNavigation({
+    aoDeslizarEsquerda: irParaHistorico,
+  });
+
   if (!sessao) return null;
 
   return (
-    <main className="pagina-sessao-compra">
+    <main className="pagina-sessao-compra" {...gestosNavegacao}>
+      <button
+        type="button"
+        className="botao-ir-historico"
+        onClick={irParaHistorico}
+        disabled={indoParaHistorico}
+        aria-label="Ir para o histórico de compras"
+        title="Ir para o histórico"
+      >
+        <span aria-hidden="true">→</span>
+      </button>
+
       <div className="topo-sessao">
         <div className="titulo-sessao">
           <img src={iconeLista} alt="" aria-hidden="true" />

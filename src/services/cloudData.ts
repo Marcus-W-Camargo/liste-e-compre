@@ -2,6 +2,19 @@ import { CloudStore } from '../../shared/cloud-store.mjs';
 import { readLegacy, validData } from '../../shared/data-validation.mjs';
 import type { DadosConta } from '../types';
 import { obterSupabase } from '../config/supabase';
+import {
+  carregarSessaoCompraLocal,
+  salvarSessaoCompraLocal,
+} from '../utils/localPurchaseSession';
+
+export function somenteDadosRemotos(
+  owner: string,
+  data: DadosConta,
+): DadosConta {
+  if (data.sessao && !carregarSessaoCompraLocal(owner))
+    salvarSessaoCompraLocal(owner, data.sessao);
+  return { ...data, sessao: null };
+}
 
 async function rpc(
   owner: string,
@@ -37,14 +50,15 @@ async function save(
   operation: string,
   data: DadosConta,
 ) {
-  if (!validData(data))
+  const dadosRemotos = somenteDadosRemotos(owner, data);
+  if (!validData(dadosRemotos))
     throw new Error(
       'Os dados da lista são inválidos. Sua cópia ainda está neste navegador.',
     );
   return rpc(owner, 'lc_save_data', {
     p_expected_revision: revision,
     p_operation: operation,
-    p_data: data,
+    p_data: dadosRemotos,
   });
 }
 export const cloud = new CloudStore({
@@ -59,20 +73,23 @@ export const cloud = new CloudStore({
       if (legacy.invalid)
         return {
           ...result,
+          data: somenteDadosRemotos(owner, result.data),
           notice:
             'Há dados locais incompatíveis. Eles foram preservados, mas não importados automaticamente.',
         };
       if (legacy.data) {
+        somenteDadosRemotos(owner, legacy.data);
         const written = await save(owner, 0, crypto.randomUUID(), legacy.data);
         result = await rpc(owner, 'lc_load_data');
         return {
           ...result,
+          data: somenteDadosRemotos(owner, result.data),
           notice: written.ok
             ? 'Suas listas antigas deste navegador foram importadas. As cópias locais foram preservadas.'
             : '',
         };
       }
     }
-    return result;
+    return { ...result, data: somenteDadosRemotos(owner, result.data) };
   },
 });

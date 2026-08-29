@@ -16,11 +16,16 @@ export function Compras() {
   );
   const [listaAbertaId, setListaAbertaId] = useState<string | null>(null);
   const [indoParaLista, setIndoParaLista] = useState(false);
+  const [indoParaHistorico, setIndoParaHistorico] = useState(false);
 
   useEffect(() => {
     document.body.classList.remove('body-home', 'body-lista');
 
-    return () => document.body.classList.remove('transicao-para-lista');
+    return () =>
+      document.body.classList.remove(
+        'transicao-para-lista',
+        'transicao-para-historico',
+      );
   }, []);
 
   useEffect(() => {
@@ -49,7 +54,16 @@ export function Compras() {
     window.setTimeout(() => navigate('/lista'), 360);
   }
 
+  function irParaHistorico() {
+    if (indoParaHistorico) return;
+
+    setIndoParaHistorico(true);
+    document.body.classList.add('transicao-para-historico');
+    window.setTimeout(() => navigate('/historico'), 360);
+  }
+
   const gestosNavegacao = useSwipeNavigation({
+    aoDeslizarEsquerda: irParaHistorico,
     aoDeslizarDireita: irParaLista,
   });
 
@@ -66,6 +80,17 @@ export function Compras() {
         title="Voltar para criar lista"
       >
         <span aria-hidden="true">←</span>
+      </button>
+
+      <button
+        type="button"
+        className="botao-ir-historico"
+        onClick={irParaHistorico}
+        disabled={indoParaHistorico}
+        aria-label="Ir para o histórico de compras"
+        title="Ir para o histórico"
+      >
+        <span aria-hidden="true">→</span>
       </button>
 
       <section className="catalogo-listas" aria-labelledby="titulo-suas-listas">

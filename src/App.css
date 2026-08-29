@@ -129,6 +129,45 @@
   display: contents;
 }
 
+.botao-ir-historico {
+  position: fixed;
+  top: 50%;
+  right: 18px;
+  z-index: 900;
+  width: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #f7501b;
+  cursor: pointer;
+  font-size: 58px;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 2px 2px rgb(26 38 59 / 25%);
+  transform: translateY(-50%);
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.botao-ir-historico:hover {
+  color: #e04312;
+  transform: translateY(-50%) scale(1.22);
+}
+
+.botao-ir-historico:disabled {
+  cursor: default;
+}
+
+body.transicao-para-historico .app-layout {
+  animation: deslizar-para-historico 0.36s ease-in forwards;
+}
+
+@keyframes deslizar-para-historico {
+  to {
+    opacity: 0.25;
+    transform: translateX(-100%);
+  }
+}
+
 .card-formulario {
   width: 100%;
   max-width: 400px;
@@ -304,6 +343,12 @@
   }
 }
 
+@media (max-width: 700px) {
+  .botao-ir-historico {
+    display: none;
+  }
+}
+
 @media (max-width: 600px) {
   .cabecalho-aplicacao {
     position: fixed;
@@ -371,4 +416,5 @@
     letter-spacing: 0;
     white-space: normal;
   }
+
 }
