@@ -76,6 +76,9 @@ Listas, rascunhos e compras finalizadas são sincronizados por conta. A **compra
 #### Listas
 
 - Produtos com categoria, quantidade e medida.
+- Biblioteca interna com mais de 900 produtos, incluindo Limpeza e Higiene.
+- Sugestões de produtos após três caracteres, sem diferenciar acentos ou maiúsculas.
+- Categorias adicionais de Bebidas e Outros.
 - **Unidades (`un`)** e **quilogramas (`Kg`)**.
 - Pesos exibidos com três casas decimais.
 - Filtro por categoria.
@@ -86,6 +89,7 @@ Listas, rascunhos e compras finalizadas são sincronizados por conta. A **compra
 #### Compra em andamento
 
 - Preço, quantidade, marcação e troca de medida.
+- Autocomplete também disponível ao adicionar produtos extras.
 - Totais por item e total parcial.
 - Progresso da compra.
 - Produtos extras.
@@ -172,6 +176,7 @@ npm run dev
 Para validar:
 
 ```bash
+npm run catalog:generate
 npm test
 npm run build
 npm run lint
@@ -198,10 +203,13 @@ npm run lint
 | `src/App.tsx` | Rotas e layout |
 | `src/pages` | Telas |
 | `src/components` | Componentes e avisos |
+| `src/data` | Biblioteca interna gerada de produtos |
 | `src/hooks` | Autenticação, swipe e teclado |
 | `src/services` | API e persistência |
 | `src/utils` | Sessão, storage e navegação |
 | `api/auth.js` | API Vercel |
+| `data` | Catálogo-fonte em TXT e CSV gerado |
+| `scripts/gerar-catalogo-produtos.mjs` | Gera CSV e biblioteca interna deduplicada |
 | `supabase` | SQL |
 | `tests` | Testes |
 | `docs` | Documentação |

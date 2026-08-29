@@ -26,6 +26,7 @@ import {
 } from '../utils/purchaseInputs';
 import { viewportMobile } from '../utils/mobile';
 import { ConfirmacaoExclusaoMobile } from '../components/ConfirmacaoExclusaoMobile';
+import { AutocompleteProduto } from '../components/AutocompleteProduto';
 import { Modal } from '../components/Modal';
 import { cloud } from '../services/cloudData';
 import iconeLista from '../assets/Liste.png';
@@ -190,7 +191,12 @@ export function ComprasSessao() {
 
       <Modal aberto={modal === 'adicionar'} onFechar={() => setModal(null)}><div className="modal-compra">
         <h2>Adicionar item</h2>
-        <input placeholder="Nome do item" value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} />
+        <AutocompleteProduto
+          ariaLabel="Nome do item"
+          placeholder="Nome do item"
+          value={novo.nome}
+          onValueChange={(nome) => setNovo((atual) => ({ ...atual, nome }))}
+        />
         <input type="text" inputMode="numeric" pattern="[0-9]*" value={novo.tipo === 'Kg' ? (novo.quantidade === '' ? '0,000' : novo.quantidade) : novo.quantidade} onChange={(e) => setNovo({ ...novo, quantidade: novo.tipo === 'Kg' ? formatarQtdCompra(mascaraPesoCompra(e.target.value), 'Kg') : String(limitarQuantidadeUn(e.target.value)) })} />
         <select value={novo.categoria} onChange={(e) => setNovo({ ...novo, categoria: e.target.value })}>{CATEGORIAS.map((c) => <option key={c.value}>{c.label}</option>)}</select>
         <select value={novo.tipo} onChange={(e) => { const tipo = e.target.value as TipoMedida; setNovo({ ...novo, tipo, quantidade: tipo === 'Kg' ? '0,000' : '1' }); }}><option value="un">Unidade</option><option value="Kg">Kg</option></select>
