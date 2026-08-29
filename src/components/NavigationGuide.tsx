@@ -74,18 +74,22 @@ export function NavigationGuide({ usuarioId }: { usuarioId: string }) {
       onKeyDown={fecharPeloTeclado}
     >
       <div className="guia-navegacao__card">
-        <div className="guia-navegacao__setas" aria-hidden="true">
-          <span>←</span>
-          <i>{mobile ? '☝️' : '↔'}</i>
-          <span>→</span>
-        </div>
+        {mobile ? (
+          <div className="guia-navegacao__setas" aria-hidden="true">
+            <span>←</span><i>☝️</i><span>→</span>
+          </div>
+        ) : (
+          <div className="guia-navegacao__teclas" aria-hidden="true">
+            <kbd>A</kbd><span>←</span><span className="guia-navegacao__separador">•</span><span>→</span><kbd>D</kbd>
+          </div>
+        )}
         <h2 id="titulo-guia-navegacao">
-          {mobile ? 'Navegue deslizando' : 'Navegue pelas setas'}
+          {mobile ? 'Navegue deslizando' : 'Navegue pelo teclado'}
         </h2>
         <p id="texto-guia-navegacao">
           {mobile
             ? 'Arraste a tela para a esquerda ou para a direita para acessar Listas, Compras e Histórico.'
-            : 'Use as setas nas laterais da tela para acessar Listas, Compras e Histórico.'}
+            : 'Use A para navegar à esquerda e D para navegar à direita entre Listas, Compras e Histórico.'}
         </p>
         <small>
           {mobile
