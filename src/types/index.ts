@@ -55,9 +55,11 @@ export const CATEGORIAS = [
   { value: 'Mercearia', label: '🍞 Mercearia' },
   { value: 'Hortifruti', label: '🍎 Hortifrúti' },
   { value: 'Acougue', label: '🥩 Açougue' },
+  { value: 'Bebidas', label: '🥤 Bebidas' },
   { value: 'Laticinios', label: '🥛 Laticínios' },
   { value: 'Limpeza', label: '🧹 Limpeza' },
   { value: 'Higiene', label: '🧼 Higiene' },
+  { value: 'Outros', label: '📦 Outros' },
 ] as const;
 
 export type CategoriaValue = (typeof CATEGORIAS)[number]['value'];
