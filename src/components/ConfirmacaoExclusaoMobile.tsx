@@ -35,17 +35,17 @@ export function ConfirmacaoExclusaoMobile({
         <div className="confirmacao-exclusao-mobile__acoes">
           <button
             type="button"
-            className="confirmacao-exclusao-mobile__cancelar"
-            onClick={onCancelar}
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
             className="confirmacao-exclusao-mobile__confirmar"
             onClick={onConfirmar}
           >
             Excluir {rotulo}
+          </button>
+          <button
+            type="button"
+            className="confirmacao-exclusao-mobile__cancelar"
+            onClick={onCancelar}
+          >
+            Cancelar
           </button>
         </div>
       </div>

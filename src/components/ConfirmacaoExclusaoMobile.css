@@ -41,7 +41,7 @@
 
 .confirmacao-exclusao-mobile__acoes {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 10px;
   width: 100%;
   margin-top: 8px;
@@ -64,10 +64,4 @@
 .confirmacao-exclusao-mobile__confirmar {
   background: #f7501b;
   color: #fff;
-}
-
-@media (max-width: 380px) {
-  .confirmacao-exclusao-mobile__acoes {
-    grid-template-columns: 1fr;
-  }
 }
