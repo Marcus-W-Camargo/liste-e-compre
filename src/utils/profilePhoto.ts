@@ -38,3 +38,14 @@ export function salvarFotoPerfil(usuarioId: string, imagem: string): boolean {
     return false;
   }
 }
+
+export function removerFotoPerfil(usuarioId: string): boolean {
+  if (!usuarioId) return false;
+
+  try {
+    localStorage.removeItem(chaveFotoPerfil(usuarioId));
+    return true;
+  } catch {
+    return false;
+  }
+}

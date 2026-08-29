@@ -63,7 +63,7 @@ describe('foto do perfil', () => {
     expect(screen.getByRole('dialog')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar adição da foto' }));
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Adicionar foto ao perfil' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Abrir opções da foto do perfil' })).toBeTruthy();
   });
 
   it('a seta abre novamente os arquivos e salvar posiciona a foto no avatar', async () => {
@@ -93,8 +93,44 @@ describe('foto do perfil', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     const foto = screen.getByAltText('Foto de perfil de Usuário Teste');
     expect(foto.getAttribute('src')).toBe('data:image/jpeg;base64,foto-recortada');
-    expect(screen.getByRole('button', { name: 'Trocar foto do perfil' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Abrir opções da foto do perfil' })).toBeTruthy();
     expect(localStorage.getItem('liste-e-compre:foto-perfil:v1:usuario-teste'))
       .toContain('foto-recortada');
+  });
+
+  it('abre as opções, fecha ao clicar fora e permite escolher outra foto', () => {
+    render(<Perfil />);
+    const abrirArquivos = vi.spyOn(inputDeFoto(), 'click');
+    const camera = screen.getByRole('button', { name: 'Abrir opções da foto do perfil' });
+
+    fireEvent.click(camera);
+    expect(screen.getByRole('heading', { name: 'Foto do perfil' })).toBeTruthy();
+    expect(
+      (screen.getByRole('button', { name: 'Excluir foto' }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar opções da foto' }));
+    expect(screen.queryByRole('heading', { name: 'Foto do perfil' })).toBeNull();
+
+    fireEvent.click(camera);
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar foto' }));
+    expect(abrirArquivos).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('heading', { name: 'Foto do perfil' })).toBeNull();
+  });
+
+  it('exclui a foto salva e restaura o ícone padrão', () => {
+    localStorage.setItem(
+      'liste-e-compre:foto-perfil:v1:usuario-teste',
+      JSON.stringify({ versao: 1, imagem: 'data:image/jpeg;base64,foto-atual' }),
+    );
+    render(<Perfil />);
+
+    expect(screen.getByAltText('Foto de perfil de Usuário Teste')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir opções da foto do perfil' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Excluir foto' }));
+
+    expect(screen.queryByAltText('Foto de perfil de Usuário Teste')).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Foto do perfil' })).toBeNull();
+    expect(localStorage.getItem('liste-e-compre:foto-perfil:v1:usuario-teste')).toBeNull();
   });
 });

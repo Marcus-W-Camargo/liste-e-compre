@@ -6,7 +6,11 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { carregarFotoPerfil, salvarFotoPerfil } from '../utils/profilePhoto';
+import {
+  carregarFotoPerfil,
+  removerFotoPerfil,
+  salvarFotoPerfil,
+} from '../utils/profilePhoto';
 
 const TAMANHO_RECORTE = 280;
 const TAMANHO_SAIDA = 512;
@@ -30,6 +34,66 @@ interface EditorRecorteFotoProps {
   onCancelar: () => void;
   onEscolherOutra: () => void;
   onSalvar: (foto: string) => void;
+}
+
+interface MenuAcoesFotoProps {
+  temFoto: boolean;
+  onAlterar: () => void;
+  onExcluir: () => void;
+  onFechar: () => void;
+}
+
+function MenuAcoesFoto({
+  temFoto,
+  onAlterar,
+  onExcluir,
+  onFechar,
+}: MenuAcoesFotoProps) {
+  return (
+    <>
+      <button
+        type="button"
+        className="fundo-menu-acoes-foto"
+        onClick={onFechar}
+        aria-label="Fechar opções da foto"
+      />
+      <section
+        className="menu-acoes-foto"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="titulo-menu-acoes-foto"
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') onFechar();
+        }}
+      >
+        <span className="puxador-menu-acoes-foto" aria-hidden="true" />
+        <h2 id="titulo-menu-acoes-foto">Foto do perfil</h2>
+        <p>
+          {temFoto
+            ? 'Deseja alterar ou excluir sua foto atual?'
+            : 'Adicione uma foto para personalizar sua conta.'}
+        </p>
+        <div className="botoes-menu-acoes-foto">
+          <button
+            type="button"
+            className="alterar-foto-perfil"
+            onClick={onAlterar}
+            autoFocus
+          >
+            {temFoto ? 'Alterar foto' : 'Adicionar foto'}
+          </button>
+          <button
+            type="button"
+            className="excluir-foto-perfil"
+            onClick={onExcluir}
+            disabled={!temFoto}
+          >
+            Excluir foto
+          </button>
+        </div>
+      </section>
+    </>
+  );
 }
 
 function lerArquivoComoDataUrl(arquivo: File): Promise<string> {
@@ -267,6 +331,7 @@ export function Perfil() {
     useState<ImagemSelecionada | null>(null);
   const [erroArquivo, setErroArquivo] = useState('');
   const [lendoArquivo, setLendoArquivo] = useState(false);
+  const [menuFotoAberto, setMenuFotoAberto] = useState(false);
   const foto = fotoUsuario.usuarioId === id
     ? fotoUsuario.foto
     : carregarFotoPerfil(id);
@@ -322,6 +387,24 @@ export function Perfil() {
     setImagemSelecionada(null);
   }
 
+  function abrirSeletorDeFoto() {
+    setMenuFotoAberto(false);
+    inputArquivo.current?.click();
+  }
+
+  function excluirFoto() {
+    setMenuFotoAberto(false);
+    setErroArquivo('');
+    if (!foto) return;
+
+    if (!removerFotoPerfil(id)) {
+      setErroArquivo('Não foi possível excluir a foto neste dispositivo.');
+      return;
+    }
+
+    setFotoUsuario({ usuarioId: id, foto: null });
+  }
+
   return (
     <main className="pagina-perfil">
       <section className="card-perfil" aria-labelledby="titulo-perfil">
@@ -337,9 +420,12 @@ export function Perfil() {
             <button
               type="button"
               className="indicador-foto-perfil"
-              onClick={() => inputArquivo.current?.click()}
-              aria-label={foto ? 'Trocar foto do perfil' : 'Adicionar foto ao perfil'}
-              title={foto ? 'Trocar foto' : 'Adicionar foto'}
+              onClick={() => {
+                setErroArquivo('');
+                setMenuFotoAberto(true);
+              }}
+              aria-label="Abrir opções da foto do perfil"
+              title="Opções da foto"
               disabled={lendoArquivo}
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -353,6 +439,14 @@ export function Perfil() {
               accept="image/jpeg,image/png,.jpg,.jpeg,.png"
               onChange={selecionarArquivo}
             />
+            {menuFotoAberto ? (
+              <MenuAcoesFoto
+                temFoto={Boolean(foto)}
+                onAlterar={abrirSeletorDeFoto}
+                onExcluir={excluirFoto}
+                onFechar={() => setMenuFotoAberto(false)}
+              />
+            ) : null}
           </div>
 
           <div className="apresentacao-perfil">
