@@ -40,22 +40,11 @@ body.transicao-para-lista .app-layout { animation: deslizar-para-lista .36s ease
 @media (max-width: 700px) {
   .pagina-compras {
     padding: 92px 14px 32px;
+    touch-action: pan-y;
   }
 
   .botao-voltar-lista {
-    top: auto;
-    bottom: 18px;
-    left: 14px;
-    display: grid;
-    width: 48px;
-    height: 48px;
-    border: 2px solid #1a263b;
-    border-radius: 50%;
-    background: #fff;
-    font-size: 38px;
-    place-items: center;
-    text-shadow: none;
-    transform: none;
+    display: none;
   }
 
   .botao-voltar-lista:hover {

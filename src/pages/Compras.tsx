@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ListaCompraCard } from '../components/ListaCompraCard';
 import { useAuth } from '../hooks/useAuth';
+import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
 import type { ListaSalva } from '../types';
 import { atualizarDataPrevistaNoHistorico, carregarHistoricoListas } from '../utils/storage';
 import { obterSessao } from '../utils/auth';
@@ -48,10 +49,14 @@ export function Compras() {
     window.setTimeout(() => navigate('/lista'), 360);
   }
 
+  const gestosNavegacao = useSwipeNavigation({
+    aoDeslizarDireita: irParaLista,
+  });
+
   if (!logado) return null;
 
   return (
-    <main className="pagina-compras">
+    <main className="pagina-compras" {...gestosNavegacao}>
       <button
         type="button"
         className="botao-voltar-lista"

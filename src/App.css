@@ -363,10 +363,12 @@
   .rodape {
     width: 100vw;
     max-width: none;
-    padding: 9px 2px;
+    padding: 9px 6px;
     margin-right: calc(50% - 50vw);
     margin-left: calc(50% - 50vw);
-    font-size: clamp(5.2px, 1.6vw, 7.5px);
-    letter-spacing: -0.1px;
+    font-size: clamp(8.5px, 2.45vw, 10px);
+    line-height: 1.35;
+    letter-spacing: 0;
+    white-space: normal;
   }
 }

@@ -139,6 +139,16 @@
   }
 }
 
+@media (max-width: 700px) {
+  .body-lista {
+    touch-action: pan-y;
+  }
+
+  .botao-ir-compras {
+    display: none;
+  }
+}
+
 .botao-ir-compras {
   position: fixed;
   top: 50%;

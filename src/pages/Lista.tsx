@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../hooks/useAuth';
 import { useListaCompras } from '../hooks/useListaCompras';
+import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
 import { cloud } from '../services/cloudData';
 import type { ListaSalva } from '../types';
 
@@ -78,6 +79,10 @@ export function Lista() {
     document.body.classList.add('transicao-para-compras');
     window.setTimeout(() => navigate('/compre'), 360);
   }
+
+  const gestosNavegacao = useSwipeNavigation({
+    aoDeslizarEsquerda: irParaCompras,
+  });
 
   function fecharModal() {
     setModal(null);
@@ -217,7 +222,7 @@ export function Lista() {
   }
 
   return (
-    <div className="body-lista">
+    <div className="body-lista" {...gestosNavegacao}>
       <button
         type="button"
         className="botao-ir-compras"
