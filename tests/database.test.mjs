@@ -13,8 +13,29 @@ before(async () => {
     create table auth.users(id uuid primary key, email text unique, email_confirmed_at timestamptz, raw_user_meta_data jsonb);
     create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
     grant usage on schema auth to authenticated;
-    grant execute on function auth.uid() to authenticated;`);
-  for (const file of ['01-auth.sql', '02-lists.sql', '04-email-precheck.sql']) {
+    grant execute on function auth.uid() to authenticated;
+    create schema storage;
+    create table storage.buckets(
+      id text primary key,
+      name text not null,
+      public boolean not null default false,
+      file_size_limit bigint,
+      allowed_mime_types text[]
+    );
+    create table storage.objects(
+      bucket_id text not null references storage.buckets(id),
+      name text not null,
+      primary key(bucket_id,name)
+    );
+    alter table storage.objects enable row level security;
+    grant usage on schema storage to authenticated;
+    grant select,insert,update,delete on storage.objects to authenticated;`);
+  for (const file of [
+    '01-auth.sql',
+    '02-lists.sql',
+    '04-email-precheck.sql',
+    '05-profile-photos.sql',
+  ]) {
     const sql = await readFile(
       new URL(`../supabase/${file}`, import.meta.url),
       'utf8',
@@ -200,6 +221,76 @@ test('listas, rascunho e compra em andamento fazem round-trip sem misturar donos
     (await roleQuery('authenticated', bob, 'select * from public.profiles'))
       .rows[0].full_name,
     'Bób Souza',
+  );
+});
+test('foto de perfil privada permite somente o arquivo exato do próprio usuário', async () => {
+  const caminhoAlice = `${alice}/avatar.jpg`;
+  const caminhoBob = `${bob}/avatar.jpg`;
+
+  await roleQuery(
+    'authenticated',
+    alice,
+    'insert into storage.objects(bucket_id,name) values($1,$2)',
+    ['profile-photos', caminhoAlice],
+  );
+  assert.equal(
+    (
+      await roleQuery(
+        'authenticated',
+        alice,
+        'select name from storage.objects where bucket_id=$1',
+        ['profile-photos'],
+      )
+    ).rows[0].name,
+    caminhoAlice,
+  );
+  assert.equal(
+    (
+      await roleQuery(
+        'authenticated',
+        bob,
+        'select name from storage.objects where bucket_id=$1',
+        ['profile-photos'],
+      )
+    ).rows.length,
+    0,
+  );
+  await assert.rejects(
+    roleQuery(
+      'authenticated',
+      bob,
+      'insert into storage.objects(bucket_id,name) values($1,$2)',
+      ['profile-photos', caminhoAlice],
+    ),
+    /row-level security policy/,
+  );
+  await roleQuery(
+    'authenticated',
+    bob,
+    'insert into storage.objects(bucket_id,name) values($1,$2)',
+    ['profile-photos', caminhoBob],
+  );
+  assert.equal(
+    (
+      await roleQuery(
+        'authenticated',
+        bob,
+        'delete from storage.objects where bucket_id=$1 returning name',
+        ['profile-photos'],
+      )
+    ).rows[0].name,
+    caminhoBob,
+  );
+  assert.equal(
+    (
+      await roleQuery(
+        'authenticated',
+        alice,
+        'select name from storage.objects where bucket_id=$1',
+        ['profile-photos'],
+      )
+    ).rows[0].name,
+    caminhoAlice,
   );
 });
 test('conflito entre dispositivos não apaga dados; retry idempotente não duplica', async () => {

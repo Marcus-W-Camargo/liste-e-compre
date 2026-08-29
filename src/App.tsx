@@ -5,9 +5,9 @@ import { Conta } from './pages/Conta';
 import { Compras } from './pages/Compras';
 import { ComprasSessao } from './pages/ComprasSessao';
 import { HistoricoCompras } from './pages/HistoricoCompras';
+import { Perfil } from './pages/Perfil';
 import { Header } from './components/Header';
 import { CloudAccess, CloudStatus } from './components/CloudAccess';
-import { useAuth } from './hooks/useAuth';
 import { useDesktopKeyboardNavigation } from './hooks/useDesktopKeyboardNavigation';
 import './App.css';
 
@@ -29,20 +29,6 @@ function Rodape() {
         desenvolvido para fins de estudo e portfólio.
       </p>
     </footer>
-  );
-}
-
-function Perfil() {
-  const { nome, email } = useAuth();
-  return (
-    <main className="pagina-placeholder">
-      <h1>Minha conta</h1>
-      <p>{nome}</p>
-      <p>{email}</p>
-      <p>
-        Suas listas são vinculadas a esta conta e sincronizadas com a nuvem.
-      </p>
-    </main>
   );
 }
 
