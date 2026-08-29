@@ -21,20 +21,20 @@
   .pagina-sessao-compra .campo-preco span {
     flex: 0 0 auto;
     margin-right: 2px;
-    font-size: 8px;
+    font-size: 9px;
   }
 
   .pagina-sessao-compra .campo-preco input {
     width: 100%;
     min-width: 0;
-    font-size: 8.5px;
+    font-size: 10px;
     font-variant-numeric: tabular-nums;
   }
 
   .pagina-sessao-compra .campo-qtd input {
     width: 100%;
     min-width: 0;
-    font-size: 9px;
+    font-size: 10px;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.2px;
     text-align: center;
@@ -43,7 +43,7 @@
   .pagina-sessao-compra .total-linha-compra {
     min-width: 0;
     overflow: hidden;
-    font-size: 8.5px;
+    font-size: 10px;
     text-overflow: ellipsis;
   }
 }
@@ -59,6 +59,6 @@
   .pagina-sessao-compra .campo-preco input,
   .pagina-sessao-compra .campo-qtd input,
   .pagina-sessao-compra .total-linha-compra {
-    font-size: 8px;
+    font-size: 9px;
   }
 }
