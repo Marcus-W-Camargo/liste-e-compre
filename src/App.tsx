@@ -8,6 +8,7 @@ import { HistoricoCompras } from './pages/HistoricoCompras';
 import { Header } from './components/Header';
 import { CloudAccess, CloudStatus } from './components/CloudAccess';
 import { useAuth } from './hooks/useAuth';
+import { useDesktopKeyboardNavigation } from './hooks/useDesktopKeyboardNavigation';
 import './App.css';
 
 function Placeholder({ titulo }: { titulo: string }) {
@@ -45,9 +46,15 @@ function Perfil() {
   );
 }
 
+function NavegacaoDesktop() {
+  useDesktopKeyboardNavigation();
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <NavegacaoDesktop />
       <div className="app-layout">
         <div className="app-conteudo">
           <Header />
