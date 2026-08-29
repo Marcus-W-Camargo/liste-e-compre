@@ -9,7 +9,7 @@
 
   .pagina-sessao-compra .linha-compra {
     grid-template-columns:
-      16px 18px minmax(28px, 1fr) 64px 42px 50px 92px 18px;
+      16px 18px minmax(28px, 1fr) 64px 42px 50px 78px 18px;
     gap: 3px;
   }
 
@@ -72,7 +72,7 @@
 @media (max-width: 380px) {
   .pagina-sessao-compra .linha-compra {
     grid-template-columns:
-      15px 17px minmax(22px, 1fr) 60px 40px 46px 82px 17px;
+      15px 17px minmax(22px, 1fr) 60px 40px 46px 70px 17px;
     gap: 2px;
     padding-inline: 2px;
   }
