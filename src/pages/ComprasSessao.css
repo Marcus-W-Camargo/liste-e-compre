@@ -301,24 +301,26 @@
 .botoes-qtd-compra {
   display: flex;
   width: 22px;
-  height: 100%;
   flex: 0 0 22px;
+  align-self: stretch;
   flex-direction: column;
   border-left: 1.5px solid #1a263b;
 }
 
 .botoes-qtd-compra button {
-  display: grid;
+  display: flex;
   flex: 1;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
   padding: 0;
   border: 0;
-  background: #ffebd6;
+  background: #ffebd680;
   color: #1a263b;
   cursor: pointer;
   font-size: 10px;
   font-weight: 800;
   line-height: 1;
-  place-items: center;
 }
 
 .botoes-qtd-compra button:first-child {
@@ -587,7 +589,8 @@
 
   .linha-compra {
     grid-template-columns:
-      16px 18px minmax(36px, 1fr) 62px 42px 52px 48px 18px;
+      16px 18px minmax(36px, 0.65fr) 58px 40px 50px
+      minmax(70px, 1.35fr) 18px;
     gap: 2px;
     min-height: 46px;
     padding: 6px 3px;
@@ -636,13 +639,13 @@
   }
 
   .botoes-qtd-compra {
-    width: 16px;
-    flex-basis: 16px;
+    width: 18px;
+    flex-basis: 18px;
     border-left-width: 1px;
   }
 
   .botoes-qtd-compra button {
-    font-size: 8px;
+    font-size: 9px;
   }
 
   .medida-item-compra {
@@ -682,9 +685,9 @@
   }
 
   .total-linha-compra {
-    overflow: hidden;
-    font-size: 10px;
-    text-overflow: ellipsis;
+    overflow: visible;
+    font-size: 11px;
+    text-overflow: clip;
   }
 
   .btn-lixo-compra {
