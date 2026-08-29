@@ -9,8 +9,8 @@
 
   .pagina-sessao-compra .linha-compra {
     grid-template-columns:
-      16px 18px minmax(20px, 1fr) 72px 44px 52px 52px 18px;
-    gap: 2px;
+      16px 18px minmax(28px, 1fr) 64px 42px 50px 78px 18px;
+    gap: 3px;
   }
 
   .pagina-sessao-compra .campo-tracejado {
@@ -21,14 +21,40 @@
   .pagina-sessao-compra .campo-preco span {
     flex: 0 0 auto;
     margin-right: 2px;
-    font-size: 9px;
+    font-size: 8px;
   }
 
   .pagina-sessao-compra .campo-preco input {
     width: 100%;
     min-width: 0;
-    font-size: 10px;
+    font-size: 9px;
     font-variant-numeric: tabular-nums;
+  }
+
+  .pagina-sessao-compra .medida-item-compra,
+  .pagina-sessao-compra .campo-qtd {
+    margin-left: 2px;
+  }
+
+  .pagina-sessao-compra .campo-qtd {
+    padding-inline: 0;
+  }
+
+  .pagina-sessao-compra .campo-qtd--kg {
+    padding-inline: 3px;
+  }
+
+  .pagina-sessao-compra .botoes-qtd-compra {
+    height: auto;
+    align-self: stretch;
+  }
+
+  .pagina-sessao-compra .botoes-qtd-compra button {
+    display: flex;
+    min-height: 0;
+    align-items: center;
+    justify-content: center;
+    background: #ffebd680;
   }
 
   .pagina-sessao-compra .campo-qtd input {
@@ -42,23 +68,26 @@
 
   .pagina-sessao-compra .total-linha-compra {
     min-width: 0;
-    overflow: hidden;
-    font-size: 10px;
-    text-overflow: ellipsis;
+    overflow: visible;
+    font-size: 11px;
+    text-overflow: clip;
   }
 }
 
 @media (max-width: 380px) {
   .pagina-sessao-compra .linha-compra {
     grid-template-columns:
-      15px 17px minmax(16px, 1fr) 68px 42px 49px 49px 17px;
-    gap: 1px;
+      15px 17px minmax(22px, 1fr) 60px 40px 46px 70px 17px;
+    gap: 2px;
     padding-inline: 2px;
   }
 
   .pagina-sessao-compra .campo-preco input,
-  .pagina-sessao-compra .campo-qtd input,
-  .pagina-sessao-compra .total-linha-compra {
+  .pagina-sessao-compra .campo-qtd input {
     font-size: 9px;
+  }
+
+  .pagina-sessao-compra .total-linha-compra {
+    font-size: 10px;
   }
 }

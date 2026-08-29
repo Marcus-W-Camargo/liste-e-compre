@@ -1,4 +1,7 @@
+import { useState } from 'react';
 import type { Item as ItemType, TipoMedida } from '../types';
+import { viewportMobile } from '../utils/mobile';
+import { ConfirmacaoExclusaoMobile } from './ConfirmacaoExclusaoMobile';
 import './Item.css';
 
 interface ItemProps {
@@ -32,6 +35,8 @@ function mascaraPeso(valor: string): string {
 }
 
 export function Item({ item, onAtualizar, onRemover }: ItemProps) {
+  const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
+
   function handleQtdChange(valor: string) {
     if (item.tipo === 'Kg') {
       const mascarado = mascaraPeso(valor);
@@ -76,6 +81,20 @@ export function Item({ item, onAtualizar, onRemover }: ItemProps) {
 
   const tipoKg = item.tipo === 'Kg';
   const idSwitch = `chk-tipo-medida-${item.id}`;
+
+  function solicitarExclusao() {
+    if (viewportMobile()) {
+      setConfirmandoExclusao(true);
+      return;
+    }
+
+    onRemover(item.id);
+  }
+
+  function confirmarExclusao() {
+    setConfirmandoExclusao(false);
+    onRemover(item.id);
+  }
 
   return (
     <li className="item-lista-produto">
@@ -142,13 +161,21 @@ export function Item({ item, onAtualizar, onRemover }: ItemProps) {
         <button
           type="button"
           className="btn-deletar-item-lista"
-          onClick={() => onRemover(item.id)}
+          onClick={solicitarExclusao}
           title="Remover item"
           aria-label={`Remover ${item.nome}`}
         >
           🗑️
         </button>
       </div>
+
+      <ConfirmacaoExclusaoMobile
+        aberto={confirmandoExclusao}
+        tipo="item"
+        nome={item.nome}
+        onCancelar={() => setConfirmandoExclusao(false)}
+        onConfirmar={confirmarExclusao}
+      />
     </li>
   );
 }

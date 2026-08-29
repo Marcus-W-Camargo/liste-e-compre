@@ -189,7 +189,7 @@
 
 .linha-compra {
   display: grid;
-  grid-template-columns: 22px 28px minmax(90px, 1.2fr) 118px 92px 72px 92px 32px;
+  grid-template-columns: 22px 28px minmax(90px, 1.2fr) 118px 92px 80px 92px 32px;
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
@@ -278,6 +278,56 @@
 
 .campo-qtd input {
   text-align: center;
+}
+
+.campo-preco input,
+.campo-qtd input {
+  font-variant-numeric: tabular-nums;
+}
+
+.campo-preco input {
+  text-align: right;
+}
+
+.campo-qtd {
+  padding-right: 0;
+  overflow: hidden;
+}
+
+.campo-qtd--kg {
+  padding-right: 8px;
+}
+
+.botoes-qtd-compra {
+  display: flex;
+  width: 22px;
+  height: 100%;
+  flex: 0 0 22px;
+  flex-direction: column;
+  border-left: 1.5px solid #1a263b;
+}
+
+.botoes-qtd-compra button {
+  display: grid;
+  flex: 1;
+  padding: 0;
+  border: 0;
+  background: #ffebd6;
+  color: #1a263b;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  place-items: center;
+}
+
+.botoes-qtd-compra button:first-child {
+  border-bottom: 1px solid #1a263b;
+}
+
+.botoes-qtd-compra button:disabled {
+  cursor: default;
+  opacity: 0.38;
 }
 
 .campo-tracejado input::-webkit-outer-spin-button,
@@ -478,7 +528,7 @@
   }
 
   .linha-compra {
-    grid-template-columns: 22px 24px minmax(70px, 1fr) 100px 84px 64px 80px 28px;
+    grid-template-columns: 22px 24px minmax(70px, 1fr) 100px 84px 72px 80px 28px;
     gap: 6px;
     padding: 8px 4px;
   }
@@ -537,7 +587,8 @@
 
   .linha-compra {
     grid-template-columns:
-      16px 18px minmax(42px, 1fr) 46px 44px 32px 46px 18px;
+      16px 18px minmax(36px, 0.65fr) 58px 40px 50px
+      minmax(70px, 1.35fr) 18px;
     gap: 2px;
     min-height: 46px;
     padding: 6px 3px;
@@ -561,6 +612,81 @@
     font-size: 7px;
   }
 
+  .nome-item-compra-mobile {
+    position: relative;
+    min-width: 0;
+  }
+
+  .botao-nome-item-compra {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    padding: 2px 0;
+    overflow: hidden;
+    border: 0;
+    background: transparent;
+    color: #1a263b;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: left;
+  }
+
+  .botao-nome-item-compra > span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .botao-nome-item-compra small {
+    display: block;
+    color: #f7501b;
+    font-size: 7px;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  .botao-nome-item-compra:focus-visible {
+    border-radius: 4px;
+    outline: 2px solid #f7501b;
+    outline-offset: 2px;
+  }
+
+  .balao-nome-item-compra {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    z-index: 40;
+    width: max-content;
+    max-width: min(240px, 76vw);
+    padding: 7px 9px;
+    border: 1.5px solid #1a263b;
+    border-radius: 9px;
+    background: #fff;
+    box-shadow: 0 5px 14px rgb(26 38 59 / 24%);
+    color: #1a263b;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+    pointer-events: none;
+    white-space: normal;
+  }
+
+  .balao-nome-item-compra::after {
+    position: absolute;
+    top: 100%;
+    left: 12px;
+    width: 8px;
+    height: 8px;
+    border-right: 1.5px solid #1a263b;
+    border-bottom: 1.5px solid #1a263b;
+    background: #fff;
+    content: '';
+    transform: translateY(-5px) rotate(45deg);
+  }
+
   .campo-tracejado {
     height: 30px;
     padding: 0 2px;
@@ -574,7 +700,25 @@
   }
 
   .campo-tracejado input {
-    font-size: 10px;
+    font-size: 9px;
+  }
+
+  .campo-preco span {
+    font-size: 8px;
+  }
+
+  .campo-qtd--kg {
+    padding-right: 2px;
+  }
+
+  .botoes-qtd-compra {
+    width: 18px;
+    flex-basis: 18px;
+    border-left-width: 1px;
+  }
+
+  .botoes-qtd-compra button {
+    font-size: 9px;
   }
 
   .medida-item-compra {
@@ -614,9 +758,9 @@
   }
 
   .total-linha-compra {
-    overflow: hidden;
-    font-size: 10px;
-    text-overflow: ellipsis;
+    overflow: visible;
+    font-size: 11px;
+    text-overflow: clip;
   }
 
   .btn-lixo-compra {

@@ -1,0 +1,67 @@
+.confirmacao-exclusao-mobile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: #1a263b;
+  text-align: center;
+}
+
+.confirmacao-exclusao-mobile__icone {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  border: 2px solid #1a263b;
+  border-radius: 50%;
+  background: #ffebd6;
+  font-size: 25px;
+  place-items: center;
+}
+
+.confirmacao-exclusao-mobile h2,
+.confirmacao-exclusao-mobile p {
+  margin: 0;
+}
+
+.confirmacao-exclusao-mobile h2 {
+  font-size: 23px;
+}
+
+.confirmacao-exclusao-mobile p {
+  max-width: 310px;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.confirmacao-exclusao-mobile__aviso {
+  color: #b43a16;
+  font-size: 13px !important;
+  font-weight: 700;
+}
+
+.confirmacao-exclusao-mobile__acoes {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.confirmacao-exclusao-mobile__acoes button {
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 2px solid #1a263b;
+  border-radius: 13px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.confirmacao-exclusao-mobile__cancelar {
+  background: #fff;
+  color: #1a263b;
+}
+
+.confirmacao-exclusao-mobile__confirmar {
+  background: #f7501b;
+  color: #fff;
+}
