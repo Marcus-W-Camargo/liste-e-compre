@@ -1,5 +1,6 @@
 .pagina-historico {
-  flex: 1 0 auto;
+  box-sizing: border-box;
+  flex: 0 0 auto;
   width: min(100%, 760px);
   margin: 105px auto 45px;
   padding: 0 18px;
@@ -88,8 +89,8 @@ body.transicao-historico-para-compras .app-layout {
 @media (max-width: 700px) {
   .pagina-historico {
     width: 100%;
-    min-height: calc(100dvh - 84px);
-    padding: 0 18px 32px;
+    min-height: 0;
+    padding: 0 18px 20px;
     margin: 84px auto 0;
     touch-action: pan-y;
   }
