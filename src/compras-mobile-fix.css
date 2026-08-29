@@ -31,6 +31,11 @@
     font-variant-numeric: tabular-nums;
   }
 
+  .pagina-sessao-compra .medida-item-compra,
+  .pagina-sessao-compra .campo-qtd {
+    margin-left: 2px;
+  }
+
   .pagina-sessao-compra .campo-qtd {
     padding-inline: 0;
   }
