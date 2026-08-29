@@ -372,7 +372,7 @@ export function Perfil() {
             </div>
           </div>
 
-          <div className="campo-informacao-perfil">
+          <div className="campo-informacao-perfil campo-email-perfil">
             <span className="icone-informacao-perfil" aria-hidden="true">✉️</span>
             <div>
               <span className="rotulo-informacao-perfil">E-mail</span>
