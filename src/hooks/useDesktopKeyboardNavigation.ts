@@ -24,27 +24,29 @@ export function useDesktopKeyboardNavigation() {
       if (alvo instanceof Element && alvo.closest(CAMPOS_EDITAVEIS)) return;
 
       const tecla = evento.key.toLowerCase();
-      if (tecla !== 'a' && tecla !== 'd') return;
+      const esquerda = tecla === 'a' || tecla === 'arrowleft';
+      const direita = tecla === 'd' || tecla === 'arrowright';
+      if (!esquerda && !direita) return;
 
       const { pathname } = location;
       let destino: string | null = null;
       let state: { retornoCompras?: string } | undefined;
 
-      if (pathname === '/lista' && tecla === 'd') {
+      if (pathname === '/lista' && direita) {
         destino = '/compre';
       } else if (pathname === '/compre') {
-        if (tecla === 'a') destino = '/lista';
-        if (tecla === 'd') {
+        if (esquerda) destino = '/lista';
+        if (direita) {
           destino = '/historico';
           state = { retornoCompras: '/compre' };
         }
       } else if (pathname.startsWith('/compre/')) {
-        if (tecla === 'a') destino = '/compre';
-        if (tecla === 'd') {
+        if (esquerda) destino = '/compre';
+        if (direita) {
           destino = '/historico';
           state = { retornoCompras: pathname };
         }
-      } else if (pathname === '/historico' && tecla === 'a') {
+      } else if (pathname === '/historico' && esquerda) {
         const email = obterSessao().email;
         const retornoSolicitado = (location.state as
           | { retornoCompras?: unknown }
