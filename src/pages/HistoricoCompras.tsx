@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
 import type { CompraFinalizada } from '../types';
@@ -9,6 +9,7 @@ import {
   carregarHistoricoListas,
   carregarSessaoCompra,
 } from '../utils/storage';
+import { resolverDestinoRetornoHistorico } from '../utils/purchaseNavigation';
 import './HistoricoCompras.css';
 
 const moeda = new Intl.NumberFormat('pt-BR', {
@@ -19,19 +20,22 @@ const moeda = new Intl.NumberFormat('pt-BR', {
 export function HistoricoCompras() {
   const { logado } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const email = obterSessao().email;
   const [compras] = useState<CompraFinalizada[]>(() =>
     carregarComprasFinalizadas(email),
   );
   const sessaoEmAndamento = carregarSessaoCompra(email);
-  const sessaoAindaExiste =
-    sessaoEmAndamento &&
-    carregarHistoricoListas(email).some(
-      (lista) => lista.id === sessaoEmAndamento.listaId,
-    );
-  const destinoCompras = sessaoAindaExiste
-    ? `/compre/${sessaoEmAndamento.listaId}`
-    : '/compre';
+  const listasSalvas = carregarHistoricoListas(email);
+  const retornoSolicitado = (location.state as
+    | { retornoCompras?: unknown }
+    | null)?.retornoCompras;
+  const destinoCompras = resolverDestinoRetornoHistorico(
+    retornoSolicitado,
+    sessaoEmAndamento,
+    listasSalvas.map((lista) => lista.id),
+  );
+  const deveContinuarCompra = destinoCompras !== '/compre';
   const total = useMemo(
     () => compras.reduce((soma, compra) => soma + compra.valorTotal, 0),
     [compras],
@@ -89,7 +93,7 @@ export function HistoricoCompras() {
       )}
 
       <button className="voltar-catalogo" onClick={irParaCompras}>
-        {sessaoAindaExiste ? 'Continuar compra' : 'Voltar às listas'}
+        {deveContinuarCompra ? 'Continuar compra' : 'Voltar às listas'}
       </button>
     </main>
   );

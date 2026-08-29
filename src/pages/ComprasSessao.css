@@ -1,4 +1,5 @@
 .pagina-sessao-compra {
+  position: relative;
   box-sizing: border-box;
   flex: 1 0 auto;
   width: min(calc(100% - 34px), 1040px);
@@ -11,12 +12,43 @@
   color: #1a263b;
 }
 
+.fechar-sessao-compra {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  z-index: 10;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #f7501b;
+  cursor: pointer;
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1;
+  place-items: center;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.fechar-sessao-compra:hover {
+  color: #e04312;
+  transform: scale(1.12);
+}
+
+.fechar-sessao-compra:focus-visible {
+  border-radius: 50%;
+  outline: 3px solid #1a263b;
+  outline-offset: 2px;
+}
+
 .topo-sessao {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px 28px;
-  padding: 2px 8px 22px;
+  padding: 2px 52px 22px 8px;
 }
 
 .titulo-sessao {
@@ -461,9 +493,17 @@
     touch-action: pan-y;
   }
 
+  .fechar-sessao-compra {
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    font-size: 34px;
+  }
+
   .topo-sessao {
     grid-template-columns: 1fr;
-    padding: 0 4px 16px;
+    padding: 0 44px 16px 4px;
   }
 
   .titulo-sessao img {
@@ -597,5 +637,12 @@
   .acoes-sessao button {
     width: 100%;
     min-height: 48px;
+  }
+}
+
+@media (max-width: 700px) {
+  .pagina-sessao-compra {
+    min-height: calc(100dvh - 84px);
+    margin-bottom: 0;
   }
 }

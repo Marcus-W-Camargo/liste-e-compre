@@ -1,5 +1,6 @@
 .body-lista {
   display: flex;
+  flex: 1 0 auto;
   flex-direction: column;
   align-items: center;
   width: 100%;
@@ -141,6 +142,7 @@
 
 @media (max-width: 700px) {
   .body-lista {
+    min-height: calc(100dvh - 72px);
     touch-action: pan-y;
   }
 

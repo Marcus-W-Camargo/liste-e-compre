@@ -59,7 +59,13 @@ export function Compras() {
 
     setIndoParaHistorico(true);
     document.body.classList.add('transicao-para-historico');
-    window.setTimeout(() => navigate('/historico'), 360);
+    window.setTimeout(
+      () =>
+        navigate('/historico', {
+          state: { retornoCompras: '/compre' },
+        }),
+      360,
+    );
   }
 
   const gestosNavegacao = useSwipeNavigation({

@@ -252,7 +252,13 @@ export function ComprasSessao() {
 
     setIndoParaHistorico(true);
     document.body.classList.add('transicao-para-historico');
-    window.setTimeout(() => navigate('/historico'), 360);
+    window.setTimeout(
+      () =>
+        navigate('/historico', {
+          state: { retornoCompras: `/compre/${listaId}` },
+        }),
+      360,
+    );
   }
 
   const gestosNavegacao = useSwipeNavigation({
@@ -263,6 +269,16 @@ export function ComprasSessao() {
 
   return (
     <main className="pagina-sessao-compra" {...gestosNavegacao}>
+      <button
+        type="button"
+        className="fechar-sessao-compra"
+        onClick={() => navigate('/compre')}
+        aria-label="Fechar compra e voltar para o catálogo"
+        title="Voltar ao catálogo"
+      >
+        <span aria-hidden="true">×</span>
+      </button>
+
       <button
         type="button"
         className="botao-ir-historico"

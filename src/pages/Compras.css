@@ -39,6 +39,7 @@ body.transicao-para-lista .app-layout { animation: deslizar-para-lista .36s ease
 
 @media (max-width: 700px) {
   .pagina-compras {
+    min-height: calc(100dvh - 72px);
     padding: 92px 14px 32px;
     touch-action: pan-y;
   }
