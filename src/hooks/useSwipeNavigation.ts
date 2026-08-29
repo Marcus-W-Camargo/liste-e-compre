@@ -1,4 +1,9 @@
-import { useCallback, useRef, type TouchEventHandler } from 'react';
+import {
+  useCallback,
+  useRef,
+  type MouseEventHandler,
+  type TouchEventHandler,
+} from 'react';
 
 type OpcoesDeslize = {
   aoDeslizarEsquerda?: () => void;
@@ -20,6 +25,7 @@ export function useSwipeNavigation({
   larguraMaxima = 700,
 }: OpcoesDeslize) {
   const inicio = useRef<InicioDeslize | null>(null);
+  const suprimirCliqueAte = useRef(0);
 
   const cancelar = useCallback(() => {
     inicio.current = null;
@@ -38,7 +44,9 @@ export function useSwipeNavigation({
       const alvo = evento.target;
       if (
         alvo instanceof Element &&
-        alvo.closest('input, textarea, select, label, [role="dialog"]')
+        alvo.closest(
+          'input, textarea, select, [contenteditable="true"], [role="dialog"]',
+        )
       ) {
         cancelar();
         return;
@@ -67,15 +75,30 @@ export function useSwipeNavigation({
       )
         return;
 
-      if (deslocamentoX < 0) aoDeslizarEsquerda?.();
-      else aoDeslizarDireita?.();
+      const navegar =
+        deslocamentoX < 0 ? aoDeslizarEsquerda : aoDeslizarDireita;
+      if (!navegar) return;
+
+      // Evita que o clique sintético do toque também ative o card ou botão
+      // sobre o qual o usuário iniciou a navegação.
+      suprimirCliqueAte.current = Date.now() + 600;
+      navegar();
     },
     [aoDeslizarDireita, aoDeslizarEsquerda, cancelar],
   );
+
+  const aoClicar: MouseEventHandler<HTMLElement> = useCallback((evento) => {
+    if (Date.now() > suprimirCliqueAte.current) return;
+
+    suprimirCliqueAte.current = 0;
+    evento.preventDefault();
+    evento.stopPropagation();
+  }, []);
 
   return {
     onTouchStart: aoIniciar,
     onTouchEnd: aoTerminar,
     onTouchCancel: cancelar,
+    onClickCapture: aoClicar,
   };
 }

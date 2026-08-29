@@ -2,6 +2,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { cloud } from '../services/cloudData';
+import { NavigationGuide } from './NavigationGuide';
 import './CloudAccess.css';
 export function CloudAccess() {
   const { logado, carregando, id, email } = useAuth();
@@ -30,13 +31,16 @@ export function CloudAccess() {
       </p>
     );
   return (
-    <div
-      className="cloud-view"
-      key={`${id}-${state.epoch}`}
-      inert={['error', 'conflict'].includes(state.status)}
-    >
-      <Outlet />
-    </div>
+    <>
+      <NavigationGuide usuarioId={id} />
+      <div
+        className="cloud-view"
+        key={`${id}-${state.epoch}`}
+        inert={['error', 'conflict'].includes(state.status)}
+      >
+        <Outlet />
+      </div>
+    </>
   );
 }
 function baixarCopia() {

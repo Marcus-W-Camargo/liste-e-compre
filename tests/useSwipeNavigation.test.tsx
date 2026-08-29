@@ -5,9 +5,11 @@ import { useSwipeNavigation } from '../src/hooks/useSwipeNavigation';
 function Superficie({
   esquerda,
   direita,
+  acaoCard = () => {},
 }: {
   esquerda: () => void;
   direita: () => void;
+  acaoCard?: () => void;
 }) {
   const gestos = useSwipeNavigation({
     aoDeslizarEsquerda: esquerda,
@@ -17,6 +19,9 @@ function Superficie({
   return (
     <main data-testid="superficie" {...gestos}>
       <input aria-label="Campo protegido" />
+      <button type="button" onClick={acaoCard}>
+        Card interativo
+      </button>
     </main>
   );
 }
@@ -86,5 +91,30 @@ describe('navegação mobile por deslize', () => {
 
     expect(esquerda).not.toHaveBeenCalled();
     expect(direita).not.toHaveBeenCalled();
+  });
+
+  it('reconhece o gesto iniciado sobre botões, cards e seus ícones', () => {
+    const esquerda = vi.fn();
+    const direita = vi.fn();
+    const acaoCard = vi.fn();
+    render(
+      <Superficie
+        esquerda={esquerda}
+        direita={direita}
+        acaoCard={acaoCard}
+      />,
+    );
+
+    const card = screen.getByRole('button', { name: 'Card interativo' });
+    arrastar(
+      card,
+      { x: 260, y: 100 },
+      { x: 100, y: 104 },
+    );
+    fireEvent.click(card);
+
+    expect(esquerda).toHaveBeenCalledOnce();
+    expect(direita).not.toHaveBeenCalled();
+    expect(acaoCard).not.toHaveBeenCalled();
   });
 });
