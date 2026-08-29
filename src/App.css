@@ -121,8 +121,12 @@
 }
 
 .rodape p {
-  overflow: hidden;
-  text-overflow: clip;
+  width: 100%;
+  margin: 0;
+}
+
+.rodape-texto-mobile {
+  display: none;
 }
 
 .cabecalho-aplicacao {
@@ -361,7 +365,20 @@
   }
 
   .rodape {
-    padding: 10px 4px;
-    font-size: clamp(8px, 2.55vw, 11px);
+    width: 100vw;
+    max-width: none;
+    padding: 9px 2px;
+    margin-right: calc(50% - 50vw);
+    margin-left: calc(50% - 50vw);
+    font-size: clamp(6.5px, 2vw, 9px);
+    letter-spacing: -0.08px;
+  }
+
+  .rodape-texto-completo {
+    display: none;
+  }
+
+  .rodape-texto-mobile {
+    display: inline;
   }
 }

@@ -454,8 +454,8 @@
 
 @media (max-width: 760px) {
   .pagina-sessao-compra {
-    width: calc(100% - 12px);
-    padding: 16px 8px 14px;
+    width: calc(100% - 8px);
+    padding: 16px 4px 14px;
     margin: 84px auto 16px;
     border-radius: 26px;
   }
@@ -491,27 +491,103 @@
   }
 
   .itens-compra {
-    padding: 4px 2px 6px;
+    padding: 4px 0 6px;
   }
 
   .linha-compra {
-    grid-template-columns: 20px 22px minmax(0, 1fr) 28px;
-    grid-template-areas:
-      'check icon nome lixo'
-      'preco preco medida medida'
-      'qtd qtd total total';
-    gap: 8px 6px;
-    padding: 10px 7px;
+    grid-template-columns:
+      16px 18px minmax(42px, 1fr) 46px 44px 32px 46px 18px;
+    gap: 2px;
+    min-height: 46px;
+    padding: 6px 3px;
   }
 
-  .check-item-compra { grid-area: check; }
-  .icone-item-compra { grid-area: icon; }
-  .linha-compra strong { grid-area: nome; }
-  .campo-preco { grid-area: preco; }
-  .medida-item-compra { grid-area: medida; justify-content: flex-start; }
-  .campo-qtd { grid-area: qtd; }
-  .total-linha-compra { grid-area: total; }
-  .btn-lixo-compra { grid-area: lixo; justify-self: end; }
+  .check-item-compra {
+    width: 16px;
+    height: 16px;
+    border-width: 1.5px;
+  }
+
+  .icone-item-compra {
+    font-size: 15px;
+  }
+
+  .linha-compra strong {
+    font-size: 11px;
+  }
+
+  .linha-compra strong small {
+    font-size: 7px;
+  }
+
+  .campo-tracejado {
+    height: 30px;
+    padding: 0 2px;
+    border-width: 1.2px;
+    border-radius: 7px;
+  }
+
+  .campo-tracejado span {
+    margin-right: 1px;
+    font-size: 9px;
+  }
+
+  .campo-tracejado input {
+    font-size: 10px;
+  }
+
+  .medida-item-compra {
+    justify-content: center;
+    gap: 1px;
+  }
+
+  .medida-item-compra > span {
+    font-size: 9px;
+  }
+
+  .switch-medida-compra {
+    width: 27px;
+    height: 18px;
+  }
+
+  .bola-switch-compra {
+    width: 12px;
+    height: 12px;
+  }
+
+  .checkbox-switch-compra:checked + .corpo-switch-compra .bola-switch-compra {
+    left: calc(100% - 14px);
+  }
+
+  .texto-un-compra,
+  .texto-kg-compra {
+    font-size: 7px;
+  }
+
+  .texto-un-compra {
+    left: 2px;
+  }
+
+  .texto-kg-compra {
+    right: 2px;
+  }
+
+  .total-linha-compra {
+    overflow: hidden;
+    font-size: 10px;
+    text-overflow: ellipsis;
+  }
+
+  .btn-lixo-compra {
+    width: 18px;
+    height: 24px;
+    padding: 0;
+  }
+
+  .btn-lixo-compra svg {
+    width: 16px;
+    height: 16px;
+  }
 
   .acoes-sessao {
     flex-direction: column;
