@@ -148,7 +148,6 @@
   box-shadow: 0 16px 36px rgb(11 20 36 / 30%);
   color: #1a263b;
   text-align: left;
-  transform: translateX(-22%);
   animation: abrir-menu-acoes-foto 0.2s ease-out;
 }
 
@@ -232,12 +231,12 @@
 @keyframes abrir-menu-acoes-foto {
   from {
     opacity: 0;
-    transform: translateX(-22%) translateY(-8px) scale(0.97);
+    transform: translateY(-8px) scale(0.97);
   }
 
   to {
     opacity: 1;
-    transform: translateX(-22%) translateY(0) scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 

@@ -9,6 +9,7 @@
 | EmailJS            | Entrega os templates existentes; não decide se uma conta foi confirmada               |
 | Supabase Auth      | Identidade por e-mail, hashing de senha, login e sessões                              |
 | PostgreSQL / RLS   | Dados por `auth.uid()`, transações de sincronização e controle privado de verificação |
+| Supabase Storage   | Foto de perfil privada, limitada ao arquivo pertencente ao `auth.uid()`               |
 | Supabase Cron      | Remove registros de envio antigos; não dá expiração aos códigos                       |
 
 ## Cadastro e recuperação
@@ -71,6 +72,12 @@ Essa estratégia é simples para o porte do projeto; regrava o conjunto da conta
 Sem rede, alterações pendentes ficam **apenas na memória da aba**. O site avisa e permite tentar sincronizar/baixar cópia; não é uma aplicação offline-first. Logout espera a gravação; ao fechar a aba com edição pendente há aviso do navegador quando suportado. Não feche antes de “Dados sincronizados”.
 
 Os tokens de sessão do Supabase são persistidos pelo SDK para manter login. Eles não são senhas, mas também precisam ser protegidos contra XSS. Alterar um objeto de sessão antigo não gera um JWT válido nem acesso às linhas de outro usuário.
+
+## Foto de perfil
+
+A foto recortada é convertida para JPEG de 512×512 e enviada ao bucket privado `profile-photos`. O caminho é determinístico: `<auth.uid()>/avatar.jpg`. As políticas de `SELECT`, `INSERT`, `UPDATE` e `DELETE` comparam o caminho completo com o UID autenticado; conhecer o e-mail ou o UUID de outra conta não concede acesso ao arquivo dela.
+
+O bucket aceita somente JPEG e limita o objeto a 2 MiB. O navegador baixa a imagem usando o JWT da sessão, portanto não existe URL pública permanente. A versão anterior em `localStorage`, quando presente, é enviada uma única vez após o login e removida somente depois do upload bem-sucedido. Falhas de rede preservam essa cópia para nova tentativa.
 
 ## Importação e testes
 

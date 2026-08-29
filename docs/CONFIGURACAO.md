@@ -4,6 +4,12 @@ A integração base já está na `main`. A atualização da consulta antecipada 
 
 Você precisa somente das suas contas do Supabase, EmailJS e Vercel. Não é necessário Upstash, servidor separado, SMTP novo ou o código de seis dígitos do Supabase.
 
+## Atualização: foto de perfil sincronizada
+
+Se o projeto Supabase já está configurado, abra **SQL Editor → New query** e execute o conteúdo inteiro de [05-profile-photos.sql](../supabase/05-profile-photos.sql), como `postgres`, antes de testar esta versão. O script é reexecutável: cria ou reforça o bucket privado `profile-photos`, limita os arquivos a JPEG de 2 MiB e instala políticas para cada conta operar somente `<auth.uid()>/avatar.jpg`.
+
+Não transforme o bucket em público e não substitua o UID pelo e-mail. O e-mail pode mudar; o UID da sessão é a identidade usada pelas regras RLS. Depois de aplicar o script, entre na mesma conta em dois dispositivos: a foto salva no primeiro deve aparecer no segundo. Uma conta diferente não pode listar, baixar, sobrescrever ou excluir essa imagem.
+
 ## Atualização: consulta antes do envio
 
 Se a integração já está configurada, **não recrie o projeto nem execute a instalação do zero**:
@@ -31,6 +37,7 @@ As próximas seções descrevem a **instalação completa**, para quem ainda nã
    | 2     | [02-lists.sql](../supabase/02-lists.sql)     | Listas, itens, compras, histórico, isolamento por usuário e sincronização |
    | 3     | [03-cleanup.sql](../supabase/03-cleanup.sql) | Limpeza automática dos registros de envio após a janela de 45 minutos     |
    | 4     | [04-email-precheck.sql](../supabase/04-email-precheck.sql) | Consulta privada de existência de conta, antes do envio de cadastro |
+   | 5     | [05-profile-photos.sql](../supabase/05-profile-photos.sql) | Bucket privado e isolamento da foto de perfil por UID |
 
    Não substitua valores dentro dos scripts. Eles já estão prontos. Execute como o usuário `postgres` do SQL Editor, não como `anon` ou `authenticated`.
 

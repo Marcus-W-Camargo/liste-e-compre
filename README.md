@@ -6,7 +6,7 @@
 [![React](https://img.shields.io/badge/React-19-20232A?logo=react&logoColor=61DAFB)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
-[![Supabase](https://img.shields.io/badge/Supabase-Auth%20%2B%20Database-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-Auth%20%2B%20Database%20%2B%20Storage-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com/)
 [![Vercel](https://img.shields.io/badge/Vercel-Deploy-000000?logo=vercel&logoColor=white)](https://vercel.com/)
 [![CI](https://github.com/Marcus-W-Camargo/liste-e-compre/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Marcus-W-Camargo/liste-e-compre/actions/workflows/ci.yml)
 
@@ -22,7 +22,7 @@
 
 **Liste e Compre** organiza compras do planejamento à conclusão. O usuário cria listas por categoria, informa quantidades, agenda uma data, acompanha preços e produtos durante a compra e consulta o histórico após finalizar.
 
-A aplicação é uma SPA em **React + TypeScript**, construída com **Vite**, usando **Supabase Auth + PostgreSQL**, API na **Vercel** e códigos de verificação entregues pelo **EmailJS**.
+A aplicação é uma SPA em **React + TypeScript**, construída com **Vite**, usando **Supabase Auth + PostgreSQL + Storage**, API na **Vercel** e códigos de verificação entregues pelo **EmailJS**.
 
 Listas, rascunhos e compras finalizadas são sincronizados por conta. A **compra ainda não finalizada permanece somente no navegador atual**, em `localStorage`, isolada por usuário, até ser concluída.
 
@@ -52,6 +52,7 @@ Listas, rascunhos e compras finalizadas são sincronizados por conta. A **compra
 | Estilização | CSS | Interface responsiva |
 | Autenticação | Supabase Auth | Contas e sessões |
 | Banco | PostgreSQL / Supabase | Dados sincronizados |
+| Arquivos | Supabase Storage privado | Foto de perfil isolada por conta |
 | Persistência local | `localStorage` | Compra incompleta por conta |
 | API | Vercel Functions + Node.js | Cadastro e recuperação |
 | E-mail | EmailJS | Códigos de verificação |
@@ -65,6 +66,8 @@ Listas, rascunhos e compras finalizadas são sincronizados por conta. A **compra
 #### Conta e acesso
 
 - Cadastro, login, recuperação de senha e perfil.
+- Foto de perfil com recorte, substituição, exclusão e sincronização entre dispositivos.
+- Bucket privado protegido por RLS: cada UID acessa somente seu próprio avatar.
 - Código de verificação de quatro dígitos.
 - Proteção das páginas autenticadas.
 - Avisos iniciais separados por conta.
@@ -138,6 +141,7 @@ Listas, rascunhos e compras finalizadas são sincronizados por conta. A **compra
 ### Sincronização e persistência
 
 - Listas, rascunhos e compras finalizadas são sincronizados por conta.
+- A foto de perfil é sincronizada em um bucket privado por conta.
 - A compra incompleta fica localmente no navegador atual.
 - Cada conta possui sua própria sessão local.
 - Conflitos de sincronização continuam sendo informados.

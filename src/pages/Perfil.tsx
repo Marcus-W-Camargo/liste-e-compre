@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -8,7 +9,9 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import {
   carregarFotoPerfil,
+  carregarFotoPerfilLocal,
   removerFotoPerfil,
+  removerFotoPerfilLocal,
   salvarFotoPerfil,
 } from '../utils/profilePhoto';
 
@@ -33,7 +36,7 @@ interface EditorRecorteFotoProps {
   imagem: ImagemSelecionada;
   onCancelar: () => void;
   onEscolherOutra: () => void;
-  onSalvar: (foto: string) => void;
+  onSalvar: (foto: string) => Promise<void> | void;
 }
 
 interface MenuAcoesFotoProps {
@@ -235,7 +238,7 @@ function EditorRecorteFoto({
 
     try {
       const foto = await criarFotoRecortada(imagem, zoom, posicao);
-      onSalvar(foto);
+      await onSalvar(foto);
     } catch (error) {
       setErro(error instanceof Error ? error.message : 'Não foi possível salvar a foto.');
       setSalvando(false);
@@ -304,7 +307,7 @@ function EditorRecorteFoto({
           />
         </label>
 
-        <p className="nota-editor-foto">A foto será salva somente neste dispositivo.</p>
+        <p className="nota-editor-foto">A foto será sincronizada com segurança na sua conta.</p>
         {erro ? <p className="erro-editor-foto" role="alert">{erro}</p> : null}
 
         <button
@@ -325,16 +328,54 @@ export function Perfil() {
   const inputArquivo = useRef<HTMLInputElement>(null);
   const [fotoUsuario, setFotoUsuario] = useState(() => ({
     usuarioId: id,
-    foto: carregarFotoPerfil(id),
+    foto: carregarFotoPerfilLocal(id),
   }));
   const [imagemSelecionada, setImagemSelecionada] =
     useState<ImagemSelecionada | null>(null);
   const [erroArquivo, setErroArquivo] = useState('');
   const [lendoArquivo, setLendoArquivo] = useState(false);
+  const [sincronizandoFoto, setSincronizandoFoto] = useState(true);
   const [menuFotoAberto, setMenuFotoAberto] = useState(false);
   const foto = fotoUsuario.usuarioId === id
     ? fotoUsuario.foto
-    : carregarFotoPerfil(id);
+    : carregarFotoPerfilLocal(id);
+
+  useEffect(() => {
+    let ativo = true;
+
+    void (async () => {
+      const fotoLocal = carregarFotoPerfilLocal(id);
+      try {
+        let fotoSincronizada = await carregarFotoPerfil(id);
+
+        if (!fotoSincronizada && fotoLocal) {
+          await salvarFotoPerfil(id, fotoLocal);
+          removerFotoPerfilLocal(id);
+          fotoSincronizada = fotoLocal;
+        } else if (fotoSincronizada && fotoLocal) {
+          removerFotoPerfilLocal(id);
+        }
+
+        if (ativo) {
+          setFotoUsuario({ usuarioId: id, foto: fotoSincronizada });
+        }
+      } catch (error) {
+        if (ativo) {
+          setErroArquivo(
+            error instanceof Error
+              ? error.message
+              : 'Não foi possível carregar a foto da sua conta.',
+          );
+        }
+      } finally {
+        if (ativo) setSincronizandoFoto(false);
+      }
+    })();
+
+    return () => {
+      ativo = false;
+    };
+  }, [id]);
 
   async function selecionarArquivo(event: ChangeEvent<HTMLInputElement>) {
     const arquivo = event.currentTarget.files?.[0];
@@ -378,11 +419,9 @@ export function Perfil() {
     setErroArquivo('');
   }
 
-  function confirmarFoto(fotoRecortada: string) {
-    if (!salvarFotoPerfil(id, fotoRecortada)) {
-      throw new Error('Não foi possível guardar a foto neste dispositivo.');
-    }
-
+  async function confirmarFoto(fotoRecortada: string) {
+    await salvarFotoPerfil(id, fotoRecortada);
+    removerFotoPerfilLocal(id);
     setFotoUsuario({ usuarioId: id, foto: fotoRecortada });
     setImagemSelecionada(null);
   }
@@ -392,17 +431,25 @@ export function Perfil() {
     inputArquivo.current?.click();
   }
 
-  function excluirFoto() {
+  async function excluirFoto() {
     setMenuFotoAberto(false);
     setErroArquivo('');
     if (!foto) return;
 
-    if (!removerFotoPerfil(id)) {
-      setErroArquivo('Não foi possível excluir a foto neste dispositivo.');
-      return;
+    setSincronizandoFoto(true);
+    try {
+      await removerFotoPerfil(id);
+      removerFotoPerfilLocal(id);
+      setFotoUsuario({ usuarioId: id, foto: null });
+    } catch (error) {
+      setErroArquivo(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível excluir a foto da sua conta.',
+      );
+    } finally {
+      setSincronizandoFoto(false);
     }
-
-    setFotoUsuario({ usuarioId: id, foto: null });
   }
 
   return (
@@ -426,7 +473,7 @@ export function Perfil() {
               }}
               aria-label="Abrir opções da foto do perfil"
               title="Opções da foto"
-              disabled={lendoArquivo}
+              disabled={lendoArquivo || sincronizandoFoto}
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M8.2 6.5 9.4 4.8h5.2l1.2 1.7H19A2 2 0 0 1 21 8.5v8A2 2 0 0 1 19 18.5H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h3.2ZM12 16a3.75 3.75 0 1 0 0-7.5A3.75 3.75 0 0 0 12 16Z" />
@@ -443,7 +490,7 @@ export function Perfil() {
               <MenuAcoesFoto
                 temFoto={Boolean(foto)}
                 onAlterar={abrirSeletorDeFoto}
-                onExcluir={excluirFoto}
+                onExcluir={() => void excluirFoto()}
                 onFechar={() => setMenuFotoAberto(false)}
               />
             ) : null}
@@ -477,7 +524,7 @@ export function Perfil() {
 
         <p className="aviso-sincronizacao-perfil">
           <span aria-hidden="true">☁️</span>
-          Suas listas são vinculadas a esta conta e sincronizadas com a nuvem.
+          Suas listas e sua foto são vinculadas a esta conta e sincronizadas com a nuvem.
         </p>
       </section>
 
