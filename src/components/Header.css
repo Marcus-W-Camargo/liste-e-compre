@@ -23,6 +23,20 @@
   transform: scale(1.05);
 }
 
+.icone-usuario.tem-foto-perfil {
+  overflow: hidden;
+  padding: 0;
+  background: #fff;
+}
+
+.foto-usuario-topo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
 @media (max-width: 600px) {
   .logo-voltar-home {
     position: absolute;
