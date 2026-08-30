@@ -1,0 +1,31 @@
+.ajuda-cabecalho > .ajuda-kicker {
+  margin-bottom: 14px;
+  font-size: clamp(2.1rem, 5.2vw, 2.95rem);
+  font-weight: 650;
+  line-height: 1.05;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.ajuda-cabecalho > h1 {
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  line-height: 1.2;
+}
+
+.ajuda-cabecalho > p {
+  margin-top: 9px;
+  font-size: clamp(0.9rem, 1.8vw, 1rem);
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .ajuda-cabecalho > .ajuda-kicker {
+    margin-bottom: 12px;
+    font-size: clamp(1.9rem, 9.3vw, 2.45rem);
+    font-weight: 650;
+  }
+
+  .ajuda-cabecalho > h1 {
+    font-size: 1.3rem;
+  }
+}
