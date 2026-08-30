@@ -330,27 +330,27 @@ Saved lists, drafts and completed purchases are synchronized by account. An **un
 4. Open the saved list in **Shopping** and start the purchase.
 5. Record prices, quantities, completed items and extra products.
 6. Keep an unfinished purchase locally for same-browser recovery.
-7. Handle pending items before completion.
-8. Save the completed purchase to History.
-9. Review previous items or recreate a new editable list from an older purchase.
+7. Resolve pending items before completion.
+8. Store the completed purchase in History.
+9. Review previous items or recreate a new list from an earlier purchase.
 
 ---
 
-### Technologies
+### Technology stack
 
 | Layer | Technology | Purpose |
 | --- | --- | --- |
-| Interface | React 19 | Components and screens |
-| Language | TypeScript 6 | Type safety during development |
-| Routing | React Router 7 | SPA routes and navigation |
+| UI | React 19 | Components and screens |
+| Language | TypeScript 6 | Typing and development safety |
+| Routing | React Router 7 | SPA navigation |
 | Build | Vite 8 | Development and production builds |
 | Styling | CSS | Responsive interface |
 | Authentication | Supabase Auth | Accounts and sessions |
 | Database | PostgreSQL / Supabase | Per-user synchronized data |
-| Files | Private Supabase Storage | Per-account profile photos |
+| Files | Private Supabase Storage | Account-isolated profile photos |
 | Local persistence | `localStorage` | Unfinished purchase per user/browser |
 | API | Vercel Functions + Node.js | Auxiliary authentication and feedback |
-| Email verification | EmailJS | Verification-code delivery |
+| Verification email | EmailJS | Verification-code delivery |
 | Feedback | Resend | Help Center message delivery |
 | Quality | Oxlint + Vitest + Node Test + GitHub Actions | Linting, tests and builds |
 | Hosting | Vercel | SPA and serverless functions |
