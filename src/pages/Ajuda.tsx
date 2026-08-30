@@ -72,6 +72,7 @@ const PASSOS_GUIA: PassoGuia[] = [
 ];
 
 const PERGUNTAS = [
+  { pergunta: 'Por que preciso estar conectado a uma conta para usar o site?', resposta: 'A conta é necessária para manter suas listas, compras e histórico vinculados ao seu perfil. Assim, suas informações podem ser salvas e sincronizadas com segurança, evitando que você perca seus dados ao trocar de dispositivo ou fechar o navegador.' },
   { pergunta: 'Como começo uma nova lista de compras?', resposta: 'Entre em Lista, preencha produto, categoria, quantidade e medida, adicione os itens e depois use Salvar Lista.' },
   { pergunta: 'Posso adicionar um produto que não aparece nas sugestões?', resposta: 'Sim. As sugestões servem para agilizar o preenchimento. Você pode digitar outro nome normalmente e escolher a categoria desejada.' },
   { pergunta: 'Como escolho entre unidade e quilo?', resposta: 'No formulário, use o switch de Medida. O ícone 📦 indica unidade e ⚖️ indica quilo. Em quilos, a quantidade usa três casas decimais.' },
