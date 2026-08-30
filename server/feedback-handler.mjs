@@ -66,7 +66,6 @@ export function createFeedbackHandler({ env = process.env, fetchImpl = fetch } =
       const tipo = textoSeguro(body?.tipo || 'Teste', 40);
       const mensagem = textoSeguro(body?.mensagem, 5000);
       const emailUsuario = textoSeguro(body?.email, 254);
-      const pagina = textoSeguro(body?.pagina, 500);
       const navegador = textoSeguro(body?.navegador, 500);
 
       if (!mensagem) {
@@ -77,7 +76,6 @@ export function createFeedbackHandler({ env = process.env, fetchImpl = fetch } =
       const texto = [
         `Tipo: ${tipo}`,
         emailUsuario ? `E-mail do usuário: ${emailUsuario}` : null,
-        pagina ? `Página: ${pagina}` : null,
         navegador ? `Navegador: ${navegador}` : null,
         `Data: ${new Date().toISOString()}`,
         '',
