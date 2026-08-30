@@ -170,9 +170,9 @@ export function Header() {
                   💡 Ajuda
                 </Link>
                 <a
-                  href="#"
+                  href="https://marcuscamargo-portifolio.vercel.app/"
                   className="item-dropdown"
-                  onClick={(event) => event.preventDefault()}
+                  onClick={() => setDropdownAberto(false)}
                 >
                   🌐 Sobre
                 </a>
