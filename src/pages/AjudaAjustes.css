@@ -246,6 +246,58 @@
   font-size: 6.5px;
 }
 
+/* Centralização óptica dos símbolos circulares do FAQ e do guia. */
+.ajuda-faq-sinal {
+  display: grid;
+  padding: 0;
+  font-size: 0;
+  line-height: 1;
+  place-items: center;
+}
+
+.ajuda-faq-sinal::before {
+  content: '+';
+  display: grid;
+  width: 100%;
+  height: 100%;
+  font-family: Arial, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  place-items: center;
+}
+
+.ajuda-faq-item.aberta .ajuda-faq-sinal::before {
+  content: '−';
+}
+
+.ajuda-guia-seta {
+  padding: 0;
+  font-size: 0;
+  line-height: 1;
+}
+
+.ajuda-guia-seta::before {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  font-family: Arial, sans-serif;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+  place-items: center;
+}
+
+.ajuda-guia-seta--esquerda::before {
+  content: '‹';
+  transform: translateX(-1px);
+}
+
+.ajuda-guia-seta--direita::before {
+  content: '›';
+  transform: translateX(1px);
+}
+
 @media (max-width: 480px) {
   .ajuda-cena-salvar .ajuda-lista-cabecalho {
     grid-template-columns: auto minmax(100px, 1fr) auto;
