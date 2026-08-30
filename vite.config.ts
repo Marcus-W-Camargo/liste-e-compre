@@ -20,8 +20,8 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     resolve: {
       alias: [
-        { find: /\/assets\/titulo\.png$/, replacement: logoNovo },
-        { find: /\/assets\/background\.(?:jpg|jpeg)$/, replacement: backgroundNovo },
+        { find: /^.*\/assets\/titulo\.png$/, replacement: logoNovo },
+        { find: /^.*\/assets\/background\.(?:jpg|jpeg)$/, replacement: backgroundNovo },
       ],
     },
     server: {
