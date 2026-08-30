@@ -1,0 +1,310 @@
+/* Ajustes pontuais do guia solicitados após revisão visual. */
+
+/* Passo 4: aproxima a lista salva da estrutura real de ListaItens + Item. */
+.ajuda-cena-salvar .ajuda-lista-card-real {
+  width: 92%;
+  padding: 15px;
+  border-radius: 20px;
+  background: #fff;
+}
+
+.ajuda-cena-salvar .ajuda-lista-cabecalho {
+  display: grid;
+  grid-template-columns: auto 132px auto;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ajuda-cena-salvar .ajuda-lista-cabecalho strong {
+  font-size: 11px;
+}
+
+.ajuda-cena-salvar .ajuda-lista-cabecalho::after {
+  content: '📋 Geral (Todos)  ▾';
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 31px;
+  padding: 0 8px;
+  border: 2px solid #1a263b;
+  border-radius: 16px;
+  background: #fff;
+  color: #1a263b;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.ajuda-cena-salvar .ajuda-lista-cabecalho span {
+  justify-self: end;
+  padding: 3px 7px;
+  border-radius: 10px;
+  background: #f7501b;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.ajuda-cena-salvar .ajuda-item-lista {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 54px 52px 18px;
+  align-items: center;
+  gap: 6px;
+  min-height: 45px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 72%);
+}
+
+.ajuda-cena-salvar .ajuda-item-lista + .ajuda-item-lista {
+  margin-top: 5px;
+}
+
+.ajuda-cena-salvar .ajuda-item-lista:nth-of-type(even) {
+  background: rgb(214 224 236 / 64%);
+}
+
+.ajuda-cena-salvar .ajuda-item-lista > span {
+  align-self: start;
+  padding-top: 3px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.ajuda-cena-salvar .ajuda-item-lista > span::after {
+  display: block;
+  margin-top: 2px;
+  color: #f7501b;
+  font-size: 6px;
+  font-weight: 700;
+}
+
+.ajuda-cena-salvar .ajuda-item-lista:nth-of-type(2) > span::after,
+.ajuda-cena-salvar .ajuda-item-lista:nth-of-type(3) > span::after {
+  content: '🍞 Mercearia';
+}
+
+.ajuda-cena-salvar .ajuda-item-lista:nth-of-type(4) > span::after {
+  content: '🍎 Hortifrúti';
+}
+
+.ajuda-cena-salvar .ajuda-item-lista > strong {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 29px;
+  padding: 0 5px;
+  border: 2px solid #1a263b;
+  border-radius: 9px;
+  background: #fff;
+  font-size: 8px;
+  text-align: center;
+}
+
+.ajuda-cena-salvar .ajuda-item-lista::before {
+  content: '📦';
+  grid-column: 3;
+  grid-row: 1;
+  display: grid;
+  width: 46px;
+  height: 24px;
+  border: 1.5px solid #1a263b;
+  border-radius: 50px;
+  background: #f7501b;
+  font-size: 9px;
+  place-items: center start;
+  padding-left: 5px;
+}
+
+.ajuda-cena-salvar .ajuda-item-lista:nth-of-type(4)::before {
+  content: '⚖️';
+  place-items: center end;
+  padding-right: 5px;
+  padding-left: 0;
+}
+
+.ajuda-cena-salvar .ajuda-item-lista::after {
+  content: '🗑️';
+  grid-column: 4;
+  grid-row: 1;
+  font-size: 10px;
+  text-align: center;
+}
+
+.ajuda-cena-salvar .ajuda-salvar-wrapper {
+  margin-top: 11px;
+}
+
+.ajuda-cena-salvar .ajuda-salvar-real::before {
+  content: '💾 ';
+}
+
+/* Passo 7: mantém os valores matematicamente coerentes com a lógica da compra. */
+.ajuda-compra-real .ajuda-topo-compra-real > span {
+  font-size: 0;
+}
+
+.ajuda-compra-real .ajuda-topo-compra-real > span::before {
+  background: conic-gradient(#f7501b 100%, #d7e0ea 0);
+}
+
+.ajuda-compra-real .ajuda-topo-compra-real > span::after {
+  width: 11px;
+  height: 11px;
+}
+
+.ajuda-compra-real .ajuda-topo-compra-real > span {
+  min-width: 78px;
+}
+
+.ajuda-compra-real .ajuda-topo-compra-real > span::marker {
+  content: '';
+}
+
+.ajuda-compra-real .ajuda-topo-compra-real > span {
+  color: transparent;
+}
+
+.ajuda-compra-real .ajuda-topo-compra-real > span::after {
+  color: transparent;
+}
+
+.ajuda-compra-real .ajuda-topo-compra-real > span {
+  position: relative;
+}
+
+.ajuda-compra-real .ajuda-topo-compra-real > span::before {
+  box-shadow: 28px 0 0 -20px transparent;
+}
+
+.ajuda-compra-real .ajuda-topo-compra-real > span {
+  text-indent: -9999px;
+}
+
+.ajuda-compra-real .ajuda-topo-compra-real > span::after {
+  text-indent: 0;
+}
+
+.ajuda-compra-real .ajuda-topo-compra-real > span {
+  overflow: visible;
+}
+
+.ajuda-compra-real .ajuda-topo-compra-real > span::before {
+  text-indent: 0;
+}
+
+.ajuda-compra-real .ajuda-topo-compra-real > span {
+  white-space: nowrap;
+}
+
+.ajuda-compra-real .ajuda-topo-compra-real > span {
+  padding-right: 52px;
+}
+
+.ajuda-compra-real .ajuda-topo-compra-real > span::after {
+  content: '100% concluída';
+  position: absolute;
+  top: 50%;
+  left: 27px;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  color: #f7501b;
+  font-size: 8px;
+  font-weight: 800;
+  transform: translateY(-50%);
+}
+
+.ajuda-compra-real .ajuda-topo-compra-real > b {
+  font-size: 0;
+}
+
+.ajuda-compra-real .ajuda-topo-compra-real > b::after {
+  content: 'Total parcial: R$ 57,95';
+  font-size: 8px;
+}
+
+.ajuda-compra-real .ajuda-linha-compra-real.par .ajuda-check-real {
+  border-color: #f7501b;
+  background: #f7501b;
+  color: #fff;
+}
+
+.ajuda-compra-real .ajuda-linha-compra-real.par .ajuda-check-real::after {
+  content: '✓';
+}
+
+.ajuda-compra-real .ajuda-linha-compra-real.par > b {
+  font-size: 0;
+}
+
+.ajuda-compra-real .ajuda-linha-compra-real.par > b::after {
+  content: 'R$ 8,15';
+  font-size: 6.5px;
+}
+
+/* Centralização óptica dos símbolos circulares do FAQ e do guia. */
+.ajuda-faq-sinal {
+  display: grid;
+  padding: 0;
+  font-size: 0;
+  line-height: 1;
+  place-items: center;
+}
+
+.ajuda-faq-sinal::before {
+  content: '+';
+  display: grid;
+  width: 100%;
+  height: 100%;
+  font-family: Arial, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  place-items: center;
+}
+
+.ajuda-faq-item.aberta .ajuda-faq-sinal::before {
+  content: '−';
+}
+
+.ajuda-guia-seta {
+  padding: 0;
+  font-size: 0;
+  line-height: 1;
+}
+
+.ajuda-guia-seta::before {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  font-family: Arial, sans-serif;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+  place-items: center;
+}
+
+.ajuda-guia-seta--esquerda::before {
+  content: '‹';
+  transform: translateX(-1px);
+}
+
+.ajuda-guia-seta--direita::before {
+  content: '›';
+  transform: translateX(1px);
+}
+
+@media (max-width: 480px) {
+  .ajuda-cena-salvar .ajuda-lista-cabecalho {
+    grid-template-columns: auto minmax(100px, 1fr) auto;
+  }
+
+  .ajuda-cena-salvar .ajuda-item-lista {
+    grid-template-columns: minmax(0,1fr) 48px 43px 16px;
+    gap: 3px;
+  }
+}

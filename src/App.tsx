@@ -6,20 +6,13 @@ import { Compras } from './pages/Compras';
 import { ComprasSessao } from './pages/ComprasSessao';
 import { HistoricoCompras } from './pages/HistoricoCompras';
 import { Perfil } from './pages/Perfil';
+import { Ajuda } from './pages/Ajuda';
 import { Header } from './components/Header';
 import { CloudAccess, CloudStatus } from './components/CloudAccess';
 import { useDesktopKeyboardNavigation } from './hooks/useDesktopKeyboardNavigation';
 import './App.css';
-
-function Placeholder({ titulo }: { titulo: string }) {
-  return (
-    <div className="pagina-placeholder">
-      <h1>{titulo}</h1>
-      <p>Página em migração — em breve.</p>
-      <a href="/">← Voltar para a Home</a>
-    </div>
-  );
-}
+import './pages/AjudaAjustes.css';
+import './pages/AjudaFaqLeitura.css';
 
 function Rodape() {
   return (
@@ -54,7 +47,7 @@ function App() {
               <Route path="/compre/:listaId" element={<ComprasSessao />} />
               <Route path="/historico" element={<HistoricoCompras />} />
               <Route path="/perfil" element={<Perfil />} />
-              <Route path="/ajuda" element={<Placeholder titulo="Ajuda" />} />
+              <Route path="/ajuda" element={<Ajuda />} />
             </Route>
           </Routes>
         </div>

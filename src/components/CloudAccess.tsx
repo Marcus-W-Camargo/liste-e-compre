@@ -1,11 +1,12 @@
 import { useEffect, useSyncExternalStore } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { cloud } from '../services/cloudData';
 import { NavigationGuide } from './NavigationGuide';
 import './CloudAccess.css';
 export function CloudAccess() {
   const { logado, carregando, id, email } = useAuth();
+  const location = useLocation();
   const state = useSyncExternalStore(cloud.subscribe, cloud.getSnapshot);
   useEffect(() => {
     if (logado) void cloud.connect(id, email).catch(() => {});
@@ -20,7 +21,9 @@ export function CloudAccess() {
   if (state.owner !== id || ['idle', 'loading'].includes(state.status))
     return (
       <p className="cloud-loading" role="status">
-        Carregando suas listas…
+        {location.pathname === '/ajuda'
+          ? 'Carregando a Central de Ajuda…'
+          : 'Carregando suas listas…'}
       </p>
     );
   if (state.status === 'error' && !state.dirty)
