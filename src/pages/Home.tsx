@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../hooks/useAuth';
 import { Modal } from '../components/Modal';
-import tituloImg from '../assets/titulo.png';
+import tituloImg from '../assets/liste-&-compre.png';
 import './Home.css';
 
 export function Home() {
