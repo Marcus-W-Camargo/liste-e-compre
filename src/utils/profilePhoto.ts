@@ -3,6 +3,7 @@ import { obterSupabase } from '../config/supabase';
 const BALDE_FOTOS_PERFIL = 'profile-photos';
 const PREFIXO_FOTO_PERFIL_LOCAL = 'liste-e-compre:foto-perfil:v1:';
 const PREFIXO_URL_FOTO_PERFIL = 'liste-e-compre:url-foto-perfil:v1:';
+const EVENTO_FOTO_PERFIL_ATUALIZADA = 'liste-e-compre:foto-perfil-atualizada';
 const TAMANHO_MAXIMO_FOTO_SINCRONIZADA = 200 * 1024;
 const TAMANHO_MAXIMO_LADO = 512;
 const DURACAO_URL_ASSINADA = 24 * 60 * 60;
@@ -40,6 +41,13 @@ function chaveUrlFotoPerfil(usuarioId: string): string {
 function fotoNaoEncontrada(erro: ErroStorage): boolean {
   return Number(erro.statusCode) === 404 ||
     /not found|object not found/i.test(erro.message ?? '');
+}
+
+function emitirFotoPerfilAtualizada(usuarioId: string): void {
+  if (!usuarioId || typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(EVENTO_FOTO_PERFIL_ATUALIZADA, {
+    detail: { usuarioId },
+  }));
 }
 
 function removerUrlFotoPerfilCache(usuarioId: string): void {
@@ -211,6 +219,7 @@ export async function salvarFotoPerfil(
 
   if (error) throw new Error('Não foi possível sincronizar a foto da sua conta.');
   removerUrlFotoPerfilCache(usuarioId);
+  emitirFotoPerfilAtualizada(usuarioId);
 }
 
 export async function removerFotoPerfil(usuarioId: string): Promise<void> {
@@ -225,4 +234,7 @@ export async function removerFotoPerfil(usuarioId: string): Promise<void> {
   }
 
   removerUrlFotoPerfilCache(usuarioId);
+  emitirFotoPerfilAtualizada(usuarioId);
 }
+
+export const EVENTO_ATUALIZACAO_FOTO_PERFIL = EVENTO_FOTO_PERFIL_ATUALIZADA;
