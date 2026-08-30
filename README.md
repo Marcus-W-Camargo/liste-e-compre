@@ -28,6 +28,22 @@ Listas, rascunhos e compras concluídas são sincronizados por conta. A **compra
 
 ---
 
+### Diferenciais
+
+O **Liste & Compre** foi pensado para acompanhar uma compra real do planejamento ao fechamento, indo além de uma checklist convencional.
+
+- **Planejamento e execução no mesmo fluxo:** a lista criada antes da compra se transforma na própria tela de acompanhamento durante a compra.
+- **Valores em tempo real:** preços, quantidades e totais são atualizados conforme os produtos são adicionados ao carrinho.
+- **Unidades e peso:** suporte a produtos por unidade e quilograma, incluindo quantidades decimais para itens pesados.
+- **Controle de extras:** produtos não planejados podem ser adicionados durante a compra e permanecem identificados no Histórico.
+- **Retomada da compra:** uma compra ainda não finalizada fica preservada localmente no navegador para continuar depois no mesmo dispositivo.
+- **Histórico reutilizável:** além de consultar compras anteriores, é possível visualizar seus itens e recriar uma nova lista a partir de uma compra já concluída.
+- **Experiência por conta:** listas, rascunhos, histórico, perfil e orientações são separados por usuário.
+- **Desktop e mobile:** a interface combina atalhos de teclado no computador com navegação por gestos em dispositivos móveis.
+- **Central de Ajuda integrada:** guia visual, FAQ e envio de feedback fazem parte da própria aplicação.
+
+---
+
 ### Fluxo principal
 
 1. Cadastro ou login em uma conta autenticada.
@@ -122,10 +138,7 @@ Listas, rascunhos e compras concluídas são sincronizados por conta. A **compra
 - Visualização dos itens de uma compra antiga em uma única lista, agrupada por categoria.
 - Ação **Refazer a mesma compra**, que recria os itens de uma compra anterior na página de criação de lista sem reutilizar preços antigos.
 - Confirmação antes de substituir uma lista que já esteja em criação.
-- Retorno preservando o ponto de origem:
-  - Catálogo → Histórico → Catálogo.
-  - Compra em andamento → Histórico → mesma compra.
-  - Acesso direto → Catálogo.
+- Retorno preservando o ponto de origem: Catálogo → Histórico → Catálogo; compra em andamento → Histórico → mesma compra; acesso direto → Catálogo.
 
 #### Central de Ajuda e feedback
 
@@ -190,9 +203,13 @@ Listas, rascunhos e compras concluídas são sincronizados por conta. A **compra
 
 ---
 
-### Configuração e execução local
+### Código-fonte, execução local e licença
 
-Requisitos: **Node.js 24 recomendado**, npm, projeto Supabase e credenciais dos serviços de e-mail usados pela aplicação.
+O **Liste & Compre** foi desenvolvido como **protótipo, projeto de estudo e peça de portfólio**, sem finalidade comercial direta. O código-fonte pode ser consultado, estudado e reutilizado nos termos da **Licença MIT** incluída neste repositório.
+
+Consulte [`LICENSE`](LICENSE) para o texto original em inglês e [`LICENSE.pt-br.md`](LICENSE.pt-br.md) para a tradução em português. O aviso de copyright e os termos da licença devem ser preservados conforme previsto pela própria MIT.
+
+Para quem deseja estudar ou executar o projeto localmente, os requisitos são: **Node.js 24 recomendado**, npm, um projeto Supabase e credenciais dos serviços de e-mail utilizados pela aplicação.
 
 ```bash
 git clone https://github.com/Marcus-W-Camargo/liste-e-compre.git
@@ -284,6 +301,22 @@ Desenvolvido por [Marcus Camargo](https://github.com/Marcus-W-Camargo) como proj
 The application is a SPA built with **React 19 + TypeScript 6 + Vite 8**, backed by **Supabase Auth, PostgreSQL and Storage**, serverless functions on **Vercel**, **EmailJS** for verification codes and **Resend** for the Help Center feedback channel.
 
 Saved lists, drafts and completed purchases are synchronized by account. An **unfinished shopping session remains only in the current browser**, stored in `localStorage` and isolated by user until completion. This avoids unnecessary synchronization during an in-person shopping session and keeps same-device recovery straightforward.
+
+---
+
+### Key differentiators
+
+**Liste & Compre** was designed to support a real shopping trip from planning through completion, rather than acting only as a conventional checklist.
+
+- **Planning and shopping in one flow:** the list prepared beforehand becomes the live shopping interface.
+- **Real-time values:** prices, quantities and totals update as products are added to the cart.
+- **Units and weight:** products can be tracked by unit or kilogram, including decimal quantities for weighted items.
+- **Extra-item tracking:** unplanned products can be added during shopping and remain identified in History.
+- **Shopping-session recovery:** an unfinished purchase is kept locally so it can be resumed later in the same browser/device.
+- **Reusable History:** users can inspect previous purchases and recreate a new editable list from a completed purchase.
+- **Account-based experience:** lists, drafts, History, profile data and guidance are separated per user.
+- **Desktop and mobile:** the interface combines keyboard navigation on desktop with gesture navigation on mobile devices.
+- **Integrated Help Center:** the visual guide, FAQ and feedback channel are part of the application itself.
 
 ---
 
@@ -379,12 +412,9 @@ Saved lists, drafts and completed purchases are synchronized by account. An **un
 - Accumulated spending total displayed at the top of the page.
 - Quantity, price and planned/extra origin preserved for each item.
 - Previous purchase items can be viewed in one list grouped by category.
-- **Repeat the same purchase** action recreates a previous purchase as a new editable list without copying old prices.
+- **Repeat the same purchase** recreates a previous purchase as a new editable list without copying old prices.
 - Confirmation before replacing a list that is already being created.
-- Origin-aware return navigation:
-  - Catalog → History → Catalog.
-  - Active shopping session → History → same session.
-  - Direct access → Catalog.
+- Origin-aware return navigation between Catalog, History and the active shopping session.
 
 #### Help Center and feedback
 
@@ -449,9 +479,13 @@ Saved lists, drafts and completed purchases are synchronized by account. An **un
 
 ---
 
-### Local setup
+### Source code, local setup and license
 
-Requirements: **Node.js 24 recommended**, npm, a Supabase project and credentials for the email services used by the application.
+**Liste & Compre** was developed as a **prototype, study project and portfolio piece**, with no direct commercial purpose. Its source code can be reviewed, studied and reused under the **MIT License** included in this repository.
+
+See [`LICENSE`](LICENSE) for the original English license and [`LICENSE.pt-br.md`](LICENSE.pt-br.md) for the Portuguese translation. The copyright notice and license terms must be preserved as required by the MIT License.
+
+To study or run the project locally, the requirements are: **Node.js 24 recommended**, npm, a Supabase project and credentials for the email services used by the application.
 
 ```bash
 git clone https://github.com/Marcus-W-Camargo/liste-e-compre.git
