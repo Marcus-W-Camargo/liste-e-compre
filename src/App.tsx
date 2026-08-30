@@ -14,6 +14,7 @@ import { useDesktopKeyboardNavigation } from './hooks/useDesktopKeyboardNavigati
 import './App.css';
 import './pages/AjudaAjustes.css';
 import './pages/AjudaFaqLeitura.css';
+import './pages/AjudaHierarquia.css';
 
 function Rodape() {
   return (
