@@ -1,5 +1,6 @@
 const DESTINATARIO_PADRAO = 'listeecompre@gmail.com';
 const REMETENTE_TESTE = 'Liste & Compre <onboarding@resend.dev>';
+const ORIGEM_PRODUCAO = 'https://listeecompre.vercel.app';
 
 function responder(res, status, payload) {
   res.statusCode = status;
@@ -33,12 +34,12 @@ function origemPermitida(req, env) {
   const origem = req.headers.origin;
   if (typeof origem !== 'string') return false;
 
-  const permitidas = new Set();
-  if (env.APP_ORIGIN) permitidas.add(env.APP_ORIGIN);
+  const permitidas = new Set([ORIGEM_PRODUCAO]);
+  if (env.APP_ORIGIN) permitidas.add(env.APP_ORIGIN.replace(/\/$/, ''));
   if (env.VERCEL_URL) permitidas.add(`https://${env.VERCEL_URL}`);
   if (env.VERCEL_BRANCH_URL) permitidas.add(`https://${env.VERCEL_BRANCH_URL}`);
 
-  return permitidas.has(origem);
+  return permitidas.has(origem.replace(/\/$/, ''));
 }
 
 export function createFeedbackHandler({ env = process.env, fetchImpl = fetch } = {}) {
