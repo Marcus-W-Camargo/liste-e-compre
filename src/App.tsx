@@ -12,6 +12,7 @@ import { CloudAccess, CloudStatus } from './components/CloudAccess';
 import { useDesktopKeyboardNavigation } from './hooks/useDesktopKeyboardNavigation';
 import './App.css';
 import './pages/AjudaAjustes.css';
+import './pages/AjudaFaqLeitura.css';
 
 function Rodape() {
   return (
