@@ -8,6 +8,7 @@ import { HistoricoCompras } from './pages/HistoricoCompras';
 import { Perfil } from './pages/Perfil';
 import { Ajuda } from './pages/Ajuda';
 import { Header } from './components/Header';
+import { AjudaFeedback } from './components/AjudaFeedback';
 import { CloudAccess, CloudStatus } from './components/CloudAccess';
 import { useDesktopKeyboardNavigation } from './hooks/useDesktopKeyboardNavigation';
 import './App.css';
@@ -30,6 +31,15 @@ function NavegacaoDesktop() {
   return null;
 }
 
+function PaginaAjuda() {
+  return (
+    <>
+      <Ajuda />
+      <AjudaFeedback />
+    </>
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -47,7 +57,7 @@ function App() {
               <Route path="/compre/:listaId" element={<ComprasSessao />} />
               <Route path="/historico" element={<HistoricoCompras />} />
               <Route path="/perfil" element={<Perfil />} />
-              <Route path="/ajuda" element={<Ajuda />} />
+              <Route path="/ajuda" element={<PaginaAjuda />} />
             </Route>
           </Routes>
         </div>
