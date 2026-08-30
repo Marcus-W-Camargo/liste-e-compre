@@ -10,7 +10,7 @@
 [![Vercel](https://img.shields.io/badge/Vercel-Deploy-000000?logo=vercel&logoColor=white)](https://vercel.com/)
 [![CI](https://github.com/Marcus-W-Camargo/liste-e-compre/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Marcus-W-Camargo/liste-e-compre/actions/workflows/ci.yml)
 
-🌐 **Acessar / Open:** [liste-e-compre.vercel.app](https://liste-e-compre.vercel.app/)
+🌐 **Acessar / Open:** [listeecompre.vercel.app](https://listeecompre.vercel.app/)
 
 ---
 
@@ -227,7 +227,7 @@ npm run lint
 - Saída: `dist`
 - Runtime Node.js: compatível com `>=22.12.0` e recomendado em **24.x**
 - Funções serverless: autenticação auxiliar e feedback
-- Produção: [liste-e-compre.vercel.app](https://liste-e-compre.vercel.app/)
+- Produção: [listeecompre.vercel.app](https://listeecompre.vercel.app/)
 
 ---
 
@@ -486,7 +486,7 @@ npm run lint
 - Output directory: `dist`
 - Node.js runtime: compatible with `>=22.12.0`, **24.x** recommended
 - Serverless functions: auxiliary authentication and feedback
-- Production: [liste-e-compre.vercel.app](https://liste-e-compre.vercel.app/)
+- Production: [listeecompre.vercel.app](https://listeecompre.vercel.app/)
 
 ---
 
