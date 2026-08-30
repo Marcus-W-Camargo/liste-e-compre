@@ -4,18 +4,59 @@ import './Header.css';
 import { Link, useLocation } from 'react-router-dom';
 import logoTitulo from '../assets/liste-&-compre.png';
 import { useAuth } from '../hooks/useAuth';
+import {
+  carregarFotoPerfil,
+  carregarFotoPerfilLocal,
+  EVENTO_ATUALIZACAO_FOTO_PERFIL,
+} from '../utils/profilePhoto';
 
 export function Header() {
-  const { logado, nome, logout, atualizarSessao } = useAuth();
+  const { id, logado, nome, logout, atualizarSessao } = useAuth();
   const location = useLocation();
   const [dropdownAberto, setDropdownAberto] = useState(false);
   const [modalLogout, setModalLogout] = useState(false);
   const [erroLogout, setErroLogout] = useState('');
   const [saindo, setSaindo] = useState(false);
+  const [fotoPerfil, setFotoPerfil] = useState<string | null>(() =>
+    id ? carregarFotoPerfilLocal(id) : null,
+  );
 
   useLayoutEffect(() => {
     atualizarSessao();
   }, [atualizarSessao, location.pathname]);
+
+  useEffect(() => {
+    if (!logado || !id) {
+      setFotoPerfil(null);
+      return;
+    }
+
+    let ativo = true;
+
+    async function atualizarFoto() {
+      try {
+        const fotoLocal = carregarFotoPerfilLocal(id);
+        if (fotoLocal && ativo) setFotoPerfil(fotoLocal);
+        const fotoSincronizada = await carregarFotoPerfil(id);
+        if (ativo) setFotoPerfil(fotoSincronizada);
+      } catch {
+        if (ativo && !carregarFotoPerfilLocal(id)) setFotoPerfil(null);
+      }
+    }
+
+    void atualizarFoto();
+
+    function aoAtualizarFoto(evento: Event) {
+      const detalhe = (evento as CustomEvent<{ usuarioId?: string }>).detail;
+      if (detalhe?.usuarioId === id) void atualizarFoto();
+    }
+
+    window.addEventListener(EVENTO_ATUALIZACAO_FOTO_PERFIL, aoAtualizarFoto);
+    return () => {
+      ativo = false;
+      window.removeEventListener(EVENTO_ATUALIZACAO_FOTO_PERFIL, aoAtualizarFoto);
+    };
+  }, [id, logado]);
 
   useEffect(() => {
     if (!dropdownAberto) return;
@@ -78,7 +119,7 @@ export function Header() {
 
           <button
             type="button"
-            className={`icone-usuario ${dropdownAberto ? 'menu-ativo' : ''}`}
+            className={`icone-usuario ${fotoPerfil ? 'tem-foto-perfil' : ''} ${dropdownAberto ? 'menu-ativo' : ''}`}
             onClick={(event) => {
               event.stopPropagation();
               if (logado) setDropdownAberto((atual) => !atual);
@@ -86,16 +127,25 @@ export function Header() {
             aria-label="Menu da conta"
             aria-expanded={logado ? dropdownAberto : undefined}
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z"
-                fill="#1a263b"
+            {fotoPerfil ? (
+              <img
+                src={fotoPerfil}
+                alt=""
+                className="foto-usuario-topo"
+                aria-hidden="true"
               />
-            </svg>
+            ) : (
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z"
+                  fill="#1a263b"
+                />
+              </svg>
+            )}
           </button>
 
           {logado && dropdownAberto && (
