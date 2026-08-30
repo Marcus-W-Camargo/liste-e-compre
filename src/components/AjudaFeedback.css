@@ -96,6 +96,8 @@
   display: grid;
   place-items: center;
   padding: 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: rgba(16, 25, 40, 0.58);
   backdrop-filter: blur(5px);
 }
@@ -103,7 +105,7 @@
 .ajuda-feedback-modal {
   position: relative;
   width: min(100%, 590px);
-  max-height: min(760px, calc(100vh - 34px));
+  max-height: min(760px, calc(100dvh - 48px));
   overflow: auto;
   padding: 30px;
   border-radius: 24px;
@@ -113,10 +115,11 @@
 
 .ajuda-feedback-fechar {
   position: absolute;
+  z-index: 5;
   top: 14px;
   right: 14px;
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
   display: grid;
   place-items: center;
   padding: 0;
@@ -124,9 +127,17 @@
   border-radius: 50%;
   background: #f2f4f7;
   color: #344054;
-  font-size: 1.6rem;
+  font-size: 1.75rem;
+  font-weight: 500;
   line-height: 1;
   cursor: pointer;
+}
+
+.ajuda-feedback-fechar:hover,
+.ajuda-feedback-fechar:focus-visible {
+  background: #e9edf3;
+  outline: 2px solid #ef7e2a;
+  outline-offset: 2px;
 }
 
 .ajuda-feedback-modal-icone {
@@ -275,14 +286,40 @@
   }
 
   .ajuda-feedback-overlay {
-    padding: 12px;
-    align-items: end;
+    top: 72px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: auto;
+    align-items: start;
+    justify-items: center;
+    padding: 12px 12px max(16px, env(safe-area-inset-bottom));
   }
 
   .ajuda-feedback-modal {
     width: 100%;
-    max-height: 86vh;
-    padding: 24px 18px 20px;
-    border-radius: 22px 22px 12px 12px;
+    max-height: calc(100dvh - 96px);
+    margin: 0;
+    padding: 22px 18px 20px;
+    border-radius: 20px;
+  }
+
+  .ajuda-feedback-fechar {
+    position: sticky;
+    top: 0;
+    float: right;
+    margin: -6px -4px 4px 10px;
+  }
+
+  .ajuda-feedback-modal-icone {
+    margin-top: 2px;
+  }
+
+  .ajuda-feedback-modal h2 {
+    margin-right: 0;
+  }
+
+  .ajuda-feedback-modal textarea {
+    min-height: 130px;
   }
 }
