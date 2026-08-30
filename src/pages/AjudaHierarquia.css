@@ -1,6 +1,7 @@
 .ajuda-cabecalho > .ajuda-kicker {
-  margin-bottom: 8px;
-  font-size: clamp(2rem, 5vw, 2.8rem);
+  margin-bottom: 14px;
+  font-size: clamp(2.1rem, 5.2vw, 2.95rem);
+  font-weight: 650;
   line-height: 1.05;
   letter-spacing: 0;
   text-transform: none;
@@ -19,7 +20,9 @@
 
 @media (max-width: 600px) {
   .ajuda-cabecalho > .ajuda-kicker {
-    font-size: clamp(1.8rem, 9vw, 2.35rem);
+    margin-bottom: 12px;
+    font-size: clamp(1.9rem, 9.3vw, 2.45rem);
+    font-weight: 650;
   }
 
   .ajuda-cabecalho > h1 {
