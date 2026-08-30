@@ -161,6 +161,7 @@ O **Liste & Compre** foi pensado para acompanhar uma compra real do planejamento
 - Layout da compra compactado para melhor aproveitamento da largura em telas pequenas.
 - Foto do usuário integrada ao menu de conta.
 - Favicon próprio da aplicação.
+- Item **🌐 Sobre** no menu da conta integrado ao site oficial de portfólio de [Marcus Camargo](https://marcuscamargo-portfolio.vercel.app/).
 - **Mobile:** navegação horizontal por swipe entre as telas principais.
 - O swipe pode começar sobre cards, botões e áreas vazias; campos editáveis são protegidos.
 - **Desktop:** `A` ou `←` navega para a esquerda; `D` ou `→` navega para a direita.
@@ -277,7 +278,7 @@ As propostas abaixo representam trabalho futuro e não possuem prazo de entrega 
 - [ ] **Aprofundar a análise de gastos extras:** comparar itens planejados e adicionados durante a compra, destacando com mais clareza o impacto dos extras no valor final.
 - [ ] **Adicionar gerenciamento de credenciais dentro da Minha Conta:** permitir alteração de senha e evolução segura do fluxo de alteração de e-mail pelo próprio usuário.
 - [ ] **Disponibilizar a interface em inglês:** internacionalizar textos, datas, valores e demais elementos da experiência do usuário.
-- [ ] **Evoluir a presença e descoberta pública do projeto:** aprimorar metadados, SEO e integração do item “Sobre” com a página principal de portfólio.
+- [ ] **Evoluir a presença e descoberta pública do projeto:** aprimorar metadados e SEO para ampliar a indexação e a descoberta pública da aplicação.
 - [ ] **Levar o projeto para um aplicativo de celular:** definir a estratégia de portabilidade/distribuição mobile preservando contas, dados sincronizados e a experiência já responsiva.
 
 > A antiga proposta genérica de “evoluir o Histórico” não aparece mais no Roadmap porque a visualização detalhada dos itens e a ação de refazer uma compra já foram implementadas. As melhorias analíticas continuam listadas separadamente acima.
@@ -286,7 +287,8 @@ As propostas abaixo representam trabalho futuro e não possuem prazo de entrega 
 
 ### Autor
 
-Desenvolvido por [Marcus Camargo](https://github.com/Marcus-W-Camargo) como projeto de estudo, prática de desenvolvimento web e portfólio profissional.
+Desenvolvido por [Marcus Camargo](https://github.com/Marcus-W-Camargo) como projeto de estudo, prática de desenvolvimento web e portfólio profissional.  
+🌐 **Portfólio:** [marcuscamargo-portfolio.vercel.app](https://marcuscamargo-portfolio.vercel.app/)
 
 ---
 
@@ -328,27 +330,27 @@ Saved lists, drafts and completed purchases are synchronized by account. An **un
 4. Open the saved list in **Shopping** and start the purchase.
 5. Record prices, quantities, completed items and extra products.
 6. Keep an unfinished purchase locally for same-browser recovery.
-7. Resolve pending items before completion.
-8. Store the completed purchase in History.
-9. Review previous items or recreate a new list from an earlier purchase.
+7. Handle pending items before completion.
+8. Save the completed purchase to History.
+9. Review previous items or recreate a new editable list from an older purchase.
 
 ---
 
-### Technology stack
+### Technologies
 
 | Layer | Technology | Purpose |
 | --- | --- | --- |
-| UI | React 19 | Components and screens |
-| Language | TypeScript 6 | Typing and development safety |
-| Routing | React Router 7 | SPA navigation |
+| Interface | React 19 | Components and screens |
+| Language | TypeScript 6 | Type safety during development |
+| Routing | React Router 7 | SPA routes and navigation |
 | Build | Vite 8 | Development and production builds |
 | Styling | CSS | Responsive interface |
 | Authentication | Supabase Auth | Accounts and sessions |
 | Database | PostgreSQL / Supabase | Per-user synchronized data |
-| Files | Private Supabase Storage | Account-isolated profile photos |
+| Files | Private Supabase Storage | Per-account profile photos |
 | Local persistence | `localStorage` | Unfinished purchase per user/browser |
 | API | Vercel Functions + Node.js | Auxiliary authentication and feedback |
-| Verification email | EmailJS | Verification-code delivery |
+| Email verification | EmailJS | Verification-code delivery |
 | Feedback | Resend | Help Center message delivery |
 | Quality | Oxlint + Vitest + Node Test + GitHub Actions | Linting, tests and builds |
 | Hosting | Vercel | SPA and serverless functions |
@@ -437,6 +439,7 @@ Saved lists, drafts and completed purchases are synchronized by account. An **un
 - Compact shopping layout for better use of narrow screens.
 - User avatar integrated into the account menu.
 - Custom application favicon.
+- **🌐 About** item in the account menu integrated with [Marcus Camargo's official portfolio](https://marcuscamargo-portfolio.vercel.app/).
 - **Mobile:** horizontal swipe navigation across the main screens.
 - Swipes can start over cards, buttons and empty areas while editable fields remain protected.
 - **Desktop:** `A` or `←` moves left; `D` or `→` moves right.
@@ -553,7 +556,7 @@ The items below represent future work and do not have a committed delivery date.
 - [ ] **Deepen extra-spending analysis:** compare planned products with items added during shopping and make their impact on the final total clearer.
 - [ ] **Add credential management inside My Account:** support password changes and a secure evolution of the self-service email-change flow.
 - [ ] **Provide an English user interface:** internationalize text, dates, currency formatting and the rest of the user experience.
-- [ ] **Improve public discovery and project presence:** enhance metadata, SEO and connect the “About” item to the main portfolio page.
+- [ ] **Improve public discovery and project presence:** enhance metadata and SEO to improve indexing and public discoverability.
 - [ ] **Bring the project to a mobile app:** define a portability/distribution strategy while preserving accounts, synchronized data and the existing responsive experience.
 
 > The former generic “expand History” roadmap item was removed because detailed purchase-item viewing and repeat-purchase actions are already implemented. Future analytical improvements remain listed separately above.
@@ -562,7 +565,8 @@ The items below represent future work and do not have a committed delivery date.
 
 ### Author
 
-Developed by [Marcus Camargo](https://github.com/Marcus-W-Camargo) as a study project, web-development practice and professional portfolio project.
+Developed by [Marcus Camargo](https://github.com/Marcus-W-Camargo) as a study project, web-development practice and professional portfolio project.  
+🌐 **Portfolio:** [marcuscamargo-portfolio.vercel.app](https://marcuscamargo-portfolio.vercel.app/)
 
 ---
 
