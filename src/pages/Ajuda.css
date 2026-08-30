@@ -82,10 +82,10 @@
 .ajuda-quantidade-real b { display: grid; flex: 1; background: #ffebd680; font-size: 8px; place-items: center; }
 .ajuda-quantidade-real b:first-child { border-bottom: 1px solid #1a263b; }
 .ajuda-switch-medida { position: relative; display: block; width: 76px; height: 38px; overflow: hidden; border: 2px solid #1a263b; border-radius: 50px; background: #f7501b; }
-.ajuda-switch-knob { position: absolute; top: 3px; left: 3px; width: 28px; height: 28px; border: 2px solid #1a263b; border-radius: 50%; background: #fff; transition: left .2s ease; }
-.ajuda-switch-icone { position: absolute; top: 50%; right: 9px; font-size: 13px; transform: translateY(-50%); }
+.ajuda-switch-knob { position: absolute; top: 3px; left: 3px; z-index: 2; width: 28px; height: 28px; border: 2px solid #1a263b; border-radius: 50%; background: #fff; transition: left .2s ease; }
+.ajuda-switch-icone { position: absolute; z-index: 3; top: 50%; left: 17px; font-size: 13px; line-height: 1; transform: translate(-50%,-50%); }
 .ajuda-switch-medida.kg .ajuda-switch-knob { left: calc(100% - 31px); }
-.ajuda-switch-medida.kg .ajuda-switch-icone { right: auto; left: 9px; }
+.ajuda-switch-medida.kg .ajuda-switch-icone { left: calc(100% - 17px); }
 .ajuda-botao-enviar-real { display: grid; min-height: 38px; margin-top: 12px; border-radius: 12px; background: #f7501b; color: #fff; font-size: 10px; font-weight: 800; place-items: center; }
 .ajuda-autocomplete { position: absolute; z-index: 8; top: calc(100% + 4px); left: 0; width: 100%; overflow: hidden; border: 2px solid #1a263b; border-radius: 14px; background: #fff; box-shadow: 0 8px 18px rgb(0 0 0 / 16%); }
 .ajuda-autocomplete span { display: block; padding: 7px 10px; color: #1a263b; font-size: 8px; }
@@ -97,7 +97,7 @@
 .ajuda-item-lista { display: flex; align-items: center; justify-content: space-between; min-height: 32px; padding: 6px 10px; border: 2px solid #1a263b; border-radius: 11px; background: #fff; color: #1a263b; font-size: 9px; }
 .ajuda-item-lista + .ajuda-item-lista { margin-top: 6px; }
 .ajuda-salvar-wrapper { position: relative; margin-top: 10px; }
-.ajuda-salvar-real { display: grid; min-height: 36px; border-radius: 12px; background: #1a263b; color: #fff; font-size: 10px; font-weight: 800; place-items: center; }
+.ajuda-salvar-real { display: grid; min-height: 36px; border-radius: 12px; background: #f7501b; color: #fff; font-size: 10px; font-weight: 800; place-items: center; }
 .ajuda-cursor-demo { position: absolute; z-index: 8; width: 22px; height: 22px; opacity: 0; pointer-events: none; }
 .ajuda-cursor-demo::before { position: absolute; top: 0; left: 0; width: 0; height: 0; border-top: 14px solid #1a263b; border-right: 9px solid transparent; border-left: 5px solid transparent; content: ''; transform: rotate(-28deg); }
 .ajuda-cursor-demo i { position: absolute; top: 8px; left: 7px; width: 10px; height: 10px; border: 2px solid #f7501b; border-radius: 50%; opacity: 0; }
@@ -129,11 +129,14 @@
 .ajuda-lista-principal-mini .ajuda-formulario-lista { width: 100%; padding: 11px; }
 .ajuda-lista-principal-mini .ajuda-form-campo label { font-size: 7px; }
 .ajuda-lista-principal-mini .ajuda-form-input, .ajuda-lista-principal-mini .ajuda-select-real, .ajuda-lista-principal-mini .ajuda-quantidade-real { min-height: 30px; font-size: 7px; }
+.ajuda-lista-principal-mini .ajuda-quantidade-real > span { height: 30px; }
 .ajuda-lista-principal-mini .ajuda-form-linha { gap: 4px; }
 .ajuda-lista-principal-mini .ajuda-form-quantidade, .ajuda-lista-principal-mini .ajuda-form-medida { flex-basis: 54px; }
 .ajuda-lista-principal-mini .ajuda-switch-medida { width: 54px; height: 30px; }
-.ajuda-lista-principal-mini .ajuda-switch-knob { width: 22px; height: 22px; }
-.ajuda-lista-principal-mini .ajuda-switch-icone { right: 6px; font-size: 10px; }
+.ajuda-lista-principal-mini .ajuda-switch-knob { top: 2px; left: 2px; width: 22px; height: 22px; }
+.ajuda-lista-principal-mini .ajuda-switch-icone { left: 14px; font-size: 10px; }
+.ajuda-lista-principal-mini .ajuda-switch-medida.kg .ajuda-switch-knob { left: calc(100% - 26px); }
+.ajuda-lista-principal-mini .ajuda-switch-medida.kg .ajuda-switch-icone { left: calc(100% - 14px); }
 
 .ajuda-catalogo-real { position: relative; height: 100%; padding: 24px; }
 .ajuda-catalogo-real h3 { position: relative; margin: 18px 0 34px; color: #f7501b; font-family: Georgia,serif; font-size: 29px; text-align: center; }
@@ -151,32 +154,39 @@
 @keyframes cursor-catalogo { 0%,10% { opacity: 0; transform: translate(32px,-24px); } 20%,38% { opacity: 1; transform: translate(0,0); } 29% { transform: scale(.8); } 40%,100% { opacity: 0; } }
 @keyframes menu-catalogo { 0%,34% { opacity: 0; transform: scale(.98); } 44%,86% { opacity: 1; transform: scale(1); } 94%,100% { opacity: 0; } }
 
-.ajuda-compra-real { height: 100%; padding: 20px 18px; }
-.ajuda-topo-compra-real { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 7px 10px; padding: 0 4px 13px; }
-.ajuda-topo-compra-real > div { display: flex; align-items: center; gap: 6px; }
-.ajuda-topo-compra-real img { width: 31px; }
-.ajuda-topo-compra-real strong { color: #f7501b; font-size: 15px; }
-.ajuda-topo-compra-real > span { color: #f7501b; font-size: 9px; font-weight: 800; }
-.ajuda-topo-compra-real > b { grid-column: 2; font-size: 9px; }
-.ajuda-secao-compra-real { border-radius: 16px; background: rgb(214 225 237 / 88%); }
-.ajuda-secao-titulo { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 16px; background: #88aad8; color: #0b1424; }
-.ajuda-secao-titulo strong { font-size: 12px; }
-.ajuda-secao-titulo span { font-size: 8px; font-weight: 700; }
-.ajuda-linha-compra-real { display: grid; grid-template-columns: 18px 19px minmax(50px,1fr) 74px 79px 53px 58px 16px; align-items: center; gap: 5px; min-height: 43px; padding: 6px 7px; border-radius: 9px; color: #1a263b; }
+.ajuda-compra-real { position: relative; height: calc(100% - 24px); margin: 12px; padding: 17px 14px 14px; border-radius: 24px; background: rgb(214 225 237 / 92%); box-shadow: 0 7px 20px rgb(26 38 59 / 14%); color: #1a263b; }
+.ajuda-compra-real::after { position: absolute; top: 8px; right: 13px; color: #f7501b; content: '×'; font-size: 23px; font-weight: 700; line-height: 1; }
+.ajuda-topo-compra-real { display: grid; grid-template-columns: minmax(0,1fr) auto auto; align-items: center; gap: 7px 13px; padding: 0 25px 14px 3px; }
+.ajuda-topo-compra-real > div { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.ajuda-topo-compra-real img { width: 36px; flex: 0 0 auto; }
+.ajuda-topo-compra-real strong { overflow: hidden; color: #f7501b; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.ajuda-topo-compra-real > span { position: relative; padding-left: 26px; color: #f7501b; font-size: 8px; font-weight: 800; white-space: nowrap; }
+.ajuda-topo-compra-real > span::before { position: absolute; top: 50%; left: 0; width: 21px; height: 21px; border-radius: 50%; background: conic-gradient(#f7501b 50%,#d7e0ea 0); content: ''; transform: translateY(-50%); }
+.ajuda-topo-compra-real > span::after { position: absolute; top: 50%; left: 5px; width: 11px; height: 11px; border-radius: 50%; background: rgb(214 225 237); content: ''; transform: translateY(-50%); }
+.ajuda-topo-compra-real > b { font-size: 8px; white-space: nowrap; }
+.ajuda-secao-compra-real { margin-top: 2px; overflow: hidden; border-radius: 14px; background: transparent; }
+.ajuda-secao-titulo { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; border-radius: 14px; background: #88aad8; color: #0b1424; }
+.ajuda-secao-titulo strong { font-size: 11px; font-weight: 800; }
+.ajuda-secao-titulo span { position: relative; padding-right: 14px; font-size: 7px; font-weight: 600; }
+.ajuda-secao-titulo span::after { position: absolute; top: 50%; right: 0; width: 0; height: 0; border-right: 4px solid transparent; border-bottom: 6px solid #f7501b; border-left: 4px solid transparent; content: ''; transform: translateY(-50%); }
+.ajuda-linha-compra-real { display: grid; grid-template-columns: 16px 19px minmax(46px,1fr) 70px 61px 53px 58px 15px; align-items: center; gap: 4px; min-height: 39px; padding: 5px 5px; border-radius: 8px; color: #1a263b; }
 .ajuda-linha-compra-real.impar { background: rgb(255 255 255 / 72%); }
 .ajuda-linha-compra-real.par { background: rgb(214 224 236 / 78%); }
-.ajuda-check-real { display: grid; width: 17px; height: 17px; border: 2px solid #c5ced8; border-radius: 4px; background: #fff; color: transparent; font-size: 10px; place-items: center; }
+.ajuda-check-real { display: grid; width: 15px; height: 15px; border: 2px solid #c5ced8; border-radius: 4px; background: #fff; color: transparent; font-size: 9px; place-items: center; }
 .ajuda-check-real.marcado { border-color: #f7501b; background: #f7501b; color: #fff; }
-.ajuda-linha-compra-real > strong { overflow: hidden; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
-.ajuda-campo-tracejado { display: flex; align-items: center; min-width: 0; height: 27px; padding: 0 6px; border: 1.5px dashed #1a263b; border-radius: 7px; background: rgb(255 255 255 / 78%); font-size: 6.5px; }
-.ajuda-campo-tracejado b { margin-left: 3px; }
-.ajuda-medida-compra { display: flex; align-items: center; gap: 4px; font-size: 6.5px; }
-.ajuda-medida-compra .ajuda-switch-medida { width: 54px; height: 27px; }
-.ajuda-medida-compra .ajuda-switch-knob { width: 19px; height: 19px; }
-.ajuda-medida-compra .ajuda-switch-medida.kg .ajuda-switch-knob { left: calc(100% - 22px); }
-.ajuda-medida-compra .ajuda-switch-icone { right: 6px; font-size: 9px; }
-.ajuda-medida-compra .ajuda-switch-medida.kg .ajuda-switch-icone { left: 6px; }
-.ajuda-lixo-real { color: #f7501b; font-size: 10px; }
+.ajuda-linha-compra-real > span:nth-child(2) { font-size: 12px; line-height: 1; text-align: center; }
+.ajuda-linha-compra-real > strong { min-width: 0; overflow: hidden; font-size: 7.5px; text-overflow: ellipsis; white-space: nowrap; }
+.ajuda-campo-tracejado { display: flex; align-items: center; min-width: 0; height: 25px; padding: 0 5px; border: 1.5px dashed #1a263b; border-radius: 7px; background: rgb(255 255 255 / 78%); font-size: 6px; white-space: nowrap; }
+.ajuda-campo-tracejado b { margin-left: 2px; font-size: 6px; }
+.ajuda-medida-compra { display: flex; align-items: center; justify-content: flex-end; gap: 3px; min-width: 0; font-size: 6px; font-weight: 700; white-space: nowrap; }
+.ajuda-medida-compra .ajuda-switch-medida { flex: 0 0 36px; width: 36px; height: 20px; border-width: 1.5px; }
+.ajuda-medida-compra .ajuda-switch-knob { top: 1px; left: 1px; width: 15px; height: 15px; border-width: 1.5px; }
+.ajuda-medida-compra .ajuda-switch-icone { left: 9.5px; font-size: 7px; }
+.ajuda-medida-compra .ajuda-switch-medida.kg .ajuda-switch-knob { left: calc(100% - 18px); }
+.ajuda-medida-compra .ajuda-switch-medida.kg .ajuda-switch-icone { left: calc(100% - 9.5px); }
+.ajuda-linha-compra-real > b { min-width: 0; overflow: hidden; font-size: 6.5px; font-weight: 700; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+.ajuda-lixo-real { color: #7ec8d4; font-size: 11px; text-align: center; }
+.ajuda-compra-real::before { position: absolute; right: 14px; bottom: 14px; padding: 7px 10px; border: 2px solid #1a263b; border-radius: 10px; background: #f7501b; color: #fff; content: 'Finalizar compra'; font-size: 7px; font-weight: 700; }
 
 .ajuda-historico-real { position: relative; height: 100%; padding: 24px 26px; }
 .ajuda-historico-topo { display: flex; align-items: flex-end; justify-content: space-between; margin: 10px 2px 18px; }
@@ -243,9 +253,14 @@
   .ajuda-listas-salvas-real { grid-template-columns: 1fr; padding: 12px; }
   .ajuda-lista-principal-mini { display: none; }
   .ajuda-card-compra-wrapper { width: 62%; }
-  .ajuda-linha-compra-real { grid-template-columns: 16px 17px minmax(42px,1fr) 59px 66px 44px 50px 14px; gap: 3px; padding: 5px 4px; }
-  .ajuda-medida-compra .ajuda-switch-medida { width: 43px; }
-  .ajuda-medida-compra .ajuda-switch-icone { font-size: 8px; }
+  .ajuda-compra-real { margin: 7px; height: calc(100% - 14px); padding: 13px 8px 11px; }
+  .ajuda-topo-compra-real { gap: 5px 7px; padding-right: 22px; }
+  .ajuda-linha-compra-real { grid-template-columns: 14px 16px minmax(35px,1fr) 54px 49px 43px 45px 12px; gap: 2px; padding: 4px 3px; }
+  .ajuda-medida-compra .ajuda-switch-medida { width: 30px; height: 18px; }
+  .ajuda-medida-compra .ajuda-switch-knob { width: 13px; height: 13px; }
+  .ajuda-medida-compra .ajuda-switch-icone { left: 8px; font-size: 6px; }
+  .ajuda-medida-compra .ajuda-switch-medida.kg .ajuda-switch-knob { left: calc(100% - 16px); }
+  .ajuda-medida-compra .ajuda-switch-medida.kg .ajuda-switch-icone { left: calc(100% - 8px); }
 }
 @media (max-width: 340px) {
   .ajuda-guia-overlay { padding: 8px 4px; }
