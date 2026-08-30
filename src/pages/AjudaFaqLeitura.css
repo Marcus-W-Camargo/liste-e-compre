@@ -1,0 +1,11 @@
+.ajuda-faq-titulo p {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #2f3d55;
+}
+
+.ajuda-faq-item {
+  background: #fff;
+}
