@@ -11,6 +11,7 @@ import { Header } from './components/Header';
 import { CloudAccess, CloudStatus } from './components/CloudAccess';
 import { useDesktopKeyboardNavigation } from './hooks/useDesktopKeyboardNavigation';
 import './App.css';
+import './pages/AjudaAjustes.css';
 
 function Rodape() {
   return (
