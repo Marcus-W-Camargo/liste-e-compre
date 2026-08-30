@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useState, type ReactNode } from 'react';
 import './Modal.css';
 import './Header.css';
 import { Link, useLocation } from 'react-router-dom';
-import logoTitulo from '../assets/titulo.png';
+import logoTitulo from '../assets/liste-&-compre.png';
 import { useAuth } from '../hooks/useAuth';
 
 export function Header() {
