@@ -103,7 +103,6 @@ export function AjudaFeedback() {
           tipo: opcao.tipo,
           mensagem: mensagem.trim(),
           email: email.trim(),
-          pagina: window.location.pathname,
           navegador: navigator.userAgent,
         }),
       });
@@ -185,7 +184,7 @@ export function AjudaFeedback() {
               {opcao.tipo === 'Bug' && (
                 <div className="ajuda-feedback-diagnostico">
                   <span aria-hidden="true">ℹ️</span>
-                  <p>A página atual e informações básicas do navegador serão incluídas para ajudar na investigação do problema.</p>
+                  <p>Informações básicas do navegador serão incluídas para ajudar na investigação do problema.</p>
                 </div>
               )}
 
