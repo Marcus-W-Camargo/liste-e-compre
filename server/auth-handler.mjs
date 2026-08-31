@@ -4,6 +4,58 @@ import { createProviders } from './providers.mjs';
 import { createAuthController } from './auth-controller.mjs';
 import { aplicarRateLimit } from './rate-limit.mjs';
 
+const ORIGEM_PRODUCAO = 'https://listeecompre.vercel.app';
+
+function normalizarOrigem(valor) {
+  if (typeof valor !== 'string' || !valor.trim()) return null;
+
+  try {
+    const url = new URL(valor.trim());
+    if (!['http:', 'https:'].includes(url.protocol)) return null;
+    if (
+      url.username ||
+      url.password ||
+      url.pathname !== '/' ||
+      url.search ||
+      url.hash
+    )
+      return null;
+    return url.origin;
+  } catch {
+    return null;
+  }
+}
+
+function origemVercelPreview(valor) {
+  if (typeof valor !== 'string' || !valor.trim()) return null;
+
+  const origem = normalizarOrigem(`https://${valor.trim().replace(/^https?:\/\//i, '')}`);
+  if (!origem) return null;
+
+  try {
+    const { hostname, protocol } = new URL(origem);
+    if (protocol !== 'https:' || !hostname.endsWith('.vercel.app')) return null;
+    return origem;
+  } catch {
+    return null;
+  }
+}
+
+function origensPermitidas(env) {
+  const allowed = new Set([ORIGEM_PRODUCAO]);
+  const appOrigin = normalizarOrigem(env.APP_ORIGIN);
+  if (appOrigin) allowed.add(appOrigin);
+
+  if (env.VERCEL_ENV === 'preview') {
+    for (const valor of [env.VERCEL_URL, env.VERCEL_BRANCH_URL]) {
+      const origem = origemVercelPreview(valor);
+      if (origem) allowed.add(origem);
+    }
+  }
+
+  return allowed;
+}
+
 export async function readBody(req) {
   if (Number(req.headers['content-length'] ?? 0) > 8192)
     throw new AppError(413, 'CORPO_GRANDE', 'Solicitação muito grande.');
@@ -49,13 +101,8 @@ export function createHandler({
         res.setHeader('Allow', 'POST');
         throw new AppError(405, 'METODO_INVALIDO', 'Método não permitido.');
       }
-      const allowed = new Set([env.APP_ORIGIN]);
-      if (env.VERCEL_ENV === 'preview' && env.VERCEL_URL)
-        allowed.add(`https://${env.VERCEL_URL}`);
-      if (
-        typeof req.headers.origin !== 'string' ||
-        !allowed.has(req.headers.origin)
-      )
+      const origem = normalizarOrigem(req.headers.origin);
+      if (!origem || !origensPermitidas(env).has(origem))
         throw new AppError(403, 'ORIGEM_INVALIDA', 'Origem não permitida.');
       if (!/^application\/json(?:;|$)/i.test(req.headers['content-type'] ?? ''))
         throw new AppError(415, 'TIPO_INVALIDO', 'Envie JSON.');
