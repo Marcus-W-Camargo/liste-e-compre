@@ -17,8 +17,61 @@ import './App.css';
 import './pages/AjudaAjustes.css';
 import './pages/AjudaFaqLeitura.css';
 import './pages/AjudaHierarquia.css';
-function Rodape(){return <footer className="rodape"><p>© 2026 Marcus Camargo. Todos os direitos reservados. Projeto desenvolvido para fins de estudo e portfólio. <Link to="/privacidade">Política de Privacidade</Link></p></footer>}
-function NavegacaoDesktop(){useDesktopKeyboardNavigation();return null;}
-function PaginaAjuda(){return <><Ajuda/><AjudaFeedback/></>}
-function App(){return <BrowserRouter><NavegacaoDesktop/><div className="app-layout"><div className="app-conteudo"><Header/><CloudStatus/><AccountDeletion/><Routes><Route path="/" element={<Home/>}/><Route path="/conta" element={<Conta/>}/><Route path="/privacidade" element={<Privacidade/>}/><Route element={<CloudAccess/>}><Route path="/lista" element={<Lista/>}/><Route path="/compre" element={<Compras/>}/><Route path="/compre/:listaId" element={<ComprasSessao/>}/><Route path="/historico" element={<HistoricoCompras/>}/><Route path="/perfil" element={<Perfil/>}/><Route path="/ajuda" element={<PaginaAjuda/>}/></Route></Routes></div><Rodape/></div></BrowserRouter>}
+
+function Rodape() {
+  return (
+    <footer className="rodape">
+      <p>
+        © 2026 Marcus Camargo. Todos os direitos reservados. Projeto
+        desenvolvido para fins de estudo e portfólio.{' '}
+        <Link to="/privacidade">Política de Privacidade</Link>
+      </p>
+    </footer>
+  );
+}
+
+function NavegacaoDesktop() {
+  useDesktopKeyboardNavigation();
+  return null;
+}
+
+function PaginaAjuda() {
+  return (
+    <>
+      <Ajuda />
+      <AjudaFeedback />
+    </>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <NavegacaoDesktop />
+      <div className="app-layout">
+        <div className="app-conteudo">
+          <Header />
+          <CloudStatus />
+          <AccountDeletion />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/conta" element={<Conta />} />
+            <Route path="/privacidade" element={<Privacidade />} />
+            <Route element={<CloudAccess />}>
+              <Route path="/lista" element={<Lista />} />
+              <Route path="/compre" element={<Compras />} />
+              <Route path="/compre/:listaId" element={<ComprasSessao />} />
+              <Route path="/historico" element={<HistoricoCompras />} />
+              <Route path="/perfil" element={<Perfil />} />
+              <Route path="/ajuda" element={<PaginaAjuda />} />
+            </Route>
+          </Routes>
+        </div>
+
+        <Rodape />
+      </div>
+    </BrowserRouter>
+  );
+}
+
 export default App;
