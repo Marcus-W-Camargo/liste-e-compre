@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createHandler } from '../server/auth-handler.mjs';
 import { createFeedbackHandler } from '../server/feedback-handler.mjs';
 import { createDeleteAccountHandler } from '../server/delete-account-handler.mjs';
+import { AppError } from '../server/errors.mjs';
 
 function response() {
   return {
@@ -125,6 +126,88 @@ test('feedback aceita diagnóstico apenas em bug', async () => {
   await handler(req, res);
 
   assert.equal(res.statusCode, 200);
+});
+
+test('feedback envia reclamação válida com e sem e-mail quando rate limit permite', async () => {
+  for (const email of ['', 'cliente@example.com']) {
+    const enviados = [];
+    const handler = createFeedbackHandler({
+      env: { RESEND_API_KEY: 'x', APP_ORIGIN: 'https://app.test' },
+      rateLimit: async () => {},
+      fetchImpl: async (url, options) => {
+        enviados.push({ url, options });
+        return { ok: true, json: async () => ({ id: 'feedback-1' }) };
+      },
+    });
+    const req = {
+      method: 'POST',
+      headers: {
+        origin: 'https://app.test',
+        'content-type': 'application/json',
+      },
+      body: {
+        tipo: 'Reclamação',
+        mensagem: 'Mensagem válida para atendimento.',
+        email,
+        navegador: '',
+        website: '',
+      },
+    };
+    const res = response();
+
+    await handler(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(enviados.length, 1);
+    assert.equal(enviados[0].url, 'https://api.resend.com/emails');
+    const payload = JSON.parse(enviados[0].options.body);
+    assert.equal(payload.subject, '[Liste & Compre] Reclamação');
+    assert.match(payload.text, /Mensagem válida para atendimento\./);
+    if (email) assert.match(payload.text, /cliente@example\.com/);
+    else assert.doesNotMatch(payload.text, /E-mail do usuário:/);
+  }
+});
+
+test('feedback preserva indisponibilidade do rate limiter sem virar dados inválidos', async () => {
+  let enviou = false;
+  const handler = createFeedbackHandler({
+    env: { RESEND_API_KEY: 'x', APP_ORIGIN: 'https://app.test' },
+    rateLimit: async () => {
+      throw new AppError(
+        503,
+        'RATE_LIMIT_INDISPONIVEL',
+        'detalhe interno que não deve sair',
+      );
+    },
+    fetchImpl: async () => {
+      enviou = true;
+      return { ok: true, json: async () => ({ id: '1' }) };
+    },
+  });
+  const req = {
+    method: 'POST',
+    headers: {
+      origin: 'https://app.test',
+      'content-type': 'application/json',
+    },
+    body: {
+      tipo: 'Reclamação',
+      mensagem: 'Mensagem válida.',
+      email: '',
+      navegador: '',
+      website: '',
+    },
+  };
+  const res = response();
+
+  await handler(req, res);
+
+  assert.equal(res.statusCode, 503);
+  assert.equal(enviou, false);
+  assert.deepEqual(JSON.parse(res.body), {
+    ok: false,
+    error: 'Serviço temporariamente indisponível.',
+  });
 });
 
 test('feedback valida tamanho mesmo com body previamente processado', async () => {
