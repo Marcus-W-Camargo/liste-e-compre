@@ -9,10 +9,15 @@ const email = 'alice@example.com';
 const password = 'Teste123!';
 const name = 'Alice Silva';
 
-function createFixture({ signupExists = false, recoveryExists = true } = {}) {
+function createFixture({
+  signupExists = false,
+  recoveryExists = true,
+  startLimitAfter = Infinity,
+} = {}) {
   const attempts = new Map();
   const sent = [];
   const calls = [];
+  let starts = 0;
 
   const providers = {
     assertReady: async () => {},
@@ -28,6 +33,9 @@ function createFixture({ signupExists = false, recoveryExists = true } = {}) {
       if (fn === 'lc_auth_email_exists') return signupExists;
 
       if (fn === 'lc_auth_start') {
+        starts++;
+        if (starts > startLimitAfter)
+          return { ok: false, reason: 'rate_limit', retryAfter: 2700 };
         attempts.set(params.p_id, {
           ...params,
           stage: 'sending',
@@ -260,3 +268,66 @@ test('recuperação mantém segunda etapa neutra para tentativa real e sintétic
   assert.equal(real.attempts.size, 0);
   assert.equal(synthetic.attempts.size, 0);
 });
+
+function publicStartShape(response) {
+  return {
+    statusCode: response.statusCode,
+    keys: Object.keys(response.body).sort(),
+    ok: response.body.ok,
+    idType: typeof response.body.id,
+    tokenType: typeof response.body.token,
+  };
+}
+
+async function compareRepeatedStarts({ purpose, real, synthetic }) {
+  let limitedResponse;
+
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    const body = {
+      action: 'start',
+      purpose,
+      email,
+      name: purpose === 'cadastro' ? name : '',
+    };
+    const realResponse = await http(real.handle, body);
+    const syntheticResponse = await http(synthetic.handle, body);
+
+    assert.deepEqual(
+      publicStartShape(realResponse),
+      publicStartShape(syntheticResponse),
+    );
+    assert.deepEqual(publicStartShape(realResponse), {
+      statusCode: 200,
+      keys: ['id', 'ok', 'token'],
+      ok: true,
+      idType: 'string',
+      tokenType: 'string',
+    });
+    assert.equal('code' in realResponse.body, false);
+    assert.equal('error' in realResponse.body, false);
+
+    if (attempt === 4) limitedResponse = realResponse;
+  }
+
+  assert.equal(real.sent.length, 3);
+  assert.equal(synthetic.sent.length, 0);
+  assert.equal(real.attempts.has(limitedResponse.body.id), false);
+  assert.equal(synthetic.attempts.size, 0);
+}
+
+test('cadastro mantém start neutro quando a cota específica de e-mail é excedida', async () => {
+  await compareRepeatedStarts({
+    purpose: 'cadastro',
+    real: createFixture({ signupExists: false, startLimitAfter: 3 }),
+    synthetic: createFixture({ signupExists: true, startLimitAfter: 3 }),
+  });
+});
+
+test('recuperação mantém start neutro quando a cota específica de e-mail é excedida', async () => {
+  await compareRepeatedStarts({
+    purpose: 'recuperacao',
+    real: createFixture({ recoveryExists: true, startLimitAfter: 3 }),
+    synthetic: createFixture({ recoveryExists: false, startLimitAfter: 3 }),
+  });
+});
+

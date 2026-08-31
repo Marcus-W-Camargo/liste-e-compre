@@ -421,18 +421,20 @@ test('falha do EmailJS cancela a tentativa, sem criar conta', async () => {
   assert.ok(f.calls.includes('lc_auth_cancel'));
 });
 
-test('limite de envio devolve Retry-After e não chama EmailJS', async () => {
+test('limite específico de e-mail devolve tentativa sintética e não chama EmailJS', async () => {
   const f = fixture({
     rpc: async (fn) =>
       fn === 'lc_auth_email_exists'
         ? false
         : { ok: false, reason: 'rate_limit', retryAfter: 2700 },
   });
-  await assert.rejects(
-    f.handle(startBody),
-    (e) => e.status === 429 && e.retryAfter === 2700,
-  );
+  const result = await f.handle(startBody);
+  assert.deepEqual(Object.keys(result).sort(), ['id', 'ok', 'token']);
+  assert.equal(result.ok, true);
+  assert.match(result.id, /^[a-f0-9-]{36}$/);
+  assert.match(result.token, /^[a-f0-9]{64}$/);
   assert.equal(f.sent.length, 0);
+  assert.equal(f.attempts.size, 0);
 });
 
 test('HMAC distingue e-mail, propósito e tentativa; não é hash simples de quatro dígitos', () => {

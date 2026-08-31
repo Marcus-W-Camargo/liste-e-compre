@@ -136,12 +136,11 @@ export function createAuthController({
       }
 
       if (result.reason === 'rate_limit')
-        throw new AppError(
-          429,
-          'LIMITE_ENVIOS',
-          `Limite de envios atingido. Tente novamente em ${Math.ceil(result.retryAfter / 60)} minuto(s).`,
-          result.retryAfter,
-        );
+        return {
+          ok: true,
+          id: randomUUID(),
+          token: randomBytes(32).toString('hex'),
+        };
       if (result.ok !== true)
         throw new AppError(
           503,
