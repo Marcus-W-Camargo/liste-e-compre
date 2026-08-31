@@ -1,3 +1,4 @@
+import { AppError } from './errors.mjs';
 import { aplicarRateLimit } from './rate-limit.mjs';
 
 const DESTINATARIO_PADRAO = 'listeecompre@gmail.com';
@@ -156,10 +157,21 @@ export function createFeedbackHandler({
 
       return responder(res, 200, { ok: true, id: resultado?.id ?? null });
     } catch (error) {
-      if (error?.status === 429) {
+      if (error instanceof AppError) {
         if (error.retryAfter)
           res.setHeader('Retry-After', String(error.retryAfter));
-        return responder(res, 429, { ok: false, error: error.message });
+
+        if (error.status >= 500) {
+          return responder(res, error.status, {
+            ok: false,
+            error: 'Serviço temporariamente indisponível.',
+          });
+        }
+
+        return responder(res, error.status, {
+          ok: false,
+          error: error.message,
+        });
       }
 
       const corpoGrande =
