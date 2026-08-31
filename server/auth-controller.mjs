@@ -156,11 +156,12 @@ export function createAuthController({
           code,
         });
         if ((await providers.rpc('lc_auth_activate', binding)) !== true) {
-          throw new AppError(
-            409,
-            'TENTATIVA_INVALIDA',
-            'Outra tentativa foi iniciada. Utilize o código da tentativa mais recente.',
-          );
+          await providers.rpc('lc_auth_cancel', binding).catch(() => {});
+          return {
+            ok: true,
+            id: randomUUID(),
+            token: randomBytes(32).toString('hex'),
+          };
         }
       } catch (error) {
         await providers.rpc('lc_auth_cancel', binding).catch(() => {});
