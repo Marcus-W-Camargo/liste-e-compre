@@ -357,7 +357,9 @@ export function Conta() {
 
         setCodigoCadastro('');
         setCadastroConfirmacao(true);
-        setMensagem('Código enviado para seu e-mail.');
+        setMensagem(
+          'Se o cadastro puder prosseguir, o código será enviado para o e-mail informado.',
+        );
         return;
       }
 
@@ -479,7 +481,9 @@ export function Conta() {
         if (!(await iniciarTentativa('recuperacao', email))) return;
 
         setEtapaRecuperacao('codigo');
-        setMensagem('Código enviado para seu e-mail.');
+        setMensagem(
+          'Se a recuperação puder prosseguir, o código será enviado para o e-mail informado.',
+        );
         return;
       }
 
@@ -586,7 +590,8 @@ export function Conta() {
               <div className="cabecalho-verificacao">
                 <h2>Verifique seu e-mail</h2>
                 <p>
-                  O seu código de verificação foi enviado para o E-mail:{' '}
+                  Se o cadastro puder prosseguir, enviaremos o código de
+                  verificação para o e-mail:{' '}
                   <strong className="email-confirmacao">
                     {formulario.email}
                   </strong>
@@ -817,7 +822,7 @@ export function Conta() {
               {etapaRecuperacao === 'email'
                 ? 'Insira o e-mail da sua conta.'
                 : etapaRecuperacao === 'codigo'
-                  ? 'Digite o código enviado para seu e-mail.'
+                  ? 'Digite o código de verificação, caso ele tenha sido enviado ao e-mail informado.'
                   : 'Defina sua nova senha.'}
             </p>
           </div>
