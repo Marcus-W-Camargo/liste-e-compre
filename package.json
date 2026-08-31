@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/diagnose-preview-security.mjs && tsc -b && vite build",
+    "build": "tsc -b && vite build",
     "catalog:generate": "node scripts/gerar-catalogo-produtos.mjs",
     "lint": "oxlint",
     "preview": "vite preview",
