@@ -7,28 +7,529 @@ import { createHandler } from '../server/auth-handler.mjs';
 import { AppError } from '../server/errors.mjs';
 import { configProblems } from '../server/config.mjs';
 import { classifyEmailError, createProviders } from '../server/providers.mjs';
-import { nomeValido, senhaValida, normalizarEmail } from '../shared/auth-validation.mjs';
-const secret='x'.repeat(43),email='alice@example.com',password='Teste123!',name='Alice Silva';
-function fixture(overrides={}){const calls=[],sent=[],attempts=new Map();const providers={assertReady:async()=>{calls.push('ready')},send:async(data)=>{calls.push('send');sent.push(data)},signup:async(...args)=>{calls.push(['signup',...args])},reset:async(...args)=>{calls.push(['reset',...args])},rpc:async(fn,p)=>{calls.push(fn);if(fn==='lc_auth_email_exists')return false;if(fn==='lc_auth_start'){attempts.set(p.p_id,{...p,stage:'sending',errors:0});return{ok:true}}const a=attempts.get(p.p_id);if(fn==='lc_auth_activate'){a.stage='code';return true}if(fn==='lc_auth_cancel'){if(a?.p_token_mac===p.p_token_mac)attempts.delete(p.p_id);return true}if(!a||a.p_token_mac!==p.p_token_mac||a.p_email_key!==p.p_email_key)return{ok:false,reason:'invalid_attempt'};if(fn==='lc_auth_verify'){if(a.stage!=='code'||a.p_purpose!==p.p_purpose)return{ok:false,reason:'invalid_attempt'};if(a.p_code_mac!==p.p_code_mac){a.errors++;if(a.errors>=5){attempts.delete(p.p_id);return{ok:false,reason:'locked'}}return{ok:false,reason:'wrong_code',remaining:5-a.errors}}if(p.p_purpose==='recuperacao'){a.stage='reset';a.p_token_mac=p.p_reset_mac}else attempts.delete(p.p_id);return{ok:true}}if(fn==='lc_auth_consume_reset'){if(a.stage!=='reset')return false;attempts.delete(p.p_id);return true}throw new Error(fn)},...overrides};return{calls,sent,attempts,handle:createAuthController({secret,providers,generateCode:()=>{calls.push('generate');return'0042'}})}}
-const startBody={action:'start',purpose:'cadastro',email,name};
-test('e-mail existente recebe resposta neutra antes de código, reserva, envio ou conta',async()=>{const lookups=[];const f=fixture({rpc:async(fn,params)=>{lookups.push({fn,params});assert.equal(fn,'lc_auth_email_exists');return true}});const response=await http({body:JSON.stringify({...startBody,email:' ALICE@EXAMPLE.COM '}),controller:f.handle});assert.equal(response.statusCode,400);assert.deepEqual(response.body,{ok:false,code:'CADASTRO_INDISPONIVEL',error:'Não foi possível iniciar o cadastro com os dados informados. Você também pode tentar entrar ou recuperar o acesso.'});assert.deepEqual(lookups,[{fn:'lc_auth_email_exists',params:{p_email:email}}]);assert.deepEqual(f.calls,['ready']);assert.equal(f.sent.length,0);assert.equal(f.attempts.size,0)});
-test('e-mail novo é consultado antes de gerar e reservar; fluxo original continua',async()=>{const f=fixture();await f.handle(startBody);assert.deepEqual(f.calls,['ready','lc_auth_email_exists','generate','lc_auth_start','send','lc_auth_activate']);assert.equal(f.sent.length,1);assert.equal(f.attempts.size,1)});
-test('consulta com falha ou resposta não booleana não gera código nem gasta envio',async()=>{for(const value of[null,undefined,0,'false',{exists:false},[]]){const f=fixture({rpc:async()=>value});await assert.rejects(f.handle(startBody),(e)=>e.status===503&&e.code==='CONSULTA_EMAIL_FALHOU');assert.deepEqual(f.calls,['ready']);assert.equal(f.sent.length,0);assert.equal(f.attempts.size,0)}const f=fixture({rpc:async()=>{throw new AppError(503,'BANCO_INDISPONIVEL','Falha')}});await assert.rejects(f.handle(startBody),(e)=>e.code==='BANCO_INDISPONIVEL');assert.deepEqual(f.calls,['ready']);assert.equal(f.sent.length,0);assert.equal(f.attempts.size,0)});
-test('recuperação não usa o bloqueio de e-mail existente do cadastro',async()=>{const f=fixture();await f.handle({...startBody,purpose:'recuperacao'});assert.ok(!f.calls.includes('lc_auth_email_exists'));assert.equal(f.sent.length,1);assert.equal(f.sent[0].purpose,'recuperacao')});
-test('conta criada após a pré-consulta continua sendo rejeitada na confirmação final',async()=>{let signups=0;const f=fixture({signup:async()=>{signups++;throw new AppError(409,'CONTA_EXISTENTE','Este e-mail já possui uma conta.')}});const a=await f.handle(startBody);const body={action:'confirm-signup',...a,email,name,password,code:'0042'};await assert.rejects(f.handle(body),(e)=>e.code==='CONTA_EXISTENTE');assert.equal(signups,1);assert.equal(f.attempts.size,0);await assert.rejects(f.handle(body),(e)=>e.code==='TENTATIVA_INVALIDA');assert.equal(signups,1)});
-test('RPC ausente produz diagnóstico seguro e mantém o corpo do provedor fora dos logs',async()=>{const logs=[];const warn=console.warn;console.warn=(...args)=>logs.push(args);try{const providers=createProviders({SUPABASE_URL:'https://example.supabase.co',SUPABASE_SECRET_KEY:'test-server-key'},async(url,init)=>{assert.equal(String(url),'https://example.supabase.co/rest/v1/rpc/lc_auth_email_exists');assert.deepEqual(JSON.parse(init.body),{p_email:null});return new Response(JSON.stringify({code:'PGRST202',message:'private-provider-detail',details:email}),{status:404,headers:{'Content-Type':'application/json'}})});await assert.rejects(providers.rpc('lc_auth_email_exists',{p_email:null}),(e)=>e.status===503&&e.code==='CONSULTA_EMAIL_NAO_CONFIGURADA'&&!e.message.includes(email));assert.equal(logs.length,1);assert.ok(!JSON.stringify(logs).includes('private-provider-detail'));assert.ok(!JSON.stringify(logs).includes(email))}finally{console.warn=warn}});
-test('provedor mantém o tratamento de e-mail duplicado do Supabase Auth',async()=>{for(const code of['email_exists','user_already_exists']){const providers=createProviders({SUPABASE_URL:'https://example.supabase.co',SUPABASE_SECRET_KEY:'test-server-key'},async(url)=>{assert.equal(String(url),'https://example.supabase.co/auth/v1/admin/users');return new Response(JSON.stringify({code,msg:'Email already registered'}),{status:422,headers:{'Content-Type':'application/json','x-supabase-api-version':'2024-01-01'}})});await assert.rejects(providers.signup(email,password,name),(e)=>e.status===409&&e.code==='CONTA_EXISTENTE')}});
-test('nome único input: exatamente duas partes e até 21 caracteres; senha mantém requisitos',()=>{for(const n of['Maria Silva','João José','ABCDEFGHIJ ABCDEFGHIJ'])assert.equal(nomeValido(n),true,n);for(const n of['Maria',' Maria Silva','Maria  Silva','Maria Silva ','Maria de Silva','Maria\tSilva','123 Silva','ABCDEFGHIJK ABCDEFGHIJ'])assert.equal(nomeValido(n),false,n);assert.equal(senhaValida(password),true);assert.equal(senhaValida('123456!'),false);assert.equal(normalizarEmail(' ALICE@EXAMPLE.COM '),email)});
-test('start não recebe senha, não devolve código e não cria usuário',async()=>{const f=fixture();await assert.rejects(f.handle({...startBody,password}),(e)=>e.status===400);const result=await f.handle(startBody);assert.deepEqual(Object.keys(result).sort(),['id','ok','token']);assert.equal(f.sent[0].code,'0042');assert.ok(!f.calls.some((c)=>Array.isArray(c)&&c[0]==='signup'));const a=f.attempts.get(result.id);assert.ok(!JSON.stringify(a).includes(email));assert.ok(!JSON.stringify(a).includes(name))});
-test('não cria conta com código errado, e-mail trocado, token falso ou confirmação forjada',async()=>{const f=fixture(),a=await f.handle(startBody);const body={action:'confirm-signup',...a,email,password,name,code:'0042'};for(const patch of[{code:'9999'},{email:'other@example.com'},{token:'a'.repeat(64)},{code:'',verified:true}])await assert.rejects(f.handle({...body,...patch}));assert.ok(!f.calls.some((c)=>Array.isArray(c)));await f.handle(body);assert.equal(f.calls.filter((c)=>Array.isArray(c)&&c[0]==='signup').length,1);await assert.rejects(f.handle(body))});
-test('cancelamento remove só a tentativa; ela não confirma depois',async()=>{const f=fixture(),a=await f.handle(startBody);await f.handle({action:'cancel',...a});await assert.rejects(f.handle({action:'confirm-signup',...a,email,name,password,code:'0042'}))});
-test('recuperação não aceita pular a confirmação e troca o token após verificar',async()=>{const f=fixture(),a=await f.handle({...startBody,purpose:'recuperacao'});await assert.rejects(f.handle({action:'reset-password',...a,email,password}));const proof=await f.handle({action:'verify-recovery',...a,email,code:'0042'});assert.notEqual(proof.token,a.token);await assert.rejects(f.handle({action:'reset-password',...a,email,password}));await f.handle({action:'reset-password',...proof,email,password});assert.equal(f.calls.filter((c)=>Array.isArray(c)&&c[0]==='reset').length,1)});
-test('configuração é verificada antes de reservar envio ou conferir código',async()=>{const f=fixture({assertReady:async()=>{throw new AppError(503,'CONFIG','Configuração ausente')}});await assert.rejects(f.handle(startBody));assert.equal(f.calls.length,0)});
-test('falha do EmailJS cancela a tentativa, sem criar conta',async()=>{const f=fixture({send:async()=>{throw new AppError(503,'ENVIO','Falha no envio')}});await assert.rejects(f.handle(startBody));assert.equal(f.attempts.size,0);assert.ok(f.calls.includes('lc_auth_cancel'))});
-test('limite de envio devolve Retry-After e não chama EmailJS',async()=>{const f=fixture({rpc:async(fn)=>fn==='lc_auth_email_exists'?false:{ok:false,reason:'rate_limit',retryAfter:2700}});await assert.rejects(f.handle(startBody),(e)=>e.status===429&&e.retryAfter===2700);assert.equal(f.sent.length,0)});
-test('HMAC distingue e-mail, propósito e tentativa; não é hash simples de quatro dígitos',()=>{const mac=(...a)=>createHmac('sha256',secret).update(JSON.stringify(a)).digest('hex');assert.notEqual(mac('code','id1',email,'cadastro','0042'),mac('code','id2',email,'cadastro','0042'))});
-async function http({method='POST',origin='http://127.0.0.1:5173',type='application/json',body='{}',controller=async()=>({ok:true}),extraEnv={}}={}){const req=Readable.from([body]);req.method=method;req.headers={'content-type':type,...(origin?{origin}:{})};const headers={};const res={setHeader:(k,v)=>{headers[k]=v},end:(body)=>{res.body=JSON.parse(body)},statusCode:0};await createHandler({env:{APP_ORIGIN:'http://127.0.0.1:5173',...extraEnv},controller})(req,res);return{...res,headers}}
-test('HTTP bloqueia GET, origem falsa, conteúdo não JSON e payload excessivo',async()=>{assert.equal((await http({method:'GET'})).statusCode,405);assert.equal((await http({origin:'https://evil.example'})).statusCode,403);assert.equal((await http({origin:''})).statusCode,403);assert.equal((await http({type:'text/plain'})).statusCode,415);assert.equal((await http({body:'x'.repeat(8193)})).statusCode,413);assert.equal((await http({body:'{invalid'})).statusCode,400)});
-test('preview aceita somente URL exata do deployment, nunca domínio curinga',async()=>{const extraEnv={VERCEL_ENV:'preview',VERCEL_URL:'preview.vercel.app'};assert.equal((await http({origin:'https://preview.vercel.app',extraEnv})).statusCode,200);assert.equal((await http({origin:'https://other.vercel.app',extraEnv})).statusCode,403)});
-test('HTTP não expõe segredos em erros e devolve cabeçalhos seguros',async()=>{const original=console.warn;console.warn=()=>{};try{const r=await http({controller:async()=>{throw new Error('password=segredo')}});assert.equal(r.statusCode,503);assert.ok(!JSON.stringify(r.body).includes('segredo'));assert.equal(r.headers['Cache-Control'],'no-store');const limited=await http({controller:async()=>{throw new AppError(429,'LIMITE','Aguarde',45)}});assert.equal(limited.headers['Retry-After'],'45')}finally{console.warn=original}});
-test('diagnóstico encontra placeholders e nunca imprime valores',()=>{const problems=configProblems({EMAILJS_PRIVATE_KEY:'sua_chave_privadaEXAMPLE',SUPABASE_SECRET_KEY:'sb_publishable_demo'});assert.ok(problems.includes('EMAILJS_PRIVATE_KEY'));assert.ok(problems.includes('SUPABASE_SECRET_KEY'));assert.ok(!JSON.stringify(problems).includes('EXAMPLE'));assert.equal(classifyEmailError(404,'Account not found'),'CONTA_EMAILJS');assert.equal(classifyEmailError(400,'Template not found'),'TEMPLATE_EMAILJS')});
+import {
+  nomeValido,
+  senhaValida,
+  normalizarEmail,
+} from '../shared/auth-validation.mjs';
+
+const secret = 'x'.repeat(43),
+  email = 'alice@example.com',
+  password = 'Teste123!',
+  name = 'Alice Silva';
+
+function fixture(overrides = {}) {
+  const calls = [],
+    sent = [],
+    attempts = new Map();
+  const providers = {
+    assertReady: async () => {
+      calls.push('ready');
+    },
+    send: async (data) => {
+      calls.push('send');
+      sent.push(data);
+    },
+    signup: async (...args) => {
+      calls.push(['signup', ...args]);
+    },
+    reset: async (...args) => {
+      calls.push(['reset', ...args]);
+    },
+    rpc: async (fn, p) => {
+      calls.push(fn);
+      if (fn === 'lc_auth_email_exists') return false;
+      if (fn === 'lc_auth_start') {
+        attempts.set(p.p_id, { ...p, stage: 'sending', errors: 0 });
+        return { ok: true };
+      }
+      const a = attempts.get(p.p_id);
+      if (fn === 'lc_auth_activate') {
+        a.stage = 'code';
+        return true;
+      }
+      if (fn === 'lc_auth_cancel') {
+        if (a?.p_token_mac === p.p_token_mac) attempts.delete(p.p_id);
+        return true;
+      }
+      if (
+        !a ||
+        a.p_token_mac !== p.p_token_mac ||
+        a.p_email_key !== p.p_email_key
+      )
+        return { ok: false, reason: 'invalid_attempt' };
+      if (fn === 'lc_auth_verify') {
+        if (a.stage !== 'code' || a.p_purpose !== p.p_purpose)
+          return { ok: false, reason: 'invalid_attempt' };
+        if (a.p_code_mac !== p.p_code_mac) {
+          a.errors++;
+          if (a.errors >= 5) {
+            attempts.delete(p.p_id);
+            return { ok: false, reason: 'locked' };
+          }
+          return { ok: false, reason: 'wrong_code', remaining: 5 - a.errors };
+        }
+        if (p.p_purpose === 'recuperacao') {
+          a.stage = 'reset';
+          a.p_token_mac = p.p_reset_mac;
+        } else attempts.delete(p.p_id);
+        return { ok: true };
+      }
+      if (fn === 'lc_auth_consume_reset') {
+        if (a.stage !== 'reset') return false;
+        attempts.delete(p.p_id);
+        return true;
+      }
+      throw new Error(fn);
+    },
+    ...overrides,
+  };
+  return {
+    calls,
+    sent,
+    attempts,
+    handle: createAuthController({
+      secret,
+      providers,
+      generateCode: () => {
+        calls.push('generate');
+        return '0042';
+      },
+    }),
+  };
+}
+
+const startBody = { action: 'start', purpose: 'cadastro', email, name };
+
+test('resposta pública inicial de cadastro não distingue e-mail existente por status ou código', async () => {
+  const lookups = [];
+  const existente = fixture({
+    rpc: async (fn, params) => {
+      lookups.push({ fn, params });
+      assert.equal(fn, 'lc_auth_email_exists');
+      return true;
+    },
+  });
+  const disponivel = fixture();
+
+  const respostaExistente = await http({
+    body: JSON.stringify({
+      ...startBody,
+      email: ' ALICE@EXAMPLE.COM ',
+      emailExists: false,
+      verified: true,
+    }),
+    controller: existente.handle,
+  });
+  const respostaDisponivel = await http({
+    body: JSON.stringify(startBody),
+    controller: disponivel.handle,
+  });
+
+  assert.equal(respostaExistente.statusCode, 200);
+  assert.equal(respostaDisponivel.statusCode, 200);
+  assert.deepEqual(
+    Object.keys(respostaExistente.body).sort(),
+    Object.keys(respostaDisponivel.body).sort(),
+  );
+  assert.deepEqual(Object.keys(respostaExistente.body).sort(), [
+    'id',
+    'ok',
+    'token',
+  ]);
+  assert.equal(respostaExistente.body.ok, true);
+  assert.equal(typeof respostaExistente.body.id, 'string');
+  assert.equal(typeof respostaExistente.body.token, 'string');
+  assert.equal('code' in respostaExistente.body, false);
+  assert.deepEqual(lookups, [
+    { fn: 'lc_auth_email_exists', params: { p_email: email } },
+  ]);
+  assert.deepEqual(existente.calls, ['ready']);
+  assert.equal(existente.sent.length, 0);
+  assert.equal(existente.attempts.size, 0);
+});
+
+test('e-mail novo é consultado antes de gerar e reservar; fluxo original continua', async () => {
+  const f = fixture();
+  await f.handle(startBody);
+  assert.deepEqual(f.calls, [
+    'ready',
+    'lc_auth_email_exists',
+    'generate',
+    'lc_auth_start',
+    'send',
+    'lc_auth_activate',
+  ]);
+  assert.equal(f.sent.length, 1);
+  assert.equal(f.attempts.size, 1);
+});
+
+test('consulta com falha ou resposta não booleana não gera código nem gasta envio', async () => {
+  for (const value of [null, undefined, 0, 'false', { exists: false }, []]) {
+    const f = fixture({ rpc: async () => value });
+    await assert.rejects(
+      f.handle(startBody),
+      (e) => e.status === 503 && e.code === 'CONSULTA_EMAIL_FALHOU',
+    );
+    assert.deepEqual(f.calls, ['ready']);
+    assert.equal(f.sent.length, 0);
+    assert.equal(f.attempts.size, 0);
+  }
+  const f = fixture({
+    rpc: async () => {
+      throw new AppError(503, 'BANCO_INDISPONIVEL', 'Falha');
+    },
+  });
+  await assert.rejects(
+    f.handle(startBody),
+    (e) => e.code === 'BANCO_INDISPONIVEL',
+  );
+  assert.deepEqual(f.calls, ['ready']);
+  assert.equal(f.sent.length, 0);
+  assert.equal(f.attempts.size, 0);
+});
+
+test('recuperação não usa o bloqueio de e-mail existente do cadastro', async () => {
+  const f = fixture();
+  await f.handle({ ...startBody, purpose: 'recuperacao' });
+  assert.ok(!f.calls.includes('lc_auth_email_exists'));
+  assert.equal(f.sent.length, 1);
+  assert.equal(f.sent[0].purpose, 'recuperacao');
+});
+
+test('conta criada após a pré-consulta continua sendo rejeitada na confirmação final', async () => {
+  let signups = 0;
+  const f = fixture({
+    signup: async () => {
+      signups++;
+      throw new AppError(
+        409,
+        'CONTA_EXISTENTE',
+        'Este e-mail já possui uma conta.',
+      );
+    },
+  });
+  const a = await f.handle(startBody);
+  const body = {
+    action: 'confirm-signup',
+    ...a,
+    email,
+    name,
+    password,
+    code: '0042',
+  };
+  await assert.rejects(f.handle(body), (e) => e.code === 'CONTA_EXISTENTE');
+  assert.equal(signups, 1);
+  assert.equal(f.attempts.size, 0);
+  await assert.rejects(
+    f.handle(body),
+    (e) => e.code === 'TENTATIVA_INVALIDA',
+  );
+  assert.equal(signups, 1);
+});
+
+test('RPC ausente produz diagnóstico seguro e mantém o corpo do provedor fora dos logs', async () => {
+  const logs = [];
+  const warn = console.warn;
+  console.warn = (...args) => logs.push(args);
+  try {
+    const providers = createProviders(
+      {
+        SUPABASE_URL: 'https://example.supabase.co',
+        SUPABASE_SECRET_KEY: 'test-server-key',
+      },
+      async (url, init) => {
+        assert.equal(
+          String(url),
+          'https://example.supabase.co/rest/v1/rpc/lc_auth_email_exists',
+        );
+        assert.deepEqual(JSON.parse(init.body), { p_email: null });
+        return new Response(
+          JSON.stringify({
+            code: 'PGRST202',
+            message: 'private-provider-detail',
+            details: email,
+          }),
+          { status: 404, headers: { 'Content-Type': 'application/json' } },
+        );
+      },
+    );
+    await assert.rejects(
+      providers.rpc('lc_auth_email_exists', { p_email: null }),
+      (e) =>
+        e.status === 503 &&
+        e.code === 'CONSULTA_EMAIL_NAO_CONFIGURADA' &&
+        !e.message.includes(email),
+    );
+    assert.equal(logs.length, 1);
+    assert.ok(!JSON.stringify(logs).includes('private-provider-detail'));
+    assert.ok(!JSON.stringify(logs).includes(email));
+  } finally {
+    console.warn = warn;
+  }
+});
+
+test('provedor mantém o tratamento de e-mail duplicado do Supabase Auth', async () => {
+  for (const code of ['email_exists', 'user_already_exists']) {
+    const providers = createProviders(
+      {
+        SUPABASE_URL: 'https://example.supabase.co',
+        SUPABASE_SECRET_KEY: 'test-server-key',
+      },
+      async (url) => {
+        assert.equal(
+          String(url),
+          'https://example.supabase.co/auth/v1/admin/users',
+        );
+        return new Response(
+          JSON.stringify({ code, msg: 'Email already registered' }),
+          {
+            status: 422,
+            headers: {
+              'Content-Type': 'application/json',
+              'x-supabase-api-version': '2024-01-01',
+            },
+          },
+        );
+      },
+    );
+    await assert.rejects(
+      providers.signup(email, password, name),
+      (e) => e.status === 409 && e.code === 'CONTA_EXISTENTE',
+    );
+  }
+});
+
+test('nome único input: exatamente duas partes e até 21 caracteres; senha mantém requisitos', () => {
+  for (const n of ['Maria Silva', 'João José', 'ABCDEFGHIJ ABCDEFGHIJ'])
+    assert.equal(nomeValido(n), true, n);
+  for (const n of [
+    'Maria',
+    ' Maria Silva',
+    'Maria  Silva',
+    'Maria Silva ',
+    'Maria de Silva',
+    'Maria\tSilva',
+    '123 Silva',
+    'ABCDEFGHIJK ABCDEFGHIJ',
+  ])
+    assert.equal(nomeValido(n), false, n);
+  assert.equal(senhaValida(password), true);
+  assert.equal(senhaValida('123456!'), false);
+  assert.equal(normalizarEmail(' ALICE@EXAMPLE.COM '), email);
+});
+
+test('start não recebe senha, não devolve código e não cria usuário', async () => {
+  const f = fixture();
+  await assert.rejects(
+    f.handle({ ...startBody, password }),
+    (e) => e.status === 400,
+  );
+  const result = await f.handle(startBody);
+  assert.deepEqual(Object.keys(result).sort(), ['id', 'ok', 'token']);
+  assert.equal(f.sent[0].code, '0042');
+  assert.ok(!f.calls.some((c) => Array.isArray(c) && c[0] === 'signup'));
+  const a = f.attempts.get(result.id);
+  assert.ok(!JSON.stringify(a).includes(email));
+  assert.ok(!JSON.stringify(a).includes(name));
+});
+
+test('não cria conta com código errado, e-mail trocado, token falso ou confirmação forjada', async () => {
+  const f = fixture(),
+    a = await f.handle(startBody);
+  const body = {
+    action: 'confirm-signup',
+    ...a,
+    email,
+    password,
+    name,
+    code: '0042',
+  };
+  for (const patch of [
+    { code: '9999' },
+    { email: 'other@example.com' },
+    { token: 'a'.repeat(64) },
+    { code: '', verified: true },
+  ])
+    await assert.rejects(f.handle({ ...body, ...patch }));
+  assert.ok(!f.calls.some((c) => Array.isArray(c)));
+  await f.handle(body);
+  assert.equal(
+    f.calls.filter((c) => Array.isArray(c) && c[0] === 'signup').length,
+    1,
+  );
+  await assert.rejects(f.handle(body));
+});
+
+test('cancelamento remove só a tentativa; ela não confirma depois', async () => {
+  const f = fixture(),
+    a = await f.handle(startBody);
+  await f.handle({ action: 'cancel', ...a });
+  await assert.rejects(
+    f.handle({
+      action: 'confirm-signup',
+      ...a,
+      email,
+      name,
+      password,
+      code: '0042',
+    }),
+  );
+});
+
+test('recuperação não aceita pular a confirmação e troca o token após verificar', async () => {
+  const f = fixture(),
+    a = await f.handle({ ...startBody, purpose: 'recuperacao' });
+  await assert.rejects(
+    f.handle({ action: 'reset-password', ...a, email, password }),
+  );
+  const proof = await f.handle({
+    action: 'verify-recovery',
+    ...a,
+    email,
+    code: '0042',
+  });
+  assert.notEqual(proof.token, a.token);
+  await assert.rejects(
+    f.handle({ action: 'reset-password', ...a, email, password }),
+  );
+  await f.handle({ action: 'reset-password', ...proof, email, password });
+  assert.equal(
+    f.calls.filter((c) => Array.isArray(c) && c[0] === 'reset').length,
+    1,
+  );
+});
+
+test('configuração é verificada antes de reservar envio ou conferir código', async () => {
+  const f = fixture({
+    assertReady: async () => {
+      throw new AppError(503, 'CONFIG', 'Configuração ausente');
+    },
+  });
+  await assert.rejects(f.handle(startBody));
+  assert.equal(f.calls.length, 0);
+});
+
+test('falha do EmailJS cancela a tentativa, sem criar conta', async () => {
+  const f = fixture({
+    send: async () => {
+      throw new AppError(503, 'ENVIO', 'Falha no envio');
+    },
+  });
+  await assert.rejects(f.handle(startBody));
+  assert.equal(f.attempts.size, 0);
+  assert.ok(f.calls.includes('lc_auth_cancel'));
+});
+
+test('limite de envio devolve Retry-After e não chama EmailJS', async () => {
+  const f = fixture({
+    rpc: async (fn) =>
+      fn === 'lc_auth_email_exists'
+        ? false
+        : { ok: false, reason: 'rate_limit', retryAfter: 2700 },
+  });
+  await assert.rejects(
+    f.handle(startBody),
+    (e) => e.status === 429 && e.retryAfter === 2700,
+  );
+  assert.equal(f.sent.length, 0);
+});
+
+test('HMAC distingue e-mail, propósito e tentativa; não é hash simples de quatro dígitos', () => {
+  const mac = (...a) =>
+    createHmac('sha256', secret).update(JSON.stringify(a)).digest('hex');
+  assert.notEqual(
+    mac('code', 'id1', email, 'cadastro', '0042'),
+    mac('code', 'id2', email, 'cadastro', '0042'),
+  );
+});
+
+async function http({
+  method = 'POST',
+  origin = 'http://127.0.0.1:5173',
+  type = 'application/json',
+  body = '{}',
+  controller = async () => ({ ok: true }),
+  extraEnv = {},
+} = {}) {
+  const req = Readable.from([body]);
+  req.method = method;
+  req.headers = { 'content-type': type, ...(origin ? { origin } : {}) };
+  const headers = {};
+  const res = {
+    setHeader: (k, v) => {
+      headers[k] = v;
+    },
+    end: (body) => {
+      res.body = JSON.parse(body);
+    },
+    statusCode: 0,
+  };
+  await createHandler({
+    env: { APP_ORIGIN: 'http://127.0.0.1:5173', ...extraEnv },
+    controller,
+  })(req, res);
+  return { ...res, headers };
+}
+
+test('HTTP bloqueia GET, origem falsa, conteúdo não JSON e payload excessivo', async () => {
+  assert.equal((await http({ method: 'GET' })).statusCode, 405);
+  assert.equal(
+    (await http({ origin: 'https://evil.example' })).statusCode,
+    403,
+  );
+  assert.equal((await http({ origin: '' })).statusCode, 403);
+  assert.equal((await http({ type: 'text/plain' })).statusCode, 415);
+  assert.equal((await http({ body: 'x'.repeat(8193) })).statusCode, 413);
+  assert.equal((await http({ body: '{invalid' })).statusCode, 400);
+});
+
+test('preview aceita somente URL exata do deployment, nunca domínio curinga', async () => {
+  const extraEnv = { VERCEL_ENV: 'preview', VERCEL_URL: 'preview.vercel.app' };
+  assert.equal(
+    (await http({ origin: 'https://preview.vercel.app', extraEnv })).statusCode,
+    200,
+  );
+  assert.equal(
+    (await http({ origin: 'https://other.vercel.app', extraEnv })).statusCode,
+    403,
+  );
+});
+
+test('HTTP não expõe segredos em erros e devolve cabeçalhos seguros', async () => {
+  const original = console.warn;
+  console.warn = () => {};
+  try {
+    const r = await http({
+      controller: async () => {
+        throw new Error('password=segredo');
+      },
+    });
+    assert.equal(r.statusCode, 503);
+    assert.ok(!JSON.stringify(r.body).includes('segredo'));
+    assert.equal(r.headers['Cache-Control'], 'no-store');
+    const limited = await http({
+      controller: async () => {
+        throw new AppError(429, 'LIMITE', 'Aguarde', 45);
+      },
+    });
+    assert.equal(limited.headers['Retry-After'], '45');
+  } finally {
+    console.warn = original;
+  }
+});
+
+test('diagnóstico encontra placeholders e nunca imprime valores', () => {
+  const problems = configProblems({
+    EMAILJS_PRIVATE_KEY: 'sua_chave_privadaEXAMPLE',
+    SUPABASE_SECRET_KEY: 'sb_publishable_demo',
+  });
+  assert.ok(problems.includes('EMAILJS_PRIVATE_KEY'));
+  assert.ok(problems.includes('SUPABASE_SECRET_KEY'));
+  assert.ok(!JSON.stringify(problems).includes('EXAMPLE'));
+  assert.equal(classifyEmailError(404, 'Account not found'), 'CONTA_EMAILJS');
+  assert.equal(
+    classifyEmailError(400, 'Template not found'),
+    'TEMPLATE_EMAILJS',
+  );
+});
