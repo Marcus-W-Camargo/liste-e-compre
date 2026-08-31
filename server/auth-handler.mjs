@@ -42,6 +42,8 @@ export function createHandler({
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
+    let body;
+
     try {
       if (req.method !== 'POST') {
         res.setHeader('Allow', 'POST');
@@ -58,7 +60,7 @@ export function createHandler({
       if (!/^application\/json(?:;|$)/i.test(req.headers['content-type'] ?? ''))
         throw new AppError(415, 'TIPO_INVALIDO', 'Envie JSON.');
 
-      const body = await readBody(req);
+      body = await readBody(req);
       if (body?.action === 'start') {
         await limiter({
           req,
@@ -81,17 +83,34 @@ export function createHandler({
       res.end(JSON.stringify(result));
     } catch (error) {
       const known = error instanceof AppError;
-      res.statusCode = known ? error.status : 503;
-      if (known && error.retryAfter)
-        res.setHeader('Retry-After', String(error.retryAfter));
+      const neutralVerificationError =
+        known &&
+        ['confirm-signup', 'verify-recovery'].includes(body?.action) &&
+        [
+          'CODIGO_INCORRETO',
+          'TENTATIVA_INVALIDA',
+          'TENTATIVA_BLOQUEADA',
+        ].includes(error.code);
+      const publicError = neutralVerificationError
+        ? new AppError(
+            400,
+            'VERIFICACAO_INVALIDA',
+            'Não foi possível confirmar o código. Confira os dados ou inicie uma nova tentativa.',
+          )
+        : error;
+      const publicKnown = publicError instanceof AppError;
+
+      res.statusCode = publicKnown ? publicError.status : 503;
+      if (publicKnown && publicError.retryAfter)
+        res.setHeader('Retry-After', String(publicError.retryAfter));
       if (!known)
         console.warn('[Auth] Falha interna (detalhes sensíveis omitidos).');
       res.end(
         JSON.stringify({
           ok: false,
-          code: known ? error.code : 'INDISPONIVEL',
-          error: known
-            ? error.message
+          code: publicKnown ? publicError.code : 'INDISPONIVEL',
+          error: publicKnown
+            ? publicError.message
             : 'Serviço indisponível. Confira a conexão e tente novamente.',
         }),
       );
