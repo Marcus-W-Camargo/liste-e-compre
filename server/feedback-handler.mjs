@@ -1,6 +1,10 @@
+import { AppError } from './errors.mjs';
+import { aplicarRateLimit } from './rate-limit.mjs';
+
 const DESTINATARIO_PADRAO = 'listeecompre@gmail.com';
 const REMETENTE_TESTE = 'Liste & Compre <onboarding@resend.dev>';
 const ORIGEM_PRODUCAO = 'https://listeecompre.vercel.app';
+const TIPOS = new Set(['Elogio', 'Reclamação', 'Bug']);
 
 function responder(res, status, payload) {
   res.statusCode = status;
@@ -12,6 +16,9 @@ function responder(res, status, payload) {
 
 async function lerBody(req) {
   if (req.body !== undefined) {
+    const raw =
+      typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+    if (Buffer.byteLength(raw) > 12_000) throw new Error('CORPO_GRANDE');
     return typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
   }
 
@@ -26,10 +33,6 @@ async function lerBody(req) {
   return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
 }
 
-function textoSeguro(valor, limite) {
-  return String(valor ?? '').trim().slice(0, limite);
-}
-
 function origemPermitida(req, env) {
   const origem = req.headers.origin;
   if (typeof origem !== 'string') return false;
@@ -37,12 +40,24 @@ function origemPermitida(req, env) {
   const permitidas = new Set([ORIGEM_PRODUCAO]);
   if (env.APP_ORIGIN) permitidas.add(env.APP_ORIGIN.replace(/\/$/, ''));
   if (env.VERCEL_URL) permitidas.add(`https://${env.VERCEL_URL}`);
-  if (env.VERCEL_BRANCH_URL) permitidas.add(`https://${env.VERCEL_BRANCH_URL}`);
+  if (env.VERCEL_BRANCH_URL)
+    permitidas.add(`https://${env.VERCEL_BRANCH_URL}`);
 
   return permitidas.has(origem.replace(/\/$/, ''));
 }
 
-export function createFeedbackHandler({ env = process.env, fetchImpl = fetch } = {}) {
+function emailValido(email) {
+  return (
+    !email ||
+    (email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+  );
+}
+
+export function createFeedbackHandler({
+  env = process.env,
+  fetchImpl = fetch,
+  rateLimit = aplicarRateLimit,
+} = {}) {
   return async function feedbackHandler(req, res) {
     if (req.method !== 'POST') {
       res.setHeader('Allow', 'POST');
@@ -59,25 +74,51 @@ export function createFeedbackHandler({ env = process.env, fetchImpl = fetch } =
 
     if (!env.RESEND_API_KEY) {
       console.warn('[Feedback] RESEND_API_KEY não configurada.');
-      return responder(res, 503, { ok: false, error: 'Serviço de e-mail indisponível.' });
+      return responder(res, 503, {
+        ok: false,
+        error: 'Serviço de e-mail indisponível.',
+      });
     }
 
     try {
-      const body = await lerBody(req);
-      const tipo = textoSeguro(body?.tipo || 'Teste', 40);
-      const mensagem = textoSeguro(body?.mensagem, 5000);
-      const emailUsuario = textoSeguro(body?.email, 254);
-      const navegador = textoSeguro(body?.navegador, 500);
+      await rateLimit({
+        req,
+        env,
+        scope: 'feedback',
+        limit: 5,
+        windowSeconds: 900,
+      });
 
-      if (!mensagem) {
-        return responder(res, 400, { ok: false, error: 'Escreva uma mensagem.' });
+      const body = await lerBody(req);
+      if (!body || typeof body !== 'object' || Array.isArray(body))
+        throw new Error('DADOS_INVALIDOS');
+
+      const tipo = typeof body.tipo === 'string' ? body.tipo.trim() : '';
+      const mensagem =
+        typeof body.mensagem === 'string' ? body.mensagem.trim() : '';
+      const emailUsuario =
+        typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+      const navegador =
+        typeof body.navegador === 'string' ? body.navegador.trim() : '';
+      const website =
+        typeof body.website === 'string' ? body.website.trim() : '';
+
+      if (website) return responder(res, 200, { ok: true });
+      if (
+        !TIPOS.has(tipo) ||
+        !mensagem ||
+        mensagem.length > 5000 ||
+        !emailValido(emailUsuario) ||
+        navegador.length > 500 ||
+        (tipo !== 'Bug' && navegador)
+      ) {
+        return responder(res, 400, { ok: false, error: 'Dados inválidos.' });
       }
 
-      const assunto = `[Liste & Compre] ${tipo}`;
       const texto = [
         `Tipo: ${tipo}`,
         emailUsuario ? `E-mail do usuário: ${emailUsuario}` : null,
-        navegador ? `Navegador: ${navegador}` : null,
+        tipo === 'Bug' && navegador ? `Navegador: ${navegador}` : null,
         `Data: ${new Date().toISOString()}`,
         '',
         'Mensagem:',
@@ -95,14 +136,18 @@ export function createFeedbackHandler({ env = process.env, fetchImpl = fetch } =
         body: JSON.stringify({
           from: REMETENTE_TESTE,
           to: [DESTINATARIO_PADRAO],
-          subject: assunto,
+          subject: `[Liste & Compre] ${tipo}`,
           text: texto,
         }),
       });
 
       const resultado = await resposta.json().catch(() => ({}));
       if (!resposta.ok) {
-        console.warn('[Feedback] Resend recusou o envio:', resposta.status, resultado?.name ?? 'erro');
+        console.warn(
+          '[Feedback] Resend recusou o envio:',
+          resposta.status,
+          resultado?.name ?? 'erro',
+        );
         return responder(res, 502, {
           ok: false,
           error: 'Não foi possível enviar a mensagem agora.',
@@ -112,7 +157,25 @@ export function createFeedbackHandler({ env = process.env, fetchImpl = fetch } =
 
       return responder(res, 200, { ok: true, id: resultado?.id ?? null });
     } catch (error) {
-      const corpoGrande = error instanceof Error && error.message === 'CORPO_GRANDE';
+      if (error instanceof AppError) {
+        if (error.retryAfter)
+          res.setHeader('Retry-After', String(error.retryAfter));
+
+        if (error.status >= 500) {
+          return responder(res, error.status, {
+            ok: false,
+            error: 'Serviço temporariamente indisponível.',
+          });
+        }
+
+        return responder(res, error.status, {
+          ok: false,
+          error: error.message,
+        });
+      }
+
+      const corpoGrande =
+        error instanceof Error && error.message === 'CORPO_GRANDE';
       return responder(res, corpoGrande ? 413 : 400, {
         ok: false,
         error: corpoGrande ? 'Mensagem muito grande.' : 'Dados inválidos.',

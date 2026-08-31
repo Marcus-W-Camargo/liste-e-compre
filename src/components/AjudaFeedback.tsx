@@ -32,7 +32,8 @@ const OPCOES: OpcaoFeedback[] = [
     icone: '🐞',
     titulo: 'Reportar um bug',
     descricao: 'Avise sobre um erro ou comportamento inesperado.',
-    placeholder: 'Descreva o problema e, se possível, o que você fazia quando ele aconteceu...',
+    placeholder:
+      'Descreva o problema e, se possível, o que você fazia quando ele aconteceu...',
   },
 ];
 
@@ -42,17 +43,25 @@ export function AjudaFeedback() {
   const [mensagem, setMensagem] = useState('');
   const [email, setEmail] = useState('');
   const [enviando, setEnviando] = useState(false);
-  const [status, setStatus] = useState<{ tipo: 'sucesso' | 'erro'; texto: string } | null>(null);
+  const [status, setStatus] = useState<{
+    tipo: 'sucesso' | 'erro';
+    texto: string;
+  } | null>(null);
 
   useEffect(() => {
     const pagina = document.querySelector('.ajuda-pagina');
     const cabecalho = document.querySelector('.ajuda-cabecalho');
-    if (!(pagina instanceof HTMLElement) || !(cabecalho instanceof HTMLElement)) return;
+    if (
+      !(pagina instanceof HTMLElement) ||
+      !(cabecalho instanceof HTMLElement)
+    )
+      return;
 
     const paragrafo = cabecalho.querySelector('p');
     const textoAnterior = paragrafo?.textContent ?? '';
     if (paragrafo) {
-      paragrafo.textContent = 'Veja o passo a passo do Liste & Compre, encontre respostas para as dúvidas mais comuns ou fale com a gente para enviar um elogio, uma reclamação ou reportar um problema.';
+      paragrafo.textContent =
+        'Veja o passo a passo do Liste & Compre, encontre respostas para as dúvidas mais comuns ou fale com a gente para enviar um elogio, uma reclamação ou reportar um problema.';
     }
 
     const ponto = document.createElement('div');
@@ -103,19 +112,29 @@ export function AjudaFeedback() {
           tipo: opcao.tipo,
           mensagem: mensagem.trim(),
           email: email.trim(),
-          navegador: navigator.userAgent,
+          navegador: opcao.tipo === 'Bug' ? navigator.userAgent : '',
+          website: '',
         }),
       });
 
       const resultado = await resposta.json().catch(() => ({}));
-      if (!resposta.ok) throw new Error(resultado?.error || 'Não foi possível enviar sua mensagem.');
+      if (!resposta.ok)
+        throw new Error(
+          resultado?.error || 'Não foi possível enviar sua mensagem.',
+        );
 
       setMensagem('');
-      setStatus({ tipo: 'sucesso', texto: 'Mensagem enviada. Obrigado por falar com a gente!' });
+      setStatus({
+        tipo: 'sucesso',
+        texto: 'Mensagem enviada. Obrigado por falar com a gente!',
+      });
     } catch (erro) {
       setStatus({
         tipo: 'erro',
-        texto: erro instanceof Error ? erro.message : 'Não foi possível enviar sua mensagem agora.',
+        texto:
+          erro instanceof Error
+            ? erro.message
+            : 'Não foi possível enviar sua mensagem agora.',
       });
     } finally {
       setEnviando(false);
@@ -130,33 +149,67 @@ export function AjudaFeedback() {
         <div className="ajuda-feedback-titulo">
           <span className="ajuda-kicker">Fale com a gente</span>
           <h2 id="titulo-feedback">Quer nos contar alguma coisa?</h2>
-          <p>Escolha uma opção e envie sua mensagem sem sair da Central de Ajuda.</p>
+          <p>
+            Escolha uma opção e envie sua mensagem sem sair da Central de Ajuda.
+          </p>
         </div>
 
         <div className="ajuda-feedback-opcoes">
           {OPCOES.map((item) => (
-            <button key={item.tipo} type="button" className="ajuda-feedback-card" onClick={() => abrirFormulario(item)}>
-              <span className="ajuda-feedback-icone" aria-hidden="true">{item.icone}</span>
+            <button
+              key={item.tipo}
+              type="button"
+              className="ajuda-feedback-card"
+              onClick={() => abrirFormulario(item)}
+            >
+              <span className="ajuda-feedback-icone" aria-hidden="true">
+                {item.icone}
+              </span>
               <span className="ajuda-feedback-card-texto">
                 <strong>{item.titulo}</strong>
                 <small>{item.descricao}</small>
               </span>
-              <span className="ajuda-feedback-seta" aria-hidden="true">›</span>
+              <span className="ajuda-feedback-seta" aria-hidden="true">
+                ›
+              </span>
             </button>
           ))}
         </div>
       </section>
 
       {opcao && (
-        <div className="ajuda-feedback-overlay" role="presentation" onMouseDown={(evento) => {
-          if (evento.target === evento.currentTarget) fecharFormulario();
-        }}>
-          <section className="ajuda-feedback-modal" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-feedback">
-            <button type="button" className="ajuda-feedback-fechar" onClick={fecharFormulario} aria-label="Fechar formulário">×</button>
-            <div className="ajuda-feedback-modal-icone" aria-hidden="true">{opcao.icone}</div>
-            <span className="ajuda-kicker">{opcao.tipo === 'Bug' ? 'Reportar problema' : opcao.tipo}</span>
+        <div
+          className="ajuda-feedback-overlay"
+          role="presentation"
+          onMouseDown={(evento) => {
+            if (evento.target === evento.currentTarget) fecharFormulario();
+          }}
+        >
+          <section
+            className="ajuda-feedback-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titulo-modal-feedback"
+          >
+            <button
+              type="button"
+              className="ajuda-feedback-fechar"
+              onClick={fecharFormulario}
+              aria-label="Fechar formulário"
+            >
+              ×
+            </button>
+            <div className="ajuda-feedback-modal-icone" aria-hidden="true">
+              {opcao.icone}
+            </div>
+            <span className="ajuda-kicker">
+              {opcao.tipo === 'Bug' ? 'Reportar problema' : opcao.tipo}
+            </span>
             <h2 id="titulo-modal-feedback">{opcao.titulo}</h2>
-            <p className="ajuda-feedback-modal-intro">Sua mensagem será enviada diretamente para a equipe do Liste & Compre.</p>
+            <p className="ajuda-feedback-modal-intro">
+              Sua mensagem será enviada diretamente para a equipe do Liste &
+              Compre.
+            </p>
 
             <form onSubmit={enviarFeedback}>
               <label htmlFor="feedback-mensagem">Sua mensagem</label>
@@ -169,9 +222,13 @@ export function AjudaFeedback() {
                 required
                 autoFocus
               />
-              <div className="ajuda-feedback-contador">{mensagem.length}/5000</div>
+              <div className="ajuda-feedback-contador">
+                {mensagem.length}/5000
+              </div>
 
-              <label htmlFor="feedback-email">E-mail para contato <span>(opcional)</span></label>
+              <label htmlFor="feedback-email">
+                E-mail para contato <span>(opcional)</span>
+              </label>
               <input
                 id="feedback-email"
                 type="email"
@@ -180,17 +237,39 @@ export function AjudaFeedback() {
                 placeholder="seuemail@exemplo.com"
                 maxLength={254}
               />
+              <input
+                type="text"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                style={{ position: 'absolute', left: '-10000px' }}
+              />
 
               {opcao.tipo === 'Bug' && (
                 <div className="ajuda-feedback-diagnostico">
                   <span aria-hidden="true">ℹ️</span>
-                  <p>Informações básicas do navegador serão incluídas para ajudar na investigação do problema.</p>
+                  <p>
+                    Informações básicas do navegador serão incluídas para ajudar
+                    na investigação do problema.
+                  </p>
                 </div>
               )}
 
-              {status && <div className={`ajuda-feedback-status ${status.tipo}`} role="status">{status.texto}</div>}
+              {status && (
+                <div
+                  className={`ajuda-feedback-status ${status.tipo}`}
+                  role="status"
+                >
+                  {status.texto}
+                </div>
+              )}
 
-              <button className="ajuda-feedback-enviar" type="submit" disabled={enviando || !mensagem.trim()}>
+              <button
+                className="ajuda-feedback-enviar"
+                type="submit"
+                disabled={enviando || !mensagem.trim()}
+              >
                 {enviando ? 'Enviando...' : 'Enviar mensagem'}
               </button>
             </form>

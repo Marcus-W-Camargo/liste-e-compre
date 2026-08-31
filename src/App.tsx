@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Home } from './pages/Home';
 import { Lista } from './pages/Lista';
 import { Conta } from './pages/Conta';
@@ -7,8 +7,10 @@ import { ComprasSessao } from './pages/ComprasSessao';
 import { HistoricoCompras } from './pages/HistoricoCompras';
 import { Perfil } from './pages/Perfil';
 import { Ajuda } from './pages/Ajuda';
+import { Privacidade } from './pages/Privacidade';
 import { Header } from './components/Header';
 import { AjudaFeedback } from './components/AjudaFeedback';
+import { AccountDeletion } from './components/AccountDeletion';
 import { CloudAccess, CloudStatus } from './components/CloudAccess';
 import { useDesktopKeyboardNavigation } from './hooks/useDesktopKeyboardNavigation';
 import './App.css';
@@ -21,7 +23,8 @@ function Rodape() {
     <footer className="rodape">
       <p>
         © 2026 Marcus Camargo. Todos os direitos reservados. Projeto
-        desenvolvido para fins de estudo e portfólio.
+        desenvolvido para fins de estudo e portfólio.{' '}
+        <Link to="/privacidade">Política de Privacidade</Link>
       </p>
     </footer>
   );
@@ -49,9 +52,11 @@ function App() {
         <div className="app-conteudo">
           <Header />
           <CloudStatus />
+          <AccountDeletion />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/conta" element={<Conta />} />
+            <Route path="/privacidade" element={<Privacidade />} />
             <Route element={<CloudAccess />}>
               <Route path="/lista" element={<Lista />} />
               <Route path="/compre" element={<Compras />} />

@@ -59,11 +59,15 @@ export function Conta() {
   const tentativa = useRef<Tentativa | null>(null);
   const geracao = useRef(0);
   const montado = useRef(true);
+  const errosVerificacaoCadastro = useRef(0);
+  const errosVerificacaoRecuperacao = useRef(0);
 
   function abandonarTentativa() {
     geracao.current++;
     if (tentativa.current) cancelarTentativa(tentativa.current);
     tentativa.current = null;
+    errosVerificacaoCadastro.current = 0;
+    errosVerificacaoRecuperacao.current = 0;
   }
   function tratarErro(error: unknown, padrao: string) {
     setErro(error instanceof Error ? error.message : padrao);
@@ -357,7 +361,9 @@ export function Conta() {
 
         setCodigoCadastro('');
         setCadastroConfirmacao(true);
-        setMensagem('Código enviado para seu e-mail.');
+        setMensagem(
+          'Se o cadastro puder prosseguir, o código será enviado para o e-mail informado.',
+        );
         return;
       }
 
@@ -405,6 +411,7 @@ export function Conta() {
         code: codigoCadastro,
       });
       tentativa.current = null;
+      errosVerificacaoCadastro.current = 0;
 
       setCadastroConfirmacao(false);
       setCodigoCadastro('');
@@ -416,6 +423,21 @@ export function Conta() {
       setModo('login');
       setMensagem('Cadastro confirmado. Faça login para continuar.');
     } catch (error) {
+      if (
+        error instanceof ErroAutenticacao &&
+        error.code === 'VERIFICACAO_INVALIDA'
+      ) {
+        errosVerificacaoCadastro.current++;
+        if (errosVerificacaoCadastro.current >= 5) {
+          abandonarTentativa();
+          setCadastroConfirmacao(false);
+          setCodigoCadastro('');
+          setErro(
+            'Não foi possível confirmar o código. Inicie uma nova tentativa.',
+          );
+          return;
+        }
+      }
       tratarErro(error, 'Código de confirmação inválido.');
     } finally {
       setProcessando(false);
@@ -479,7 +501,9 @@ export function Conta() {
         if (!(await iniciarTentativa('recuperacao', email))) return;
 
         setEtapaRecuperacao('codigo');
-        setMensagem('Código enviado para seu e-mail.');
+        setMensagem(
+          'Se a recuperação puder prosseguir, o código será enviado para o e-mail informado.',
+        );
         return;
       }
 
@@ -502,6 +526,7 @@ export function Conta() {
           return;
         }
         tentativa.current = autorizacao;
+        errosVerificacaoRecuperacao.current = 0;
         setEtapaRecuperacao('senha');
         setCodigo('');
         setMensagem('Código confirmado. Defina sua nova senha.');
@@ -537,6 +562,22 @@ export function Conta() {
       setSenhasVisiveis({});
       setMensagem('Senha redefinida com sucesso.');
     } catch (error) {
+      if (
+        etapaRecuperacao === 'codigo' &&
+        error instanceof ErroAutenticacao &&
+        error.code === 'VERIFICACAO_INVALIDA'
+      ) {
+        errosVerificacaoRecuperacao.current++;
+        if (errosVerificacaoRecuperacao.current >= 5) {
+          abandonarTentativa();
+          setEtapaRecuperacao('email');
+          setCodigo('');
+          setErro(
+            'Não foi possível confirmar o código. Inicie uma nova tentativa.',
+          );
+          return;
+        }
+      }
       tratarErro(error, 'Não foi possível concluir a recuperação.');
     } finally {
       setProcessando(false);
@@ -586,7 +627,8 @@ export function Conta() {
               <div className="cabecalho-verificacao">
                 <h2>Verifique seu e-mail</h2>
                 <p>
-                  O seu código de verificação foi enviado para o E-mail:{' '}
+                  Se o cadastro puder prosseguir, enviaremos o código de
+                  verificação para o e-mail:{' '}
                   <strong className="email-confirmacao">
                     {formulario.email}
                   </strong>
@@ -817,7 +859,7 @@ export function Conta() {
               {etapaRecuperacao === 'email'
                 ? 'Insira o e-mail da sua conta.'
                 : etapaRecuperacao === 'codigo'
-                  ? 'Digite o código enviado para seu e-mail.'
+                  ? 'Digite o código de verificação, caso ele tenha sido enviado ao e-mail informado.'
                   : 'Defina sua nova senha.'}
             </p>
           </div>

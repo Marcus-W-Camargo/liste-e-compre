@@ -12,10 +12,12 @@ import {
   senhaValida,
   normalizarEmail,
 } from '../shared/auth-validation.mjs';
+
 const secret = 'x'.repeat(43),
   email = 'alice@example.com',
   password = 'Teste123!',
   name = 'Alice Silva';
+
 function fixture(overrides = {}) {
   const calls = [],
     sent = [],
@@ -96,38 +98,57 @@ function fixture(overrides = {}) {
     }),
   };
 }
+
 const startBody = { action: 'start', purpose: 'cadastro', email, name };
-test('e-mail existente é consultado normalizado e bloqueado antes de código, reserva, envio ou conta', async () => {
+
+test('resposta pública inicial de cadastro não distingue e-mail existente por status ou código', async () => {
   const lookups = [];
-  const f = fixture({
+  const existente = fixture({
     rpc: async (fn, params) => {
       lookups.push({ fn, params });
       assert.equal(fn, 'lc_auth_email_exists');
       return true;
     },
   });
-  const response = await http({
+  const disponivel = fixture();
+
+  const respostaExistente = await http({
     body: JSON.stringify({
       ...startBody,
       email: ' ALICE@EXAMPLE.COM ',
       emailExists: false,
       verified: true,
     }),
-    controller: f.handle,
+    controller: existente.handle,
   });
-  assert.equal(response.statusCode, 409);
-  assert.deepEqual(response.body, {
-    ok: false,
-    code: 'CONTA_EXISTENTE',
-    error: 'Este e-mail já possui uma conta. Entre ou recupere sua senha.',
+  const respostaDisponivel = await http({
+    body: JSON.stringify(startBody),
+    controller: disponivel.handle,
   });
+
+  assert.equal(respostaExistente.statusCode, 200);
+  assert.equal(respostaDisponivel.statusCode, 200);
+  assert.deepEqual(
+    Object.keys(respostaExistente.body).sort(),
+    Object.keys(respostaDisponivel.body).sort(),
+  );
+  assert.deepEqual(Object.keys(respostaExistente.body).sort(), [
+    'id',
+    'ok',
+    'token',
+  ]);
+  assert.equal(respostaExistente.body.ok, true);
+  assert.equal(typeof respostaExistente.body.id, 'string');
+  assert.equal(typeof respostaExistente.body.token, 'string');
+  assert.equal('code' in respostaExistente.body, false);
   assert.deepEqual(lookups, [
     { fn: 'lc_auth_email_exists', params: { p_email: email } },
   ]);
-  assert.deepEqual(f.calls, ['ready']);
-  assert.equal(f.sent.length, 0);
-  assert.equal(f.attempts.size, 0);
+  assert.deepEqual(existente.calls, ['ready']);
+  assert.equal(existente.sent.length, 0);
+  assert.equal(existente.attempts.size, 0);
 });
+
 test('e-mail novo é consultado antes de gerar e reservar; fluxo original continua', async () => {
   const f = fixture();
   await f.handle(startBody);
@@ -142,6 +163,7 @@ test('e-mail novo é consultado antes de gerar e reservar; fluxo original contin
   assert.equal(f.sent.length, 1);
   assert.equal(f.attempts.size, 1);
 });
+
 test('consulta com falha ou resposta não booleana não gera código nem gasta envio', async () => {
   for (const value of [null, undefined, 0, 'false', { exists: false }, []]) {
     const f = fixture({ rpc: async () => value });
@@ -166,6 +188,7 @@ test('consulta com falha ou resposta não booleana não gera código nem gasta e
   assert.equal(f.sent.length, 0);
   assert.equal(f.attempts.size, 0);
 });
+
 test('recuperação não usa o bloqueio de e-mail existente do cadastro', async () => {
   const f = fixture();
   await f.handle({ ...startBody, purpose: 'recuperacao' });
@@ -173,6 +196,7 @@ test('recuperação não usa o bloqueio de e-mail existente do cadastro', async 
   assert.equal(f.sent.length, 1);
   assert.equal(f.sent[0].purpose, 'recuperacao');
 });
+
 test('conta criada após a pré-consulta continua sendo rejeitada na confirmação final', async () => {
   let signups = 0;
   const f = fixture({
@@ -187,7 +211,12 @@ test('conta criada após a pré-consulta continua sendo rejeitada na confirmaç�
   });
   const a = await f.handle(startBody);
   const body = {
-    action: 'confirm-signup', ...a, email, name, password, code: '0042',
+    action: 'confirm-signup',
+    ...a,
+    email,
+    name,
+    password,
+    code: '0042',
   };
   await assert.rejects(f.handle(body), (e) => e.code === 'CONTA_EXISTENTE');
   assert.equal(signups, 1);
@@ -198,6 +227,7 @@ test('conta criada após a pré-consulta continua sendo rejeitada na confirmaç�
   );
   assert.equal(signups, 1);
 });
+
 test('RPC ausente produz diagnóstico seguro e mantém o corpo do provedor fora dos logs', async () => {
   const logs = [];
   const warn = console.warn;
@@ -226,7 +256,8 @@ test('RPC ausente produz diagnóstico seguro e mantém o corpo do provedor fora 
     );
     await assert.rejects(
       providers.rpc('lc_auth_email_exists', { p_email: null }),
-      (e) => e.status === 503 &&
+      (e) =>
+        e.status === 503 &&
         e.code === 'CONSULTA_EMAIL_NAO_CONFIGURADA' &&
         !e.message.includes(email),
     );
@@ -237,6 +268,7 @@ test('RPC ausente produz diagnóstico seguro e mantém o corpo do provedor fora 
     console.warn = warn;
   }
 });
+
 test('provedor mantém o tratamento de e-mail duplicado do Supabase Auth', async () => {
   for (const code of ['email_exists', 'user_already_exists']) {
     const providers = createProviders(
@@ -267,6 +299,7 @@ test('provedor mantém o tratamento de e-mail duplicado do Supabase Auth', async
     );
   }
 });
+
 test('nome único input: exatamente duas partes e até 21 caracteres; senha mantém requisitos', () => {
   for (const n of ['Maria Silva', 'João José', 'ABCDEFGHIJ ABCDEFGHIJ'])
     assert.equal(nomeValido(n), true, n);
@@ -285,6 +318,7 @@ test('nome único input: exatamente duas partes e até 21 caracteres; senha mant
   assert.equal(senhaValida('123456!'), false);
   assert.equal(normalizarEmail(' ALICE@EXAMPLE.COM '), email);
 });
+
 test('start não recebe senha, não devolve código e não cria usuário', async () => {
   const f = fixture();
   await assert.rejects(
@@ -299,6 +333,7 @@ test('start não recebe senha, não devolve código e não cria usuário', async
   assert.ok(!JSON.stringify(a).includes(email));
   assert.ok(!JSON.stringify(a).includes(name));
 });
+
 test('não cria conta com código errado, e-mail trocado, token falso ou confirmação forjada', async () => {
   const f = fixture(),
     a = await f.handle(startBody);
@@ -325,6 +360,7 @@ test('não cria conta com código errado, e-mail trocado, token falso ou confirm
   );
   await assert.rejects(f.handle(body));
 });
+
 test('cancelamento remove só a tentativa; ela não confirma depois', async () => {
   const f = fixture(),
     a = await f.handle(startBody);
@@ -340,6 +376,7 @@ test('cancelamento remove só a tentativa; ela não confirma depois', async () =
     }),
   );
 });
+
 test('recuperação não aceita pular a confirmação e troca o token após verificar', async () => {
   const f = fixture(),
     a = await f.handle({ ...startBody, purpose: 'recuperacao' });
@@ -362,6 +399,7 @@ test('recuperação não aceita pular a confirmação e troca o token após veri
     1,
   );
 });
+
 test('configuração é verificada antes de reservar envio ou conferir código', async () => {
   const f = fixture({
     assertReady: async () => {
@@ -371,6 +409,7 @@ test('configuração é verificada antes de reservar envio ou conferir código',
   await assert.rejects(f.handle(startBody));
   assert.equal(f.calls.length, 0);
 });
+
 test('falha do EmailJS cancela a tentativa, sem criar conta', async () => {
   const f = fixture({
     send: async () => {
@@ -381,18 +420,23 @@ test('falha do EmailJS cancela a tentativa, sem criar conta', async () => {
   assert.equal(f.attempts.size, 0);
   assert.ok(f.calls.includes('lc_auth_cancel'));
 });
-test('limite de envio devolve Retry-After e não chama EmailJS', async () => {
+
+test('limite específico de e-mail devolve tentativa sintética e não chama EmailJS', async () => {
   const f = fixture({
-    rpc: async (fn) => fn === 'lc_auth_email_exists'
-      ? false
-      : { ok: false, reason: 'rate_limit', retryAfter: 2700 },
+    rpc: async (fn) =>
+      fn === 'lc_auth_email_exists'
+        ? false
+        : { ok: false, reason: 'rate_limit', retryAfter: 2700 },
   });
-  await assert.rejects(
-    f.handle(startBody),
-    (e) => e.status === 429 && e.retryAfter === 2700,
-  );
+  const result = await f.handle(startBody);
+  assert.deepEqual(Object.keys(result).sort(), ['id', 'ok', 'token']);
+  assert.equal(result.ok, true);
+  assert.match(result.id, /^[a-f0-9-]{36}$/);
+  assert.match(result.token, /^[a-f0-9]{64}$/);
   assert.equal(f.sent.length, 0);
+  assert.equal(f.attempts.size, 0);
 });
+
 test('HMAC distingue e-mail, propósito e tentativa; não é hash simples de quatro dígitos', () => {
   const mac = (...a) =>
     createHmac('sha256', secret).update(JSON.stringify(a)).digest('hex');
@@ -401,6 +445,7 @@ test('HMAC distingue e-mail, propósito e tentativa; não é hash simples de qua
     mac('code', 'id2', email, 'cadastro', '0042'),
   );
 });
+
 async function http({
   method = 'POST',
   origin = 'http://127.0.0.1:5173',
@@ -428,6 +473,7 @@ async function http({
   })(req, res);
   return { ...res, headers };
 }
+
 test('HTTP bloqueia GET, origem falsa, conteúdo não JSON e payload excessivo', async () => {
   assert.equal((await http({ method: 'GET' })).statusCode, 405);
   assert.equal(
@@ -439,6 +485,7 @@ test('HTTP bloqueia GET, origem falsa, conteúdo não JSON e payload excessivo',
   assert.equal((await http({ body: 'x'.repeat(8193) })).statusCode, 413);
   assert.equal((await http({ body: '{invalid' })).statusCode, 400);
 });
+
 test('preview aceita somente URL exata do deployment, nunca domínio curinga', async () => {
   const extraEnv = { VERCEL_ENV: 'preview', VERCEL_URL: 'preview.vercel.app' };
   assert.equal(
@@ -450,6 +497,7 @@ test('preview aceita somente URL exata do deployment, nunca domínio curinga', a
     403,
   );
 });
+
 test('HTTP não expõe segredos em erros e devolve cabeçalhos seguros', async () => {
   const original = console.warn;
   console.warn = () => {};
@@ -472,6 +520,7 @@ test('HTTP não expõe segredos em erros e devolve cabeçalhos seguros', async (
     console.warn = original;
   }
 });
+
 test('diagnóstico encontra placeholders e nunca imprime valores', () => {
   const problems = configProblems({
     EMAILJS_PRIVATE_KEY: 'sua_chave_privadaEXAMPLE',

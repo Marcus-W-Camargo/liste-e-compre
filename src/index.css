@@ -73,6 +73,21 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
+.rodape a,
+.rodape a:visited {
+  color: #f7501b;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.rodape a:hover,
+.rodape a:focus-visible {
+  color: #e04312;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 @media (max-width: 600px) {
   body::before {
     background-position: center center;

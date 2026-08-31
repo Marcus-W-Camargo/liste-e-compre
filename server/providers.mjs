@@ -25,6 +25,7 @@ export function createProviders(config, request = fetch) {
         request(input, { ...init, signal: AbortSignal.timeout(10000) }),
     },
   });
+
   async function rpc(name, params = {}) {
     const { data, error } = await client.rpc(name, params);
     if (error) {
@@ -47,8 +48,12 @@ export function createProviders(config, request = fetch) {
     }
     return data;
   }
+
   return {
     rpc,
+    async recoveryExists(email) {
+      return Boolean(await rpc('lc_auth_find_user', { p_email: email }));
+    },
     async assertReady() {
       // Detecta configuração incompleta ANTES de gastar a cota de envio ou consumir o código.
       let response;
@@ -99,7 +104,7 @@ export function createProviders(config, request = fetch) {
         throw new AppError(
           503,
           'ENVIO_FALHOU',
-          'Não foi possível confirmar o envio do e-mail. Tente iniciar o cadastro novamente.',
+          'Não foi possível confirmar o envio do e-mail. Tente iniciar novamente.',
         );
       }
       if (!response.ok) {
@@ -150,8 +155,8 @@ export function createProviders(config, request = fetch) {
       if (!id)
         throw new AppError(
           400,
-          'CONTA_INEXISTENTE',
-          'Não existe uma conta confirmada para esse e-mail. Você pode se cadastrar.',
+          'RECUPERACAO_INVALIDA',
+          'Não foi possível concluir a recuperação. Inicie uma nova tentativa.',
         );
       const { error } = await client.auth.admin.updateUserById(id, {
         password,

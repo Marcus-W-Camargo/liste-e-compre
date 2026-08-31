@@ -174,22 +174,139 @@ describe('formulário real, com rede simulada', () => {
     expect(requests[1]).toEqual({ action: 'cancel', ...attempt });
   });
 
-  it('não mostra sucesso se o servidor rejeitar o código e reinicia após bloqueio', async () => {
-    open();
-    await startSignup();
-    handler = () => ({
-      status: 400,
-      body: {
-        error: 'Tentativa encerrada após cinco erros.',
-        code: 'TENTATIVA_BLOQUEADA',
+  it.each([
+    ['real', attempt],
+    [
+      'sintética',
+      {
+        id: '22222222-2222-4222-8222-222222222222',
+        token: 'c'.repeat(64),
       },
-    });
-    fillCode();
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar Código' }));
-    await screen.findByText('Tentativa encerrada após cinco erros.');
-    expect(screen.getByLabelText('Nome e Sobrenome')).toBeTruthy();
-    expect(screen.queryByText(/Cadastro confirmado/)).toBeNull();
-  });
+    ],
+  ])(
+    'cadastro mantém quatro erros neutros e reinicia no quinto para tentativa %s',
+    async (_origem, tentativaInicial) => {
+      handler = (body) => {
+        if (body.action === 'start') return { body: tentativaInicial };
+        if (body.action === 'confirm-signup')
+          return {
+            status: 400,
+            body: {
+              ok: false,
+              code: 'VERIFICACAO_INVALIDA',
+              error:
+                'Não foi possível confirmar o código. Confira os dados ou inicie uma nova tentativa.',
+            },
+          };
+        return { body: { ok: true } };
+      };
+      open();
+      await startSignup();
+      fillCode();
+
+      for (let erro = 1; erro <= 4; erro++) {
+        fireEvent.click(
+          screen.getByRole('button', { name: 'Confirmar Código' }),
+        );
+        await waitFor(() =>
+          expect(
+            requests.filter((request) => request.action === 'confirm-signup'),
+          ).toHaveLength(erro),
+        );
+        expect(screen.getByLabelText('Dígito 1 do código')).toBeTruthy();
+        await waitFor(() =>
+          expect(
+            (
+              screen.getByRole('button', {
+                name: 'Confirmar Código',
+              }) as HTMLButtonElement
+            ).disabled,
+          ).toBe(false),
+        );
+      }
+
+      fireEvent.click(screen.getByRole('button', { name: 'Confirmar Código' }));
+      await screen.findByLabelText('Nome e Sobrenome');
+      expect(
+        requests.filter((request) => request.action === 'confirm-signup'),
+      ).toHaveLength(5);
+      expect(screen.queryByLabelText('Dígito 1 do código')).toBeNull();
+      expect(
+        screen.getByText(
+          'Não foi possível confirmar o código. Inicie uma nova tentativa.',
+        ),
+      ).toBeTruthy();
+      expect(screen.queryByText(/Cadastro confirmado/)).toBeNull();
+    },
+  );
+
+  it.each([
+    ['real', attempt],
+    [
+      'sintética',
+      {
+        id: '33333333-3333-4333-8333-333333333333',
+        token: 'd'.repeat(64),
+      },
+    ],
+  ])(
+    'recuperação mantém quatro erros neutros e reinicia no quinto para tentativa %s',
+    async (_origem, tentativaInicial) => {
+      handler = (body) => {
+        if (body.action === 'start') return { body: tentativaInicial };
+        if (body.action === 'verify-recovery')
+          return {
+            status: 400,
+            body: {
+              ok: false,
+              code: 'VERIFICACAO_INVALIDA',
+              error:
+                'Não foi possível confirmar o código. Confira os dados ou inicie uma nova tentativa.',
+            },
+          };
+        return { body: { ok: true } };
+      };
+      open('login');
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Esqueci minha senha' }),
+      );
+      fill('E-mail cadastrado', 'teste@example.com');
+      fireEvent.click(screen.getByRole('button', { name: 'Enviar código' }));
+      await screen.findByLabelText('Código');
+      fill('Código', '1234');
+
+      for (let erro = 1; erro <= 4; erro++) {
+        fireEvent.click(screen.getByRole('button', { name: 'Confirmar código' }));
+        await waitFor(() =>
+          expect(
+            requests.filter((request) => request.action === 'verify-recovery'),
+          ).toHaveLength(erro),
+        );
+        expect(screen.getByLabelText('Código')).toBeTruthy();
+        await waitFor(() =>
+          expect(
+            (
+              screen.getByRole('button', {
+                name: 'Confirmar código',
+              }) as HTMLButtonElement
+            ).disabled,
+          ).toBe(false),
+        );
+      }
+
+      fireEvent.click(screen.getByRole('button', { name: 'Confirmar código' }));
+      await screen.findByLabelText('E-mail cadastrado');
+      expect(
+        requests.filter((request) => request.action === 'verify-recovery'),
+      ).toHaveLength(5);
+      expect(screen.queryByLabelText('Código')).toBeNull();
+      expect(
+        screen.getByText(
+          'Não foi possível confirmar o código. Inicie uma nova tentativa.',
+        ),
+      ).toBeTruthy();
+    },
+  );
 
   it('recuperação usa a nova prova retornada pelo servidor, não o código já consumido', async () => {
     open('login');

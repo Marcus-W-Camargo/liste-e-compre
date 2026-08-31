@@ -2,6 +2,7 @@ import { AppError } from './errors.mjs';
 import { getConfig } from './config.mjs';
 import { createProviders } from './providers.mjs';
 import { createAuthController } from './auth-controller.mjs';
+import { aplicarRateLimit } from './rate-limit.mjs';
 
 export async function readBody(req) {
   if (Number(req.headers['content-length'] ?? 0) > 8192)
@@ -29,11 +30,20 @@ export async function readBody(req) {
     throw new AppError(400, 'JSON_INVALIDO', 'Solicitação inválida.');
   }
 }
-export function createHandler({ env = process.env, controller } = {}) {
+
+export function createHandler({
+  env = process.env,
+  controller,
+  rateLimit,
+} = {}) {
+  const limiter = rateLimit ?? (controller ? async () => {} : aplicarRateLimit);
+
   return async (req, res) => {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
+    let body;
+
     try {
       if (req.method !== 'POST') {
         res.setHeader('Allow', 'POST');
@@ -49,7 +59,18 @@ export function createHandler({ env = process.env, controller } = {}) {
         throw new AppError(403, 'ORIGEM_INVALIDA', 'Origem não permitida.');
       if (!/^application\/json(?:;|$)/i.test(req.headers['content-type'] ?? ''))
         throw new AppError(415, 'TIPO_INVALIDO', 'Envie JSON.');
-      const body = await readBody(req);
+
+      body = await readBody(req);
+      if (body?.action === 'start') {
+        await limiter({
+          req,
+          env,
+          scope: 'auth-start',
+          limit: 15,
+          windowSeconds: 900,
+        });
+      }
+
       const config = controller ? null : getConfig(env);
       const handle =
         controller ??
@@ -62,21 +83,39 @@ export function createHandler({ env = process.env, controller } = {}) {
       res.end(JSON.stringify(result));
     } catch (error) {
       const known = error instanceof AppError;
-      res.statusCode = known ? error.status : 503;
-      if (known && error.retryAfter)
-        res.setHeader('Retry-After', String(error.retryAfter));
+      const neutralVerificationError =
+        known &&
+        ['confirm-signup', 'verify-recovery'].includes(body?.action) &&
+        [
+          'CODIGO_INCORRETO',
+          'TENTATIVA_INVALIDA',
+          'TENTATIVA_BLOQUEADA',
+        ].includes(error.code);
+      const publicError = neutralVerificationError
+        ? new AppError(
+            400,
+            'VERIFICACAO_INVALIDA',
+            'Não foi possível confirmar o código. Confira os dados ou inicie uma nova tentativa.',
+          )
+        : error;
+      const publicKnown = publicError instanceof AppError;
+
+      res.statusCode = publicKnown ? publicError.status : 503;
+      if (publicKnown && publicError.retryAfter)
+        res.setHeader('Retry-After', String(publicError.retryAfter));
       if (!known)
         console.warn('[Auth] Falha interna (detalhes sensíveis omitidos).');
       res.end(
         JSON.stringify({
           ok: false,
-          code: known ? error.code : 'INDISPONIVEL',
-          error: known
-            ? error.message
+          code: publicKnown ? publicError.code : 'INDISPONIVEL',
+          error: publicKnown
+            ? publicError.message
             : 'Serviço indisponível. Confira a conexão e tente novamente.',
         }),
       );
     }
   };
 }
+
 export default createHandler();
