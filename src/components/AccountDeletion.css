@@ -1,1 +1,88 @@
-.exclusao-conta-ponto{margin-top:1rem}.zona-perigo-conta{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem;border-top:1px solid rgba(120,120,120,.25)}.zona-perigo-conta p{margin:.25rem 0 0;font-size:.9rem}.zona-perigo-conta button,.exclusao-confirmar{border:1px solid #b42318;border-radius:10px;padding:.65rem .9rem;background:transparent;color:#b42318;font-weight:700;cursor:pointer}.exclusao-conta-overlay{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:1rem;background:rgba(0,0,0,.58)}.exclusao-conta-modal{width:min(440px,100%);padding:1.4rem;border-radius:16px;background:#fff;color:#222;box-shadow:0 20px 60px rgba(0,0,0,.3)}.exclusao-conta-modal input{box-sizing:border-box;width:100%;margin:.8rem 0;padding:.75rem;border:1px solid #aaa;border-radius:8px}.exclusao-conta-acoes{display:flex;flex-direction:column;gap:.6rem}.exclusao-conta-acoes button{padding:.7rem;border-radius:9px;cursor:pointer}.exclusao-conta-erro{color:#b42318}.exclusao-confirmar:disabled{opacity:.45;cursor:not-allowed}@media(max-width:600px){.zona-perigo-conta{align-items:flex-start;flex-direction:column}.zona-perigo-conta button{width:100%}}
+.exclusao-conta-ponto {
+  margin-top: 1rem;
+}
+
+.zona-perigo-conta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border-top: 1px solid rgba(120, 120, 120, 0.25);
+}
+
+.zona-perigo-conta p {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+}
+
+.zona-perigo-conta button,
+.exclusao-confirmar {
+  border: 1px solid #b42318;
+  border-radius: 10px;
+  padding: 0.65rem 0.9rem;
+  background: transparent;
+  color: #b42318;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.exclusao-conta-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.58);
+}
+
+.exclusao-conta-modal {
+  width: min(440px, 100%);
+  padding: 1.4rem;
+  border-radius: 16px;
+  background: #fff;
+  color: #222;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.exclusao-conta-modal input {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0.8rem 0;
+  padding: 0.75rem;
+  border: 1px solid #aaa;
+  border-radius: 8px;
+}
+
+.exclusao-conta-acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.exclusao-conta-acoes button {
+  padding: 0.7rem;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.exclusao-conta-erro {
+  color: #b42318;
+}
+
+.exclusao-confirmar:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .zona-perigo-conta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .zona-perigo-conta button {
+    width: 100%;
+  }
+}
