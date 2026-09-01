@@ -79,6 +79,29 @@
   line-height: 1.45;
 }
 
+.exclusao-conta-modal input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 18px;
+  padding: 10px 14px;
+  border: 2px solid #1a263b;
+  border-radius: 13px;
+  outline: none;
+  background: #fff;
+  color: #1a263b;
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-align: center;
+}
+
+.exclusao-conta-modal input:focus {
+  border-color: #f7501b;
+  box-shadow: 0 0 0 3px rgb(247 80 27 / 20%);
+}
+
 .exclusao-conta-acoes {
   display: grid;
   grid-template-columns: 1fr;
