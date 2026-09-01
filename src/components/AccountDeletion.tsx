@@ -1,18 +1,15 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-import { excluirConta } from '../utils/accountDeletion';
+import { useLocation } from 'react-router-dom';
+import { solicitarExclusaoConta } from '../utils/accountDeletion';
 import './AccountDeletion.css';
 
 export function AccountDeletion() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { id } = useAuth();
   const [destino, setDestino] = useState<HTMLElement | null>(null);
   const [aberto, setAberto] = useState(false);
-  const [confirmacao, setConfirmacao] = useState('');
   const [erro, setErro] = useState('');
+  const [mensagem, setMensagem] = useState('');
   const [processando, setProcessando] = useState(false);
 
   useEffect(() => {
@@ -49,20 +46,24 @@ export function AccountDeletion() {
     };
   }, [location.pathname]);
 
-  async function confirmar() {
-    if (confirmacao !== 'EXCLUIR' || processando) return;
+  async function solicitar() {
+    if (processando) return;
 
     setProcessando(true);
     setErro('');
+    setMensagem('');
     try {
-      await excluirConta(id);
-      navigate('/conta', { replace: true });
+      await solicitarExclusaoConta();
+      setMensagem(
+        'Enviamos um link de confirmação para o e-mail da sua conta. Abra-o neste mesmo dispositivo e conexão.',
+      );
     } catch (error) {
       setErro(
         error instanceof Error
           ? error.message
-          : 'Não foi possível excluir a conta.',
+          : 'Não foi possível solicitar a exclusão da conta.',
       );
+    } finally {
       setProcessando(false);
     }
   }
@@ -80,8 +81,8 @@ export function AccountDeletion() {
           type="button"
           onClick={() => {
             setAberto(true);
-            setConfirmacao('');
             setErro('');
+            setMensagem('');
           }}
         >
           Excluir conta
@@ -98,38 +99,36 @@ export function AccountDeletion() {
           >
             <h2 id="titulo-excluir-conta">Excluir conta permanentemente?</h2>
             <p>
-              Esta ação não pode ser desfeita. Digite <strong>EXCLUIR</strong>{' '}
-              para confirmar.
+              A exclusão só será concluída após você abrir o link enviado ao
+              e-mail da sua conta usando este mesmo dispositivo e conexão.
             </p>
-            <input
-              value={confirmacao}
-              onChange={(event) =>
-                setConfirmacao(event.target.value.toUpperCase())
-              }
-              autoComplete="off"
-              aria-label="Digite EXCLUIR para confirmar"
-              autoFocus
-            />
+
+            {mensagem && (
+              <p className="exclusao-conta-sucesso" role="status">
+                {mensagem}
+              </p>
+            )}
             {erro && (
               <p className="exclusao-conta-erro" role="alert">
                 {erro}
               </p>
             )}
+
             <div className="exclusao-conta-acoes">
               <button
                 type="button"
                 className="exclusao-confirmar"
-                disabled={confirmacao !== 'EXCLUIR' || processando}
-                onClick={() => void confirmar()}
+                disabled={processando || Boolean(mensagem)}
+                onClick={() => void solicitar()}
               >
-                {processando ? 'Excluindo…' : 'Excluir permanentemente'}
+                {processando ? 'Enviando…' : 'Enviar link de confirmação'}
               </button>
               <button
                 type="button"
                 disabled={processando}
                 onClick={() => setAberto(false)}
               >
-                Cancelar
+                {mensagem ? 'Fechar' : 'Cancelar'}
               </button>
             </div>
           </section>
