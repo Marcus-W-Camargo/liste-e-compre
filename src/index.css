@@ -31,7 +31,7 @@ html::before {
   width: 100vw;
   height: 100dvh;
   background-color: #7b9fd6;
-  background-image: url('./assets/background.webp');
+  background-image: url('/background.webp');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
