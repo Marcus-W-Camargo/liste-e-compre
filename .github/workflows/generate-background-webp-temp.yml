@@ -1,0 +1,39 @@
+name: Gera background WebP temporariamente
+
+on:
+  push:
+    branches: [perf/route-splitting-background-webp]
+
+permissions:
+  contents: write
+
+jobs:
+  convert:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: perf/route-splitting-background-webp
+      - name: Converter PNG para WebP
+        run: |
+          set -euo pipefail
+          if command -v magick >/dev/null 2>&1; then
+            magick src/assets/background.png -strip -quality 84 src/assets/background.webp
+          elif command -v convert >/dev/null 2>&1; then
+            convert src/assets/background.png -strip -quality 84 src/assets/background.webp
+          else
+            sudo apt-get update
+            sudo apt-get install -y webp
+            cwebp -quiet -q 84 -metadata none src/assets/background.png -o src/assets/background.webp
+          fi
+          file src/assets/background.webp
+          ls -lh src/assets/background.png src/assets/background.webp
+      - name: Commitar WebP gerado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/assets/background.webp
+          git diff --cached --quiet && exit 0
+          git commit -m "perf: adiciona background WebP otimizado"
+          git push origin HEAD:perf/route-splitting-background-webp
