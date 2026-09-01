@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 import { analyzer } from 'vite-bundle-analyzer';
 
 const logoNovo = fileURLToPath(new URL('./src/assets/liste-&-compre.png', import.meta.url));
-const backgroundNovo = fileURLToPath(new URL('./src/assets/background.png', import.meta.url));
+const backgroundNovo = fileURLToPath(new URL('./src/assets/background.webp', import.meta.url));
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: [
         { find: /^.*\/assets\/titulo\.png$/, replacement: logoNovo },
-        { find: /^.*\/assets\/background\.(?:jpg|jpeg)$/, replacement: backgroundNovo },
+        { find: /^.*\/assets\/background\.(?:jpg|jpeg|png)$/, replacement: backgroundNovo },
       ],
     },
     server: {
