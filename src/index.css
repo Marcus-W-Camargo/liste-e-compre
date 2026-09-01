@@ -37,12 +37,10 @@ body::before {
   position: fixed;
   z-index: -1;
   inset: 0;
-  width: 100vw;
-  height: 100dvh;
   background-color: #7b9fd6;
-  background-image: url('./assets/background.png');
+  background-image: url('./assets/background.webp');
   background-repeat: no-repeat;
-  background-position: center;
+  background-position: center center;
   background-size: cover;
   content: '';
   pointer-events: none;
@@ -86,11 +84,4 @@ a {
   color: #e04312;
   text-decoration: underline;
   text-underline-offset: 2px;
-}
-
-@media (max-width: 600px) {
-  body::before {
-    background-position: center center;
-    background-size: auto 100dvh;
-  }
 }
