@@ -20,6 +20,11 @@ html {
   min-width: 320px;
   min-height: 100dvh;
   background-color: #7b9fd6;
+  background-image: url('./assets/background.webp');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  background-attachment: fixed;
 }
 
 body {
@@ -31,19 +36,6 @@ body {
   background: transparent;
   -webkit-user-select: none;
   user-select: none;
-}
-
-body::before {
-  position: fixed;
-  z-index: -1;
-  inset: 0;
-  background-color: #7b9fd6;
-  background-image: url('./assets/background.webp');
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-size: cover;
-  content: '';
-  pointer-events: none;
 }
 
 #root {
