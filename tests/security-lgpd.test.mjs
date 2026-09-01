@@ -239,20 +239,33 @@ test('feedback valida tamanho mesmo com body previamente processado', async () =
   assert.equal(res.statusCode, 413);
 });
 
-test('exclusão exige autenticação', async () => {
+test('solicitação de exclusão exige autenticação', async () => {
+  const client = {
+    auth: {
+      getUser: async () => ({ data: { user: null }, error: new Error('inválida') }),
+    },
+  };
   const handler = createDeleteAccountHandler({
     env: {
       APP_ORIGIN: 'https://app.test',
       SUPABASE_URL: 'https://x.supabase.co',
       SUPABASE_SECRET_KEY: 'secret',
+      AUTH_VERIFICATION_SECRET: 'verification-secret',
+      RESEND_API_KEY: 'resend',
     },
-    createClientImpl: () => {
-      throw new Error('não deve criar cliente');
-    },
+    createClientImpl: () => client,
+    rateLimit: async () => {},
   });
   const req = {
-    method: 'DELETE',
-    headers: { origin: 'https://app.test' },
+    method: 'POST',
+    headers: {
+      origin: 'https://app.test',
+      'content-type': 'application/json',
+    },
+    body: {
+      action: 'request',
+      deviceId: 'a'.repeat(48),
+    },
   };
   const res = response();
 
@@ -261,11 +274,13 @@ test('exclusão exige autenticação', async () => {
   assert.equal(res.statusCode, 401);
 });
 
-test('exclusão remove foto antes do usuário autenticado', async () => {
+test('exclusão só conclui após link no mesmo dispositivo, IP e conta', async () => {
   const ordem = [];
+  const enviados = [];
+  const user = { id: 'u1', email: 'cliente@example.com' };
   const client = {
     auth: {
-      getUser: async () => ({ data: { user: { id: 'u1' } }, error: null }),
+      getUser: async () => ({ data: { user }, error: null }),
       admin: {
         deleteUser: async () => {
           ordem.push('usuario');
@@ -283,25 +298,70 @@ test('exclusão remove foto antes do usuário autenticado', async () => {
       }),
     },
   };
-  const handler = createDeleteAccountHandler({
-    env: {
-      APP_ORIGIN: 'https://app.test',
-      SUPABASE_URL: 'https://x.supabase.co',
-      SUPABASE_SECRET_KEY: 'secret',
-    },
-    createClientImpl: () => client,
-  });
-  const req = {
-    method: 'DELETE',
-    headers: {
-      origin: 'https://app.test',
-      authorization: 'Bearer token',
-    },
+  const env = {
+    APP_ORIGIN: 'https://app.test/',
+    SUPABASE_URL: 'https://x.supabase.co',
+    SUPABASE_SECRET_KEY: 'secret',
+    AUTH_VERIFICATION_SECRET: 'verification-secret',
+    RESEND_API_KEY: 'resend',
   };
-  const res = response();
+  const handler = createDeleteAccountHandler({
+    env,
+    createClientImpl: () => client,
+    rateLimit: async () => {},
+    fetchImpl: async (url, options) => {
+      enviados.push({ url, options });
+      return { ok: true, json: async () => ({ id: 'email-1' }) };
+    },
+  });
+  const deviceId = 'd'.repeat(48);
+  const headers = {
+    origin: 'https://app.test',
+    'content-type': 'application/json',
+    authorization: 'Bearer token',
+    'x-forwarded-for': '203.0.113.10',
+  };
 
-  await handler(req, res);
+  const pedido = response();
+  await handler(
+    {
+      method: 'POST',
+      headers,
+      body: { action: 'request', deviceId },
+    },
+    pedido,
+  );
 
-  assert.equal(res.statusCode, 200);
+  assert.equal(pedido.statusCode, 200);
+  assert.equal(enviados.length, 1);
+  const email = JSON.parse(enviados[0].options.body);
+  assert.deepEqual(email.to, ['cliente@example.com']);
+  const match = email.text.match(/https:\/\/app\.test\/confirmar-exclusao\?token=([^\s]+)/);
+  assert.ok(match);
+  const token = decodeURIComponent(match[1]);
+
+  const tentativaErrada = response();
+  await handler(
+    {
+      method: 'POST',
+      headers: { ...headers, 'x-forwarded-for': '203.0.113.11' },
+      body: { action: 'confirm', deviceId, token },
+    },
+    tentativaErrada,
+  );
+  assert.equal(tentativaErrada.statusCode, 403);
+  assert.deepEqual(ordem, []);
+
+  const confirmacao = response();
+  await handler(
+    {
+      method: 'POST',
+      headers,
+      body: { action: 'confirm', deviceId, token },
+    },
+    confirmacao,
+  );
+
+  assert.equal(confirmacao.statusCode, 200);
   assert.deepEqual(ordem, ['foto', 'usuario']);
 });
