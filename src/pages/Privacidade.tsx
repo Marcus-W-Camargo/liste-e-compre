@@ -34,9 +34,10 @@ export function Privacidade() {
           O projeto utiliza Supabase para autenticação, banco de dados e
           armazenamento privado da foto de perfil; EmailJS nos fluxos de códigos
           necessários ao cadastro e recuperação; Resend para encaminhar mensagens
-          do formulário de feedback; e Vercel para hospedagem da aplicação e das
-          funções de backend. Esses serviços possuem suas próprias políticas e
-          podem tratar dados conforme seus termos.
+          do formulário de feedback e o link de confirmação da exclusão de conta;
+          e Vercel para hospedagem da aplicação e das funções de backend. Esses
+          serviços possuem suas próprias políticas e podem tratar dados conforme
+          seus termos.
         </p>
 
         <h2>Armazenamento no navegador</h2>
@@ -46,7 +47,10 @@ export function Privacidade() {
           identificador da conta, para permitir continuidade no mesmo navegador.
           A sessão de autenticação também pode permanecer armazenada localmente
           conforme o funcionamento configurado do Supabase. URLs temporárias da
-          foto podem ser mantidas durante a sessão do navegador.
+          foto podem ser mantidas durante a sessão do navegador. Para a confirmação
+          de exclusão, um identificador aleatório do dispositivo pode ser mantido
+          localmente e usado somente para validar que o link foi aberto no mesmo
+          navegador utilizado na solicitação.
         </p>
 
         <h2>Segurança e prevenção de abuso</h2>
@@ -58,7 +62,8 @@ export function Privacidade() {
           automatizado, a origem de requisições sensíveis pode ser transformada
           por HMAC antes do armazenamento temporário; o IP bruto não é salvo nessa
           proteção e os registros são mantidos em área privada pelo período
-          necessário ao limite.
+          necessário ao limite. A confirmação da exclusão também vincula o link
+          à conta autenticada, ao dispositivo e ao IP utilizados na solicitação.
         </p>
 
         <h2>Seus direitos</h2>
@@ -66,8 +71,9 @@ export function Privacidade() {
           Nos termos da LGPD, você pode solicitar confirmação do tratamento,
           acesso, correção, informações sobre o tratamento e exclusão quando
           aplicável. A opção <strong>Excluir conta</strong>, disponível em Minha
-          Conta / Perfil, é o mecanismo automático principal para remover a conta,
-          dados vinculados e foto.
+          Conta / Perfil, envia um link de confirmação ao e-mail da própria conta.
+          A remoção automática só é concluída após a validação desse link no mesmo
+          dispositivo e IP utilizados na solicitação.
         </p>
 
         <h2>Como falar sobre seus dados</h2>
@@ -81,7 +87,7 @@ export function Privacidade() {
         </p>
 
         <p className="privacidade-atualizacao">
-          Última atualização: 31 de agosto de 2026.
+          Última atualização: 1 de setembro de 2026.
         </p>
         <Link className="privacidade-voltar" to="/">
           Voltar ao Liste & Compre
