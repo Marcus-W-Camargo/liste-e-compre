@@ -3,12 +3,8 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AccountDeletion } from '../src/components/AccountDeletion';
 
-vi.mock('../src/hooks/useAuth', () => ({
-  useAuth: () => ({ id: 'usuario-teste' }),
-}));
-
 vi.mock('../src/utils/accountDeletion', () => ({
-  excluirConta: vi.fn(),
+  solicitarExclusaoConta: vi.fn(),
 }));
 
 afterEach(() => {
