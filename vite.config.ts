@@ -1,6 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { analyzer } from 'vite-bundle-analyzer';
 
 const logoNovo = fileURLToPath(new URL('./src/assets/liste-&-compre.png', import.meta.url));
 const backgroundNovo = fileURLToPath(new URL('./src/assets/background.png', import.meta.url));
@@ -17,7 +18,19 @@ export default defineConfig(({ mode }) => {
     );
   }
   return {
-    plugins: [react()],
+    plugins: [
+      react(),
+      ...(process.env.ANALYZE === 'true'
+        ? [
+            analyzer({
+              analyzerMode: 'static',
+              fileName: 'bundle-report',
+              openAnalyzer: false,
+              reportTitle: 'Liste & Compre — Bundle Analyzer',
+            }),
+          ]
+        : []),
+    ],
     resolve: {
       alias: [
         { find: /^.*\/assets\/titulo\.png$/, replacement: logoNovo },
