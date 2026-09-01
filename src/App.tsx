@@ -1,22 +1,20 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Home } from './pages/Home';
-import { Lista } from './pages/Lista';
-import { Conta } from './pages/Conta';
-import { Compras } from './pages/Compras';
-import { ComprasSessao } from './pages/ComprasSessao';
-import { HistoricoCompras } from './pages/HistoricoCompras';
-import { Perfil } from './pages/Perfil';
-import { Ajuda } from './pages/Ajuda';
-import { Privacidade } from './pages/Privacidade';
 import { Header } from './components/Header';
-import { AjudaFeedback } from './components/AjudaFeedback';
 import { AccountDeletion } from './components/AccountDeletion';
 import { CloudAccess, CloudStatus } from './components/CloudAccess';
 import { useDesktopKeyboardNavigation } from './hooks/useDesktopKeyboardNavigation';
 import './App.css';
-import './pages/AjudaAjustes.css';
-import './pages/AjudaFaqLeitura.css';
-import './pages/AjudaHierarquia.css';
+
+const Conta = lazy(() => import('./pages/Conta').then((modulo) => ({ default: modulo.Conta })));
+const Privacidade = lazy(() => import('./pages/Privacidade').then((modulo) => ({ default: modulo.Privacidade })));
+const Lista = lazy(() => import('./pages/Lista').then((modulo) => ({ default: modulo.Lista })));
+const Compras = lazy(() => import('./pages/Compras').then((modulo) => ({ default: modulo.Compras })));
+const ComprasSessao = lazy(() => import('./pages/ComprasSessao').then((modulo) => ({ default: modulo.ComprasSessao })));
+const HistoricoCompras = lazy(() => import('./pages/HistoricoCompras').then((modulo) => ({ default: modulo.HistoricoCompras })));
+const Perfil = lazy(() => import('./pages/Perfil').then((modulo) => ({ default: modulo.Perfil })));
+const PaginaAjuda = lazy(() => import('./pages/AjudaRoute').then((modulo) => ({ default: modulo.PaginaAjuda })));
 
 function Rodape() {
   return (
@@ -35,15 +33,6 @@ function NavegacaoDesktop() {
   return null;
 }
 
-function PaginaAjuda() {
-  return (
-    <>
-      <Ajuda />
-      <AjudaFeedback />
-    </>
-  );
-}
-
 function App() {
   return (
     <BrowserRouter>
@@ -53,19 +42,21 @@ function App() {
           <Header />
           <CloudStatus />
           <AccountDeletion />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/conta" element={<Conta />} />
-            <Route path="/privacidade" element={<Privacidade />} />
-            <Route element={<CloudAccess />}>
-              <Route path="/lista" element={<Lista />} />
-              <Route path="/compre" element={<Compras />} />
-              <Route path="/compre/:listaId" element={<ComprasSessao />} />
-              <Route path="/historico" element={<HistoricoCompras />} />
-              <Route path="/perfil" element={<Perfil />} />
-              <Route path="/ajuda" element={<PaginaAjuda />} />
-            </Route>
-          </Routes>
+          <Suspense fallback={null}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/conta" element={<Conta />} />
+              <Route path="/privacidade" element={<Privacidade />} />
+              <Route element={<CloudAccess />}>
+                <Route path="/lista" element={<Lista />} />
+                <Route path="/compre" element={<Compras />} />
+                <Route path="/compre/:listaId" element={<ComprasSessao />} />
+                <Route path="/historico" element={<HistoricoCompras />} />
+                <Route path="/perfil" element={<Perfil />} />
+                <Route path="/ajuda" element={<PaginaAjuda />} />
+              </Route>
+            </Routes>
+          </Suspense>
         </div>
 
         <Rodape />
