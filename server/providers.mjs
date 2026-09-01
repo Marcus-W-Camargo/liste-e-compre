@@ -55,7 +55,6 @@ export function createProviders(config, request = fetch) {
       return Boolean(await rpc('lc_auth_find_user', { p_email: email }));
     },
     async assertReady() {
-      // Detecta configuração incompleta ANTES de gastar a cota de envio ou consumir o código.
       let response;
       try {
         response = await request(`${url}/auth/v1/settings`, {
@@ -76,6 +75,7 @@ export function createProviders(config, request = fetch) {
     async send({ purpose, email, name, code }) {
       let response;
       try {
+        const templateConta = purpose !== 'cadastro';
         response = await request(
           'https://api.emailjs.com/api/v1.0/email/send',
           {
@@ -83,17 +83,24 @@ export function createProviders(config, request = fetch) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               service_id: config.EMAILJS_SERVICE_ID,
-              template_id:
-                purpose === 'cadastro'
-                  ? config.EMAILJS_TEMPLATE_CADASTRO_ID
-                  : config.EMAILJS_TEMPLATE_RECUPERACAO_ID,
+              template_id: templateConta
+                ? config.EMAILJS_TEMPLATE_RECUPERACAO_ID
+                : config.EMAILJS_TEMPLATE_CADASTRO_ID,
               user_id: config.EMAILJS_PUBLIC_KEY,
               accessToken: config.EMAILJS_PRIVATE_KEY,
               template_params: {
                 to_email: email,
                 nome: name,
                 codigo: code,
-                ...(purpose === 'recuperacao' ? { recuperar: code } : {}),
+                ...(templateConta
+                  ? {
+                      recuperar: code,
+                      tipo_alteracao:
+                        purpose === 'exclusao'
+                          ? 'Exclusão de conta'
+                          : 'Alteração de senha',
+                    }
+                  : {}),
               },
             }),
             signal: AbortSignal.timeout(10000),
@@ -112,7 +119,6 @@ export function createProviders(config, request = fetch) {
           response.status,
           await response.text(),
         );
-        // Nunca registrar corpo da resposta, endereço, código ou credenciais.
         console.warn(
           '[EmailJS] HTTP:',
           response.status,
