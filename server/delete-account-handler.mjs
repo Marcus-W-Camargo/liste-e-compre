@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 import { aplicarRateLimit } from './rate-limit.mjs';
 
 const ORIGEM_PRODUCAO = 'https://listeecompre.vercel.app';
-const REMETENTE_PADRAO = 'Liste & Compre <onboarding@resend.dev>';
 const VALIDADE_TOKEN_MS = 30 * 60 * 1000;
 
 function responder(res, status, payload) {
@@ -113,6 +112,22 @@ async function usuarioAutenticado(client, authorization) {
   return error ? null : user;
 }
 
+function vinculoValido({ payload, user, req, deviceId, secret }) {
+  if (!payload || !user) return false;
+  const emailAtual = String(user.email ?? '').trim().toLowerCase();
+  if (!emailAtual) return false;
+
+  const mesmoUsuario = payload.uid === user.id;
+  const mesmoEmail =
+    payload.emailHash === hashVinculo(secret, 'email', emailAtual);
+  const mesmoIp =
+    payload.ip === hashVinculo(secret, 'ip', origemDaRequisicao(req));
+  const mesmoDispositivo =
+    payload.device === hashVinculo(secret, 'device', deviceId);
+
+  return mesmoUsuario && mesmoEmail && mesmoIp && mesmoDispositivo;
+}
+
 async function removerConta(client, userId) {
   const path = `${userId}/avatar.jpg`;
   const { error: storageError } = await client.storage
@@ -180,7 +195,8 @@ export function createDeleteAccountHandler({
       });
 
     if (action === 'request') {
-      if (!env.RESEND_API_KEY || !user.email)
+      const remetente = String(env.RESEND_FROM_EMAIL ?? '').trim();
+      if (!env.RESEND_API_KEY || !remetente || !user.email)
         return responder(res, 503, {
           ok: false,
           error: 'Serviço de e-mail indisponível.',
@@ -208,9 +224,10 @@ export function createDeleteAccountHandler({
       }
 
       const secret = env.AUTH_VERIFICATION_SECRET;
+      const emailNormalizado = String(user.email).trim().toLowerCase();
       const token = criarToken(secret, {
         uid: user.id,
-        email: String(user.email).toLowerCase(),
+        emailHash: hashVinculo(secret, 'email', emailNormalizado),
         ip: hashVinculo(secret, 'ip', origemDaRequisicao(req)),
         device: hashVinculo(secret, 'device', deviceId),
         exp: Date.now() + VALIDADE_TOKEN_MS,
@@ -225,7 +242,7 @@ export function createDeleteAccountHandler({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: env.RESEND_FROM_EMAIL || REMETENTE_PADRAO,
+          from: remetente,
           to: [user.email],
           subject: '[Liste & Compre] Confirme a exclusão da sua conta',
           text: [
@@ -234,6 +251,7 @@ export function createDeleteAccountHandler({
             'Abra o link abaixo no mesmo dispositivo e na mesma conexão usados na solicitação:',
             link,
             '',
+            'Na página aberta, confirme explicitamente a exclusão para concluir.',
             'Se você não solicitou a exclusão, ignore esta mensagem.',
           ].join('\n'),
         }),
@@ -248,27 +266,24 @@ export function createDeleteAccountHandler({
       return responder(res, 200, { ok: true });
     }
 
-    if (action === 'confirm') {
+    if (action === 'validate' || action === 'confirm') {
       const payload = lerToken(env.AUTH_VERIFICATION_SECRET, body?.token);
-      const emailAtual = String(user.email ?? '').toLowerCase();
-      const mesmoUsuario = payload?.uid === user.id && payload?.email === emailAtual;
-      const mesmoIp =
-        payload?.ip ===
-        hashVinculo(
-          env.AUTH_VERIFICATION_SECRET,
-          'ip',
-          origemDaRequisicao(req),
-        );
-      const mesmoDispositivo =
-        payload?.device ===
-        hashVinculo(env.AUTH_VERIFICATION_SECRET, 'device', deviceId);
+      const valido = vinculoValido({
+        payload,
+        user,
+        req,
+        deviceId,
+        secret: env.AUTH_VERIFICATION_SECRET,
+      });
 
-      if (!payload || !mesmoUsuario || !mesmoIp || !mesmoDispositivo)
+      if (!valido)
         return responder(res, 403, {
           ok: false,
           error:
             'A deletação de conta não foi bem-sucedida. Por favor entre no link com o mesmo dispositivo usado na solicitação.',
         });
+
+      if (action === 'validate') return responder(res, 200, { ok: true });
 
       try {
         await removerConta(client, user.id);
