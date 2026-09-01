@@ -252,6 +252,7 @@ test('solicitação de exclusão exige autenticação', async () => {
       SUPABASE_SECRET_KEY: 'secret',
       AUTH_VERIFICATION_SECRET: 'verification-secret',
       RESEND_API_KEY: 'resend',
+      RESEND_FROM_EMAIL: 'Liste & Compre <conta@emails.example.com>',
     },
     createClientImpl: () => client,
     rateLimit: async () => {},
@@ -274,7 +275,39 @@ test('solicitação de exclusão exige autenticação', async () => {
   assert.equal(res.statusCode, 401);
 });
 
-test('exclusão só conclui após link no mesmo dispositivo, IP e conta', async () => {
+test('exclusão exige remetente Resend próprio configurado', async () => {
+  const user = { id: 'u1', email: 'cliente@example.com' };
+  const client = {
+    auth: { getUser: async () => ({ data: { user }, error: null }) },
+  };
+  const handler = createDeleteAccountHandler({
+    env: {
+      APP_ORIGIN: 'https://app.test',
+      SUPABASE_URL: 'https://x.supabase.co',
+      SUPABASE_SECRET_KEY: 'secret',
+      AUTH_VERIFICATION_SECRET: 'verification-secret',
+      RESEND_API_KEY: 'resend',
+    },
+    createClientImpl: () => client,
+    rateLimit: async () => {},
+  });
+  const res = response();
+  await handler(
+    {
+      method: 'POST',
+      headers: {
+        origin: 'https://app.test',
+        'content-type': 'application/json',
+        authorization: 'Bearer token',
+      },
+      body: { action: 'request', deviceId: 'd'.repeat(48) },
+    },
+    res,
+  );
+  assert.equal(res.statusCode, 503);
+});
+
+test('exclusão só conclui após validação e confirmação no mesmo dispositivo, IP e conta', async () => {
   const ordem = [];
   const enviados = [];
   const user = { id: 'u1', email: 'cliente@example.com' };
@@ -304,6 +337,7 @@ test('exclusão só conclui após link no mesmo dispositivo, IP e conta', async 
     SUPABASE_SECRET_KEY: 'secret',
     AUTH_VERIFICATION_SECRET: 'verification-secret',
     RESEND_API_KEY: 'resend',
+    RESEND_FROM_EMAIL: 'Liste & Compre <conta@emails.example.com>',
   };
   const handler = createDeleteAccountHandler({
     env,
@@ -335,6 +369,7 @@ test('exclusão só conclui após link no mesmo dispositivo, IP e conta', async 
   assert.equal(pedido.statusCode, 200);
   assert.equal(enviados.length, 1);
   const email = JSON.parse(enviados[0].options.body);
+  assert.equal(email.from, env.RESEND_FROM_EMAIL);
   assert.deepEqual(email.to, ['cliente@example.com']);
   const match = email.text.match(/https:\/\/app\.test\/confirmar-exclusao\?token=([^\s]+)/);
   assert.ok(match);
@@ -345,11 +380,23 @@ test('exclusão só conclui após link no mesmo dispositivo, IP e conta', async 
     {
       method: 'POST',
       headers: { ...headers, 'x-forwarded-for': '203.0.113.11' },
-      body: { action: 'confirm', deviceId, token },
+      body: { action: 'validate', deviceId, token },
     },
     tentativaErrada,
   );
   assert.equal(tentativaErrada.statusCode, 403);
+  assert.deepEqual(ordem, []);
+
+  const validacao = response();
+  await handler(
+    {
+      method: 'POST',
+      headers,
+      body: { action: 'validate', deviceId, token },
+    },
+    validacao,
+  );
+  assert.equal(validacao.statusCode, 200);
   assert.deepEqual(ordem, []);
 
   const confirmacao = response();
