@@ -19,12 +19,24 @@
 html {
   min-width: 320px;
   min-height: 100dvh;
+  overflow-x: hidden;
+  background-color: #7b9fd6;
+}
+
+html::before {
+  position: fixed;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100dvh;
   background-color: #7b9fd6;
   background-image: url('./assets/background.webp');
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
-  background-attachment: fixed;
+  content: '';
+  pointer-events: none;
 }
 
 body {
