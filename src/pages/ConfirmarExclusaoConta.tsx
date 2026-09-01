@@ -1,16 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { confirmarExclusaoConta } from '../utils/accountDeletion';
+import {
+  confirmarExclusaoConta,
+  validarExclusaoConta,
+} from '../utils/accountDeletion';
 import './ConfirmarExclusaoConta.css';
+
+type Estado = 'validando' | 'pronto' | 'excluindo' | 'sucesso' | 'erro';
 
 export function ConfirmarExclusaoConta() {
   const [searchParams] = useSearchParams();
   const { id } = useAuth();
-  const [estado, setEstado] = useState<'processando' | 'sucesso' | 'erro'>('processando');
+  const [estado, setEstado] = useState<Estado>('validando');
+
+  const token = searchParams.get('token') ?? '';
 
   useEffect(() => {
-    const token = searchParams.get('token') ?? '';
     if (!token) {
       setEstado('erro');
       return;
@@ -19,8 +25,8 @@ export function ConfirmarExclusaoConta() {
     let ativo = true;
     void (async () => {
       try {
-        await confirmarExclusaoConta(id, token);
-        if (ativo) setEstado('sucesso');
+        await validarExclusaoConta(token);
+        if (ativo) setEstado('pronto');
       } catch {
         if (ativo) setEstado('erro');
       }
@@ -29,12 +35,37 @@ export function ConfirmarExclusaoConta() {
     return () => {
       ativo = false;
     };
-  }, [id, searchParams]);
+  }, [token]);
+
+  async function concluirExclusao() {
+    if (estado !== 'pronto') return;
+
+    setEstado('excluindo');
+    try {
+      await confirmarExclusaoConta(id, token);
+      setEstado('sucesso');
+    } catch {
+      setEstado('erro');
+    }
+  }
 
   return (
     <main className="confirmacao-exclusao-pagina">
       <section className="confirmacao-exclusao-card" aria-live="polite">
-        {estado === 'processando' && <p>Validando solicitação de exclusão…</p>}
+        {estado === 'validando' && <p>Validando solicitação de exclusão…</p>}
+        {estado === 'pronto' && (
+          <>
+            <p>Solicitação validada neste dispositivo e conexão.</p>
+            <button
+              type="button"
+              className="confirmacao-exclusao-botao"
+              onClick={() => void concluirExclusao()}
+            >
+              Confirmar exclusão da conta
+            </button>
+          </>
+        )}
+        {estado === 'excluindo' && <p>Concluindo exclusão da conta…</p>}
         {estado === 'sucesso' && (
           <p>
             Deletação de conta concluída. Pode fechar a página e voltar ao navegador.
