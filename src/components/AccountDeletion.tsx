@@ -1,13 +1,23 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useLocation } from 'react-router-dom';
-import { solicitarExclusaoConta } from '../utils/accountDeletion';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import {
+  cancelarExclusaoConta,
+  confirmarExclusaoConta,
+  solicitarExclusaoConta,
+  type TentativaExclusaoConta,
+} from '../utils/accountDeletion';
 import './AccountDeletion.css';
 
 export function AccountDeletion() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { id } = useAuth();
   const [destino, setDestino] = useState<HTMLElement | null>(null);
   const [aberto, setAberto] = useState(false);
+  const [tentativa, setTentativa] = useState<TentativaExclusaoConta | null>(null);
+  const [codigo, setCodigo] = useState('');
   const [erro, setErro] = useState('');
   const [mensagem, setMensagem] = useState('');
   const [processando, setProcessando] = useState(false);
@@ -46,6 +56,13 @@ export function AccountDeletion() {
     };
   }, [location.pathname]);
 
+  function resetarModal() {
+    setTentativa(null);
+    setCodigo('');
+    setErro('');
+    setMensagem('');
+  }
+
   async function solicitar() {
     if (processando) return;
 
@@ -53,10 +70,9 @@ export function AccountDeletion() {
     setErro('');
     setMensagem('');
     try {
-      await solicitarExclusaoConta();
-      setMensagem(
-        'Enviamos um link de confirmação para o e-mail da sua conta. Abra-o neste mesmo dispositivo e conexão.',
-      );
+      const novaTentativa = await solicitarExclusaoConta();
+      setTentativa(novaTentativa);
+      setMensagem('Enviamos um código de 4 dígitos para o e-mail da sua conta.');
     } catch (error) {
       setErro(
         error instanceof Error
@@ -66,6 +82,33 @@ export function AccountDeletion() {
     } finally {
       setProcessando(false);
     }
+  }
+
+  async function confirmar() {
+    if (!tentativa || !/^\d{4}$/.test(codigo) || processando) return;
+
+    setProcessando(true);
+    setErro('');
+    try {
+      await confirmarExclusaoConta(id, tentativa, codigo);
+      resetarModal();
+      setAberto(false);
+      navigate('/conta', { replace: true });
+    } catch (error) {
+      setErro(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível excluir a conta.',
+      );
+      setProcessando(false);
+    }
+  }
+
+  async function fechar() {
+    const atual = tentativa;
+    resetarModal();
+    setAberto(false);
+    if (atual) await cancelarExclusaoConta(atual);
   }
 
   if (!destino) return null;
@@ -80,9 +123,8 @@ export function AccountDeletion() {
         <button
           type="button"
           onClick={() => {
+            resetarModal();
             setAberto(true);
-            setErro('');
-            setMensagem('');
           }}
         >
           Excluir conta
@@ -99,9 +141,23 @@ export function AccountDeletion() {
           >
             <h2 id="titulo-excluir-conta">Excluir conta permanentemente?</h2>
             <p>
-              A exclusão só será concluída após você abrir o link enviado ao
-              e-mail da sua conta usando este mesmo dispositivo e conexão.
+              Para confirmar esta alteração na conta, enviaremos um código de 4 dígitos
+              para o e-mail da sua conta.
             </p>
+
+            {tentativa && (
+              <input
+                value={codigo}
+                onChange={(event) =>
+                  setCodigo(event.target.value.replace(/\D/g, '').slice(0, 4))
+                }
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                aria-label="Código de confirmação da exclusão"
+                placeholder="0000"
+                autoFocus
+              />
+            )}
 
             {mensagem && (
               <p className="exclusao-conta-sucesso" role="status">
@@ -115,20 +171,31 @@ export function AccountDeletion() {
             )}
 
             <div className="exclusao-conta-acoes">
-              <button
-                type="button"
-                className="exclusao-confirmar"
-                disabled={processando || Boolean(mensagem)}
-                onClick={() => void solicitar()}
-              >
-                {processando ? 'Enviando…' : 'Enviar link de confirmação'}
-              </button>
+              {!tentativa ? (
+                <button
+                  type="button"
+                  className="exclusao-confirmar"
+                  disabled={processando}
+                  onClick={() => void solicitar()}
+                >
+                  {processando ? 'Enviando…' : 'Enviar código de confirmação'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="exclusao-confirmar"
+                  disabled={!/^\d{4}$/.test(codigo) || processando}
+                  onClick={() => void confirmar()}
+                >
+                  {processando ? 'Excluindo…' : 'Excluir permanentemente'}
+                </button>
+              )}
               <button
                 type="button"
                 disabled={processando}
-                onClick={() => setAberto(false)}
+                onClick={() => void fechar()}
               >
-                {mensagem ? 'Fechar' : 'Cancelar'}
+                Cancelar
               </button>
             </div>
           </section>
