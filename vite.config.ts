@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
-      ...(process.env.ANALYZE === 'true'
+      ...(mode === 'analyze'
         ? [
             analyzer({
               analyzerMode: 'static',
