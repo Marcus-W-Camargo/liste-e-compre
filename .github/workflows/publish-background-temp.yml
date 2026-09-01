@@ -1,0 +1,43 @@
+name: Publica background temporariamente
+
+on:
+  push:
+    branches: [perf/route-splitting-background-webp]
+    paths:
+      - '.github/workflows/publish-background-temp.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: ${{ !contains(github.event.head_commit.message, 'remove workflow temporário do background') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: perf/route-splitting-background-webp
+      - name: Publicar WebP e ajustar CSS
+        run: |
+          set -euo pipefail
+          mkdir -p public
+          cp src/assets/background.webp public/background.webp
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/index.css')
+          text = p.read_text()
+          old = "url('./assets/background.webp')"
+          new = "url('/background.webp')"
+          if old not in text:
+              raise SystemExit('Referência antiga do background não encontrada no CSS')
+          p.write_text(text.replace(old, new, 1))
+          PY
+          file public/background.webp
+          ls -lh public/background.webp
+      - name: Commitar asset estático
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/background.webp src/index.css
+          git commit -m 'fix: publica background WebP sem transformação do Vite'
+          git push
