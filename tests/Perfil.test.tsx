@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { Perfil } from '../src/pages/Perfil';
 
 const storageApi = vi.hoisted(() => ({
-  download: vi.fn(),
+  createSignedUrl: vi.fn(),
   upload: vi.fn(),
   remove: vi.fn(),
 }));
@@ -53,9 +53,10 @@ async function selecionarFoto() {
 
 beforeEach(() => {
   localStorage.clear();
+  sessionStorage.clear();
   vi.clearAllMocks();
   vi.stubGlobal('Image', ImagemSimulada);
-  storageApi.download.mockResolvedValue({
+  storageApi.createSignedUrl.mockResolvedValue({
     data: null,
     error: { statusCode: 404, message: 'Object not found' },
   });
@@ -106,6 +107,9 @@ describe('foto do perfil', () => {
     vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue(
       'data:image/jpeg;base64,Zm90by1yZWNvcnRhZGE=',
     );
+    vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((callback) => {
+      callback(new Blob(['foto-otimizada'], { type: 'image/jpeg' }));
+    });
 
     fireEvent.click(screen.getByRole('button', { name: 'Salvar foto' }));
 
@@ -163,14 +167,14 @@ describe('foto do perfil', () => {
   });
 
   it('carrega automaticamente em outro dispositivo a foto privada da conta', async () => {
-    storageApi.download.mockResolvedValue({
-      data: new Blob(['foto-nuvem'], { type: 'image/jpeg' }),
+    storageApi.createSignedUrl.mockResolvedValue({
+      data: { signedUrl: 'https://storage.exemplo.test/perfil-assinado' },
       error: null,
     });
     render(<Perfil />);
 
     const foto = await screen.findByAltText('Foto de perfil de Usuário Teste');
-    expect(foto.getAttribute('src')).toMatch(/^data:image\/jpeg;base64,/);
-    expect(storageApi.download).toHaveBeenCalledWith('usuario-teste/avatar.jpg');
+    expect(foto.getAttribute('src')).toBe('https://storage.exemplo.test/perfil-assinado');
+    expect(storageApi.createSignedUrl).toHaveBeenCalledWith('usuario-teste/avatar.jpg', 86400);
   });
 });
