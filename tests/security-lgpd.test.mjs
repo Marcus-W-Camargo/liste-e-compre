@@ -239,6 +239,18 @@ test('feedback valida tamanho mesmo com body previamente processado', async () =
   assert.equal(res.statusCode, 413);
 });
 
+const emailJsEnv = {
+  APP_ORIGIN: 'https://app.test',
+  SUPABASE_URL: 'https://x.supabase.co',
+  SUPABASE_SECRET_KEY: 'secret',
+  AUTH_VERIFICATION_SECRET: 'verification-secret',
+  EMAILJS_PUBLIC_KEY: 'public',
+  EMAILJS_PRIVATE_KEY: 'private',
+  EMAILJS_SERVICE_ID: 'service',
+  EMAILJS_TEMPLATE_CADASTRO_ID: 'template-cadastro',
+  EMAILJS_TEMPLATE_RECUPERACAO_ID: 'template-conta',
+};
+
 test('solicitação de exclusão exige autenticação', async () => {
   const client = {
     auth: {
@@ -246,71 +258,37 @@ test('solicitação de exclusão exige autenticação', async () => {
     },
   };
   const handler = createDeleteAccountHandler({
-    env: {
-      APP_ORIGIN: 'https://app.test',
-      SUPABASE_URL: 'https://x.supabase.co',
-      SUPABASE_SECRET_KEY: 'secret',
-      AUTH_VERIFICATION_SECRET: 'verification-secret',
-      RESEND_API_KEY: 'resend',
-      RESEND_FROM_EMAIL: 'Liste & Compre <conta@emails.example.com>',
-    },
-    createClientImpl: () => client,
-    rateLimit: async () => {},
-  });
-  const req = {
-    method: 'POST',
-    headers: {
-      origin: 'https://app.test',
-      'content-type': 'application/json',
-    },
-    body: {
-      action: 'request',
-      deviceId: 'a'.repeat(48),
-    },
-  };
-  const res = response();
-
-  await handler(req, res);
-
-  assert.equal(res.statusCode, 401);
-});
-
-test('exclusão exige remetente Resend próprio configurado', async () => {
-  const user = { id: 'u1', email: 'cliente@example.com' };
-  const client = {
-    auth: { getUser: async () => ({ data: { user }, error: null }) },
-  };
-  const handler = createDeleteAccountHandler({
-    env: {
-      APP_ORIGIN: 'https://app.test',
-      SUPABASE_URL: 'https://x.supabase.co',
-      SUPABASE_SECRET_KEY: 'secret',
-      AUTH_VERIFICATION_SECRET: 'verification-secret',
-      RESEND_API_KEY: 'resend',
-    },
+    env: emailJsEnv,
     createClientImpl: () => client,
     rateLimit: async () => {},
   });
   const res = response();
+
   await handler(
     {
       method: 'POST',
       headers: {
         origin: 'https://app.test',
         'content-type': 'application/json',
-        authorization: 'Bearer token',
       },
-      body: { action: 'request', deviceId: 'd'.repeat(48) },
+      body: { action: 'request', sessionId: 'a'.repeat(64) },
     },
     res,
   );
-  assert.equal(res.statusCode, 503);
+
+  assert.equal(res.statusCode, 401);
 });
 
-test('exclusão só conclui após validação e confirmação no mesmo dispositivo, IP e conta', async () => {
+test('exclusão usa finalidade própria, código EmailJS e só apaga após código correto', async () => {
   const ordem = [];
-  const enviados = [];
-  const user = { id: 'u1', email: 'cliente@example.com' };
+  const envios = [];
+  let tokenMac;
+  let codeMac;
+  const user = {
+    id: 'u1',
+    email: 'cliente@example.com',
+    user_metadata: { full_name: 'Cliente Teste' },
+  };
   const client = {
     auth: {
       getUser: async () => ({ data: { user }, error: null }),
@@ -331,72 +309,78 @@ test('exclusão só conclui após validação e confirmação no mesmo dispositi
       }),
     },
   };
-  const env = {
-    APP_ORIGIN: 'https://app.test/',
-    SUPABASE_URL: 'https://x.supabase.co',
-    SUPABASE_SECRET_KEY: 'secret',
-    AUTH_VERIFICATION_SECRET: 'verification-secret',
-    RESEND_API_KEY: 'resend',
-    RESEND_FROM_EMAIL: 'Liste & Compre <conta@emails.example.com>',
+  const providers = {
+    async rpc(name, params) {
+      if (name === 'lc_auth_start') {
+        assert.equal(params.p_purpose, 'exclusao');
+        tokenMac = params.p_token_mac;
+        codeMac = params.p_code_mac;
+        return { ok: true };
+      }
+      if (name === 'lc_auth_activate') return params.p_token_mac === tokenMac;
+      if (name === 'lc_auth_cancel') return true;
+      if (name === 'lc_auth_verify') {
+        if (params.p_token_mac !== tokenMac)
+          return { ok: false, reason: 'invalid_attempt' };
+        if (params.p_code_mac !== codeMac)
+          return { ok: false, reason: 'wrong_code', remaining: 4 };
+        return { ok: true };
+      }
+      throw new Error(`RPC inesperada: ${name}`);
+    },
+    async send(payload) {
+      envios.push(payload);
+    },
   };
   const handler = createDeleteAccountHandler({
-    env,
+    env: emailJsEnv,
     createClientImpl: () => client,
     rateLimit: async () => {},
-    fetchImpl: async (url, options) => {
-      enviados.push({ url, options });
-      return { ok: true, json: async () => ({ id: 'email-1' }) };
-    },
+    providersFactory: () => providers,
+    generateCode: () => '1234',
   });
-  const deviceId = 'd'.repeat(48);
   const headers = {
     origin: 'https://app.test',
     'content-type': 'application/json',
     authorization: 'Bearer token',
-    'x-forwarded-for': '203.0.113.10',
   };
+  const sessionId = 'd'.repeat(64);
 
   const pedido = response();
   await handler(
-    {
-      method: 'POST',
-      headers,
-      body: { action: 'request', deviceId },
-    },
+    { method: 'POST', headers, body: { action: 'request', sessionId } },
     pedido,
   );
-
   assert.equal(pedido.statusCode, 200);
-  assert.equal(enviados.length, 1);
-  const email = JSON.parse(enviados[0].options.body);
-  assert.equal(email.from, env.RESEND_FROM_EMAIL);
-  assert.deepEqual(email.to, ['cliente@example.com']);
-  const match = email.text.match(/https:\/\/app\.test\/confirmar-exclusao\?token=([^\s]+)/);
-  assert.ok(match);
-  const token = decodeURIComponent(match[1]);
-
-  const tentativaErrada = response();
-  await handler(
-    {
-      method: 'POST',
-      headers: { ...headers, 'x-forwarded-for': '203.0.113.11' },
-      body: { action: 'validate', deviceId, token },
-    },
-    tentativaErrada,
-  );
-  assert.equal(tentativaErrada.statusCode, 403);
+  const tentativa = JSON.parse(pedido.body);
+  assert.match(tentativa.id, /^[a-f0-9-]{36}$/);
+  assert.match(tentativa.token, /^[a-f0-9]{64}$/);
+  assert.equal(envios.length, 1);
+  assert.deepEqual(envios[0], {
+    purpose: 'exclusao',
+    email: 'cliente@example.com',
+    name: 'Cliente Teste',
+    code: '1234',
+  });
   assert.deepEqual(ordem, []);
 
-  const validacao = response();
+  const incorreto = response();
   await handler(
     {
       method: 'POST',
       headers,
-      body: { action: 'validate', deviceId, token },
+      body: {
+        action: 'confirm',
+        id: tentativa.id,
+        token: tentativa.token,
+        sessionId,
+        code: '0000',
+      },
     },
-    validacao,
+    incorreto,
   );
-  assert.equal(validacao.statusCode, 200);
+  assert.equal(incorreto.statusCode, 400);
+  assert.match(JSON.parse(incorreto.body).error, /Código incorreto/);
   assert.deepEqual(ordem, []);
 
   const confirmacao = response();
@@ -404,11 +388,79 @@ test('exclusão só conclui após validação e confirmação no mesmo dispositi
     {
       method: 'POST',
       headers,
-      body: { action: 'confirm', deviceId, token },
+      body: {
+        action: 'confirm',
+        id: tentativa.id,
+        token: tentativa.token,
+        sessionId,
+        code: '1234',
+      },
     },
     confirmacao,
   );
-
   assert.equal(confirmacao.statusCode, 200);
   assert.deepEqual(ordem, ['foto', 'usuario']);
+});
+
+test('sessão de tentativa diferente não reutiliza a autorização de exclusão', async () => {
+  let tokenMac;
+  const user = { id: 'u1', email: 'cliente@example.com', user_metadata: {} };
+  const client = {
+    auth: { getUser: async () => ({ data: { user }, error: null }) },
+    storage: { from: () => ({ remove: async () => ({ error: null }) }) },
+  };
+  const providers = {
+    async rpc(name, params) {
+      if (name === 'lc_auth_start') {
+        tokenMac = params.p_token_mac;
+        return { ok: true };
+      }
+      if (name === 'lc_auth_activate') return true;
+      if (name === 'lc_auth_verify')
+        return params.p_token_mac === tokenMac
+          ? { ok: true }
+          : { ok: false, reason: 'invalid_attempt' };
+      return true;
+    },
+    async send() {},
+  };
+  const handler = createDeleteAccountHandler({
+    env: emailJsEnv,
+    createClientImpl: () => client,
+    rateLimit: async () => {},
+    providersFactory: () => providers,
+    generateCode: () => '1234',
+  });
+  const headers = {
+    origin: 'https://app.test',
+    'content-type': 'application/json',
+    authorization: 'Bearer token',
+  };
+  const pedido = response();
+  await handler(
+    {
+      method: 'POST',
+      headers,
+      body: { action: 'request', sessionId: 'a'.repeat(64) },
+    },
+    pedido,
+  );
+  const tentativa = JSON.parse(pedido.body);
+
+  const confirmacao = response();
+  await handler(
+    {
+      method: 'POST',
+      headers,
+      body: {
+        action: 'confirm',
+        id: tentativa.id,
+        token: tentativa.token,
+        sessionId: 'b'.repeat(64),
+        code: '1234',
+      },
+    },
+    confirmacao,
+  );
+  assert.equal(confirmacao.statusCode, 400);
 });
