@@ -15,6 +15,7 @@ const ComprasSessao = lazy(() => import('./pages/ComprasSessao').then((modulo) =
 const HistoricoCompras = lazy(() => import('./pages/HistoricoCompras').then((modulo) => ({ default: modulo.HistoricoCompras })));
 const Perfil = lazy(() => import('./pages/Perfil').then((modulo) => ({ default: modulo.Perfil })));
 const PaginaAjuda = lazy(() => import('./pages/AjudaRoute').then((modulo) => ({ default: modulo.PaginaAjuda })));
+const ConfirmarExclusaoConta = lazy(() => import('./pages/ConfirmarExclusaoConta').then((modulo) => ({ default: modulo.ConfirmarExclusaoConta })));
 
 function Rodape() {
   return (
@@ -47,6 +48,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/conta" element={<Conta />} />
               <Route path="/privacidade" element={<Privacidade />} />
+              <Route path="/confirmar-exclusao" element={<ConfirmarExclusaoConta />} />
               <Route element={<CloudAccess />}>
                 <Route path="/lista" element={<Lista />} />
                 <Route path="/compre" element={<Compras />} />
