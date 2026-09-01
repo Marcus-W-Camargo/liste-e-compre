@@ -75,6 +75,14 @@ export async function solicitarExclusaoConta() {
   });
 }
 
+export async function validarExclusaoConta(token: string) {
+  await chamarExclusao({
+    action: 'validate',
+    token,
+    deviceId: obterIdDispositivo(),
+  });
+}
+
 export async function confirmarExclusaoConta(usuarioId: string, token: string) {
   const { client } = await chamarExclusao({
     action: 'confirm',
