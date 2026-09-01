@@ -11,6 +11,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: perf/route-splitting-background-webp
+      - name: Instalar ferramentas de imagem
+        run: sudo apt-get update && sudo apt-get install -y imagemagick
       - name: Inspecionar dimensoes e borda direita
         run: |
           set -euo pipefail
@@ -21,7 +23,11 @@ jobs:
           convert src/assets/background.png -gravity East -crop 30x0+0+0 +repage -format 'mean=%[fx:mean] stddev=%[fx:standard_deviation] entropy=%[entropy]\n' info:
           echo '=== Estatisticas WEBP - 30 px direita ==='
           convert src/assets/background.webp -gravity East -crop 30x0+0+0 +repage -format 'mean=%[fx:mean] stddev=%[fx:standard_deviation] entropy=%[entropy]\n' info:
+          echo '=== Estatisticas PNG - 60 px direita ==='
+          convert src/assets/background.png -gravity East -crop 60x0+0+0 +repage -format 'mean=%[fx:mean] stddev=%[fx:standard_deviation] entropy=%[entropy]\n' info:
           echo '=== Estatisticas WEBP - 60 px direita ==='
           convert src/assets/background.webp -gravity East -crop 60x0+0+0 +repage -format 'mean=%[fx:mean] stddev=%[fx:standard_deviation] entropy=%[entropy]\n' info:
+          echo '=== Cores dominantes ultimos 30 px PNG ==='
+          convert src/assets/background.png -gravity East -crop 30x0+0+0 +repage -colors 8 -format %c histogram:info:- | sort -nr | head -10
           echo '=== Cores dominantes ultimos 30 px WEBP ==='
           convert src/assets/background.webp -gravity East -crop 30x0+0+0 +repage -colors 8 -format %c histogram:info:- | sort -nr | head -10
