@@ -16,20 +16,37 @@ export function AccountDeletion() {
   const [processando, setProcessando] = useState(false);
 
   useEffect(() => {
-    if (location.pathname !== '/perfil') {
-      setDestino(null);
-      return;
+    setDestino(null);
+
+    if (location.pathname !== '/perfil') return;
+
+    let ponto: HTMLDivElement | null = null;
+    let observador: MutationObserver | null = null;
+
+    function anexarAoPerfil() {
+      if (ponto) return true;
+
+      const card = document.querySelector('.card-perfil');
+      if (!(card instanceof HTMLElement)) return false;
+
+      ponto = document.createElement('div');
+      ponto.className = 'exclusao-conta-ponto';
+      card.appendChild(ponto);
+      setDestino(ponto);
+      return true;
     }
 
-    const card = document.querySelector('.card-perfil');
-    if (!(card instanceof HTMLElement)) return;
+    if (!anexarAoPerfil()) {
+      observador = new MutationObserver(() => {
+        if (anexarAoPerfil()) observador?.disconnect();
+      });
+      observador.observe(document.body, { childList: true, subtree: true });
+    }
 
-    const ponto = document.createElement('div');
-    ponto.className = 'exclusao-conta-ponto';
-    card.appendChild(ponto);
-    setDestino(ponto);
-
-    return () => ponto.remove();
+    return () => {
+      observador?.disconnect();
+      ponto?.remove();
+    };
   }, [location.pathname]);
 
   async function confirmar() {
