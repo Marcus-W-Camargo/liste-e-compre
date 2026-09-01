@@ -2,21 +2,16 @@ import { obterSupabase } from '../config/supabase';
 import { limparSessaoCompraLocal } from './localPurchaseSession';
 import { removerFotoPerfilLocal } from './profilePhoto';
 
-const CHAVE_DISPOSITIVO = 'liste-e-compre:device-id:v1';
-
-function criarIdDispositivo() {
-  const bytes = new Uint8Array(24);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+export interface TentativaExclusaoConta {
+  id: string;
+  token: string;
+  sessionId: string;
 }
 
-export function obterIdDispositivo() {
-  const existente = localStorage.getItem(CHAVE_DISPOSITIVO);
-  if (existente) return existente;
-
-  const criado = criarIdDispositivo();
-  localStorage.setItem(CHAVE_DISPOSITIVO, criado);
-  return criado;
+function criarSegredoHex(bytes = 32) {
+  const dados = new Uint8Array(bytes);
+  crypto.getRandomValues(dados);
+  return Array.from(dados, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 export function limparDadosLocaisDaConta(usuarioId: string) {
@@ -68,26 +63,38 @@ async function chamarExclusao(body: Record<string, string>) {
   return { client, resultado };
 }
 
-export async function solicitarExclusaoConta() {
-  await chamarExclusao({
-    action: 'request',
-    deviceId: obterIdDispositivo(),
-  });
+export async function solicitarExclusaoConta(): Promise<TentativaExclusaoConta> {
+  const sessionId = criarSegredoHex();
+  const { resultado } = await chamarExclusao({ action: 'request', sessionId });
+  if (
+    typeof resultado?.id !== 'string' ||
+    typeof resultado?.token !== 'string'
+  ) {
+    throw new Error('Não foi possível iniciar a confirmação agora.');
+  }
+  return { id: resultado.id, token: resultado.token, sessionId };
 }
 
-export async function validarExclusaoConta(token: string) {
+export async function cancelarExclusaoConta(tentativa: TentativaExclusaoConta) {
   await chamarExclusao({
-    action: 'validate',
-    token,
-    deviceId: obterIdDispositivo(),
-  });
+    action: 'cancel',
+    id: tentativa.id,
+    token: tentativa.token,
+    sessionId: tentativa.sessionId,
+  }).catch(() => {});
 }
 
-export async function confirmarExclusaoConta(usuarioId: string, token: string) {
+export async function confirmarExclusaoConta(
+  usuarioId: string,
+  tentativa: TentativaExclusaoConta,
+  code: string,
+) {
   const { client } = await chamarExclusao({
     action: 'confirm',
-    token,
-    deviceId: obterIdDispositivo(),
+    id: tentativa.id,
+    token: tentativa.token,
+    sessionId: tentativa.sessionId,
+    code,
   });
 
   limparDadosLocaisDaConta(usuarioId);
