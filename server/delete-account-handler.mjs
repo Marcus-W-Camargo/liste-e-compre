@@ -1,9 +1,10 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomBytes, randomInt, randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { aplicarRateLimit } from './rate-limit.mjs';
+import { createProviders } from './providers.mjs';
 
 const ORIGEM_PRODUCAO = 'https://listeecompre.vercel.app';
-const VALIDADE_TOKEN_MS = 30 * 60 * 1000;
+const PURPOSE = 'exclusao';
 
 function responder(res, status, payload) {
   res.statusCode = status;
@@ -28,49 +29,6 @@ function origemPermitida(req, env) {
     permitidas.add(`https://${env.VERCEL_BRANCH_URL}`);
 
   return permitidas.has(origem);
-}
-
-function origemDaRequisicao(req) {
-  const forwarded = req.headers['x-forwarded-for'];
-  const ip = Array.isArray(forwarded)
-    ? forwarded[0]
-    : String(forwarded ?? '').split(',')[0];
-  return ip.trim() || String(req.headers['x-real-ip'] ?? '').trim() || 'unknown';
-}
-
-function assinatura(secret, valor) {
-  return createHmac('sha256', secret).update(valor).digest('base64url');
-}
-
-function hashVinculo(secret, tipo, valor) {
-  return createHmac('sha256', secret)
-    .update(`account-delete:${tipo}:${valor}`)
-    .digest('hex');
-}
-
-function criarToken(secret, payload) {
-  const corpo = Buffer.from(JSON.stringify(payload)).toString('base64url');
-  return `${corpo}.${assinatura(secret, corpo)}`;
-}
-
-function lerToken(secret, token) {
-  if (typeof token !== 'string') return null;
-  const [corpo, recebida, extra] = token.split('.');
-  if (!corpo || !recebida || extra) return null;
-
-  const esperada = assinatura(secret, corpo);
-  const a = Buffer.from(recebida);
-  const b = Buffer.from(esperada);
-  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
-
-  try {
-    const payload = JSON.parse(Buffer.from(corpo, 'base64url').toString('utf8'));
-    if (!payload || typeof payload !== 'object') return null;
-    if (!Number.isFinite(payload.exp) || Date.now() > payload.exp) return null;
-    return payload;
-  } catch {
-    return null;
-  }
 }
 
 async function lerBody(req) {
@@ -112,20 +70,52 @@ async function usuarioAutenticado(client, authorization) {
   return error ? null : user;
 }
 
-function vinculoValido({ payload, user, req, deviceId, secret }) {
-  if (!payload || !user) return false;
-  const emailAtual = String(user.email ?? '').trim().toLowerCase();
-  if (!emailAtual) return false;
+function configuracaoValida(env) {
+  return [
+    'SUPABASE_URL',
+    'SUPABASE_SECRET_KEY',
+    'AUTH_VERIFICATION_SECRET',
+    'EMAILJS_PUBLIC_KEY',
+    'EMAILJS_PRIVATE_KEY',
+    'EMAILJS_SERVICE_ID',
+    'EMAILJS_TEMPLATE_CADASTRO_ID',
+    'EMAILJS_TEMPLATE_RECUPERACAO_ID',
+  ].every((chave) => typeof env[chave] === 'string' && env[chave].trim());
+}
 
-  const mesmoUsuario = payload.uid === user.id;
-  const mesmoEmail =
-    payload.emailHash === hashVinculo(secret, 'email', emailAtual);
-  const mesmoIp =
-    payload.ip === hashVinculo(secret, 'ip', origemDaRequisicao(req));
-  const mesmoDispositivo =
-    payload.device === hashVinculo(secret, 'device', deviceId);
+function emailConfig(env) {
+  return {
+    SUPABASE_URL: env.SUPABASE_URL.trim(),
+    SUPABASE_SECRET_KEY: env.SUPABASE_SECRET_KEY.trim(),
+    EMAILJS_PUBLIC_KEY: env.EMAILJS_PUBLIC_KEY.trim(),
+    EMAILJS_PRIVATE_KEY: env.EMAILJS_PRIVATE_KEY.trim(),
+    EMAILJS_SERVICE_ID: env.EMAILJS_SERVICE_ID.trim(),
+    EMAILJS_TEMPLATE_CADASTRO_ID: env.EMAILJS_TEMPLATE_CADASTRO_ID.trim(),
+    EMAILJS_TEMPLATE_RECUPERACAO_ID: env.EMAILJS_TEMPLATE_RECUPERACAO_ID.trim(),
+  };
+}
 
-  return mesmoUsuario && mesmoEmail && mesmoIp && mesmoDispositivo;
+function mac(secret, ...parts) {
+  return createHmac('sha256', secret)
+    .update(JSON.stringify(parts))
+    .digest('hex');
+}
+
+function tentativaValida(body) {
+  return (
+    /^[a-f0-9-]{36}$/.test(body?.id ?? '') &&
+    /^[a-f0-9]{64}$/.test(body?.token ?? '') &&
+    /^[a-f0-9]{64}$/.test(body?.sessionId ?? '')
+  );
+}
+
+function mapearVerificacao(result) {
+  if (result?.ok === true) return null;
+  if (result?.reason === 'locked')
+    return 'Cinco códigos incorretos. Inicie uma nova solicitação.';
+  if (result?.reason === 'wrong_code')
+    return `Código incorreto. Restam ${result.remaining} tentativa(s).`;
+  return 'Esta solicitação não está mais disponível. Inicie novamente.';
 }
 
 async function removerConta(client, userId) {
@@ -149,6 +139,8 @@ export function createDeleteAccountHandler({
   createClientImpl = createClient,
   fetchImpl = fetch,
   rateLimit = aplicarRateLimit,
+  providersFactory = createProviders,
+  generateCode = () => String(randomInt(10000)).padStart(4, '0'),
 } = {}) {
   return async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -162,16 +154,11 @@ export function createDeleteAccountHandler({
     if (!/^application\/json(?:;|$)/i.test(req.headers['content-type'] ?? ''))
       return responder(res, 415, { ok: false, error: 'Envie os dados em JSON.' });
 
-    if (
-      !env.SUPABASE_URL ||
-      !env.SUPABASE_SECRET_KEY ||
-      !env.AUTH_VERIFICATION_SECRET
-    ) {
+    if (!configuracaoValida(env))
       return responder(res, 503, {
         ok: false,
         error: 'Serviço temporariamente indisponível.',
       });
-    }
 
     let body;
     try {
@@ -180,27 +167,24 @@ export function createDeleteAccountHandler({
       return responder(res, 400, { ok: false, error: 'Dados inválidos.' });
     }
 
-    const action = typeof body?.action === 'string' ? body.action : '';
-    const deviceId = typeof body?.deviceId === 'string' ? body.deviceId.trim() : '';
-    if (!deviceId || deviceId.length < 24 || deviceId.length > 160)
-      return responder(res, 400, { ok: false, error: 'Dispositivo inválido.' });
-
     const authorization = String(req.headers.authorization ?? '');
     const client = criarClient(env, createClientImpl);
     const user = await usuarioAutenticado(client, authorization);
-    if (!user)
+    if (!user?.email)
       return responder(res, 401, {
         ok: false,
         error: 'Sessão inválida. Entre novamente.',
       });
 
+    const secret = env.AUTH_VERIFICATION_SECRET;
+    const email = String(user.email).trim().toLowerCase();
+    const emailKey = mac(secret, 'email', email);
+    const providers = providersFactory(emailConfig(env), fetchImpl);
+    const action = typeof body?.action === 'string' ? body.action : '';
+
     if (action === 'request') {
-      const remetente = String(env.RESEND_FROM_EMAIL ?? '').trim();
-      if (!env.RESEND_API_KEY || !remetente || !user.email)
-        return responder(res, 503, {
-          ok: false,
-          error: 'Serviço de e-mail indisponível.',
-        });
+      if (!/^[a-f0-9]{64}$/.test(body?.sessionId ?? ''))
+        return responder(res, 400, { ok: false, error: 'Sessão inválida.' });
 
       try {
         await rateLimit({
@@ -223,67 +207,90 @@ export function createDeleteAccountHandler({
         });
       }
 
-      const secret = env.AUTH_VERIFICATION_SECRET;
-      const emailNormalizado = String(user.email).trim().toLowerCase();
-      const token = criarToken(secret, {
-        uid: user.id,
-        emailHash: hashVinculo(secret, 'email', emailNormalizado),
-        ip: hashVinculo(secret, 'ip', origemDaRequisicao(req)),
-        device: hashVinculo(secret, 'device', deviceId),
-        exp: Date.now() + VALIDADE_TOKEN_MS,
-      });
+      const id = randomUUID();
+      const token = randomBytes(32).toString('hex');
+      const binding = {
+        p_id: id,
+        p_token_mac: mac(secret, 'delete-token', token, body.sessionId),
+      };
 
-      const origem = normalizarOrigem(req.headers.origin) || ORIGEM_PRODUCAO;
-      const link = `${origem}/confirmar-exclusao?token=${encodeURIComponent(token)}`;
-      const respostaEmail = await fetchImpl('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${env.RESEND_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: remetente,
-          to: [user.email],
-          subject: '[Liste & Compre] Confirme a exclusão da sua conta',
-          text: [
-            'Você solicitou a exclusão da sua conta no Liste & Compre.',
-            '',
-            'Abra o link abaixo no mesmo dispositivo e na mesma conexão usados na solicitação:',
-            link,
-            '',
-            'Na página aberta, confirme explicitamente a exclusão para concluir.',
-            'Se você não solicitou a exclusão, ignore esta mensagem.',
-          ].join('\n'),
-        }),
-      });
+      let code = '';
+      let result;
+      for (let n = 0; n < 20; n += 1) {
+        code = generateCode();
+        result = await providers.rpc('lc_auth_start', {
+          ...binding,
+          p_email_key: emailKey,
+          p_purpose: PURPOSE,
+          p_code_mac: mac(secret, 'code', id, emailKey, PURPOSE, code),
+          p_fingerprint: mac(secret, 'last', emailKey, code),
+        });
+        if (result?.reason !== 'repeat') break;
+      }
 
-      if (!respostaEmail.ok)
-        return responder(res, 502, {
+      if (result?.reason === 'rate_limit')
+        return responder(res, 429, {
           ok: false,
-          error: 'Não foi possível enviar o e-mail de confirmação agora.',
+          error: 'Muitas solicitações. Aguarde antes de pedir outro código.',
+          retryAfter: Number(result.retryAfter) || undefined,
         });
 
+      if (result?.ok !== true)
+        return responder(res, 503, {
+          ok: false,
+          error: 'Não foi possível iniciar a confirmação. Tente novamente.',
+        });
+
+      try {
+        await providers.send({
+          purpose: PURPOSE,
+          email,
+          name: user.user_metadata?.full_name || 'Usuário',
+          code,
+        });
+        if ((await providers.rpc('lc_auth_activate', binding)) !== true)
+          throw new Error('ATIVACAO');
+      } catch {
+        await providers.rpc('lc_auth_cancel', binding).catch(() => {});
+        return responder(res, 503, {
+          ok: false,
+          error: 'Não foi possível enviar o código. Tente novamente.',
+        });
+      }
+
+      return responder(res, 200, { ok: true, id, token });
+    }
+
+    if (action === 'cancel') {
+      if (!tentativaValida(body))
+        return responder(res, 400, { ok: false, error: 'Dados inválidos.' });
+      await providers
+        .rpc('lc_auth_cancel', {
+          p_id: body.id,
+          p_token_mac: mac(secret, 'delete-token', body.token, body.sessionId),
+        })
+        .catch(() => {});
       return responder(res, 200, { ok: true });
     }
 
-    if (action === 'validate' || action === 'confirm') {
-      const payload = lerToken(env.AUTH_VERIFICATION_SECRET, body?.token);
-      const valido = vinculoValido({
-        payload,
-        user,
-        req,
-        deviceId,
-        secret: env.AUTH_VERIFICATION_SECRET,
-      });
-
-      if (!valido)
-        return responder(res, 403, {
+    if (action === 'confirm') {
+      if (!tentativaValida(body) || !/^\d{4}$/.test(body?.code ?? ''))
+        return responder(res, 400, {
           ok: false,
-          error:
-            'A deletação de conta não foi bem-sucedida. Por favor entre no link com o mesmo dispositivo usado na solicitação.',
+          error: 'Informe o código de 4 dígitos.',
         });
 
-      if (action === 'validate') return responder(res, 200, { ok: true });
+      const result = await providers.rpc('lc_auth_verify', {
+        p_id: body.id,
+        p_email_key: emailKey,
+        p_purpose: PURPOSE,
+        p_token_mac: mac(secret, 'delete-token', body.token, body.sessionId),
+        p_code_mac: mac(secret, 'code', body.id, emailKey, PURPOSE, body.code),
+        p_reset_mac: null,
+      });
+      const erroVerificacao = mapearVerificacao(result);
+      if (erroVerificacao)
+        return responder(res, 400, { ok: false, error: erroVerificacao });
 
       try {
         await removerConta(client, user.id);
