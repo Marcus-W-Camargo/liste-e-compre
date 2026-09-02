@@ -31,6 +31,94 @@
   animation: aparecer-modal 0.2s ease-out;
 }
 
+.card-bloqueio-home .conteudo-sucesso {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  padding: 16px 6px 4px;
+  text-align: center;
+}
+
+.card-bloqueio-home .conteudo-sucesso h2 {
+  margin: 0;
+  color: #1a263b;
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+.card-bloqueio-home .conteudo-sucesso p {
+  margin: 0 0 10px;
+  color: #4a5b78;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.card-bloqueio-home .icone-sucesso-laranja {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  height: 70px;
+  margin-bottom: 2px;
+  border-radius: 50%;
+  background-color: #f7501b;
+  color: #fff;
+  font-size: 36px;
+  font-weight: 700;
+  user-select: none;
+}
+
+.card-bloqueio-home .grupo-botoes-bloqueio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.card-bloqueio-home .btn-bloqueio-link {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  border: 3px solid #1a263b;
+  border-radius: 13px;
+  background: #f7501b;
+  color: #fff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.card-bloqueio-home .btn-bloqueio-link:hover,
+.card-bloqueio-home .btn-bloqueio-link:focus-visible {
+  background: #e04312;
+}
+
+.card-bloqueio-home .link-corrigir {
+  width: max-content;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #f7501b;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.card-bloqueio-home .link-corrigir:hover,
+.card-bloqueio-home .link-corrigir:focus-visible {
+  color: #e04312;
+}
+
 @keyframes aparecer-overlay {
   from {
     opacity: 0;
@@ -59,8 +147,25 @@
   }
 
   .card-bloqueio-home {
-    width: 100%;
+    width: calc(100% - 20px);
     max-height: calc(100dvh - 20px);
     padding: 20px 16px;
+  }
+
+  .card-bloqueio-home .conteudo-sucesso {
+    padding: 10px 0 2px;
+  }
+
+  .card-bloqueio-home .conteudo-sucesso h2 {
+    font-size: 24px;
+  }
+
+  .card-bloqueio-home .conteudo-sucesso p {
+    font-size: 14px;
+  }
+
+  .card-bloqueio-home .icone-sucesso-laranja {
+    width: 62px;
+    height: 62px;
   }
 }
