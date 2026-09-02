@@ -122,10 +122,10 @@ export function Header() {
             className={`icone-usuario ${fotoPerfil ? 'tem-foto-perfil' : ''} ${dropdownAberto ? 'menu-ativo' : ''}`}
             onClick={(event) => {
               event.stopPropagation();
-              if (logado) setDropdownAberto((atual) => !atual);
+              setDropdownAberto((atual) => !atual);
             }}
             aria-label="Menu da conta"
-            aria-expanded={logado ? dropdownAberto : undefined}
+            aria-expanded={dropdownAberto}
           >
             {fotoPerfil ? (
               <img
@@ -148,27 +148,31 @@ export function Header() {
             )}
           </button>
 
-          {logado && dropdownAberto && (
+          {dropdownAberto && (
             <div
               className="dropdown-conta"
               onClick={(event) => event.stopPropagation()}
             >
               <div className="setinha-dropdown" />
               <div className="dropdown-conteudo">
-                <Link
-                  to="/perfil"
-                  className="item-dropdown"
-                  onClick={() => setDropdownAberto(false)}
-                >
-                  👤 Minha conta
-                </Link>
-                <Link
-                  to="/ajuda"
-                  className="item-dropdown"
-                  onClick={() => setDropdownAberto(false)}
-                >
-                  💡 Ajuda
-                </Link>
+                {logado && (
+                  <>
+                    <Link
+                      to="/perfil"
+                      className="item-dropdown"
+                      onClick={() => setDropdownAberto(false)}
+                    >
+                      👤 Minha conta
+                    </Link>
+                    <Link
+                      to="/ajuda"
+                      className="item-dropdown"
+                      onClick={() => setDropdownAberto(false)}
+                    >
+                      💡 Ajuda
+                    </Link>
+                  </>
+                )}
                 <a
                   href="https://marcuscamargo-portfolio.mcpt.workers.dev/"
                   className="item-dropdown"
@@ -176,17 +180,21 @@ export function Header() {
                 >
                   🌐 Sobre
                 </a>
-                <hr className="divisor-dropdown" />
-                <button
-                  type="button"
-                  className="item-dropdown btn-sair-dropdown"
-                  onClick={() => {
-                    setDropdownAberto(false);
-                    setModalLogout(true);
-                  }}
-                >
-                  🚪 Sair
-                </button>
+                {logado && (
+                  <>
+                    <hr className="divisor-dropdown" />
+                    <button
+                      type="button"
+                      className="item-dropdown btn-sair-dropdown"
+                      onClick={() => {
+                        setDropdownAberto(false);
+                        setModalLogout(true);
+                      }}
+                    >
+                      🚪 Sair
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           )}
