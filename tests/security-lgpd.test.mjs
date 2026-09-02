@@ -239,33 +239,59 @@ test('feedback valida tamanho mesmo com body previamente processado', async () =
   assert.equal(res.statusCode, 413);
 });
 
-test('exclusão exige autenticação', async () => {
-  const handler = createDeleteAccountHandler({
-    env: {
-      APP_ORIGIN: 'https://app.test',
-      SUPABASE_URL: 'https://x.supabase.co',
-      SUPABASE_SECRET_KEY: 'secret',
+const emailJsEnv = {
+  APP_ORIGIN: 'https://app.test',
+  SUPABASE_URL: 'https://x.supabase.co',
+  SUPABASE_SECRET_KEY: 'secret',
+  AUTH_VERIFICATION_SECRET: 'verification-secret',
+  EMAILJS_PUBLIC_KEY: 'public',
+  EMAILJS_PRIVATE_KEY: 'private',
+  EMAILJS_SERVICE_ID: 'service',
+  EMAILJS_TEMPLATE_CADASTRO_ID: 'template-cadastro',
+  EMAILJS_TEMPLATE_RECUPERACAO_ID: 'template-conta',
+};
+
+test('solicitação de exclusão exige autenticação', async () => {
+  const client = {
+    auth: {
+      getUser: async () => ({ data: { user: null }, error: new Error('inválida') }),
     },
-    createClientImpl: () => {
-      throw new Error('não deve criar cliente');
-    },
-  });
-  const req = {
-    method: 'DELETE',
-    headers: { origin: 'https://app.test' },
   };
+  const handler = createDeleteAccountHandler({
+    env: emailJsEnv,
+    createClientImpl: () => client,
+    rateLimit: async () => {},
+  });
   const res = response();
 
-  await handler(req, res);
+  await handler(
+    {
+      method: 'POST',
+      headers: {
+        origin: 'https://app.test',
+        'content-type': 'application/json',
+      },
+      body: { action: 'request', sessionId: 'a'.repeat(64) },
+    },
+    res,
+  );
 
   assert.equal(res.statusCode, 401);
 });
 
-test('exclusão remove foto antes do usuário autenticado', async () => {
+test('exclusão usa finalidade própria, código EmailJS e só apaga após código correto', async () => {
   const ordem = [];
+  const envios = [];
+  let tokenMac;
+  let codeMac;
+  const user = {
+    id: 'u1',
+    email: 'cliente@example.com',
+    user_metadata: { full_name: 'Cliente Teste' },
+  };
   const client = {
     auth: {
-      getUser: async () => ({ data: { user: { id: 'u1' } }, error: null }),
+      getUser: async () => ({ data: { user }, error: null }),
       admin: {
         deleteUser: async () => {
           ordem.push('usuario');
@@ -283,25 +309,158 @@ test('exclusão remove foto antes do usuário autenticado', async () => {
       }),
     },
   };
-  const handler = createDeleteAccountHandler({
-    env: {
-      APP_ORIGIN: 'https://app.test',
-      SUPABASE_URL: 'https://x.supabase.co',
-      SUPABASE_SECRET_KEY: 'secret',
+  const providers = {
+    async rpc(name, params) {
+      if (name === 'lc_auth_start') {
+        assert.equal(params.p_purpose, 'exclusao');
+        tokenMac = params.p_token_mac;
+        codeMac = params.p_code_mac;
+        return { ok: true };
+      }
+      if (name === 'lc_auth_activate') return params.p_token_mac === tokenMac;
+      if (name === 'lc_auth_cancel') return true;
+      if (name === 'lc_auth_verify') {
+        if (params.p_token_mac !== tokenMac)
+          return { ok: false, reason: 'invalid_attempt' };
+        if (params.p_code_mac !== codeMac)
+          return { ok: false, reason: 'wrong_code', remaining: 4 };
+        return { ok: true };
+      }
+      throw new Error(`RPC inesperada: ${name}`);
     },
-    createClientImpl: () => client,
-  });
-  const req = {
-    method: 'DELETE',
-    headers: {
-      origin: 'https://app.test',
-      authorization: 'Bearer token',
+    async send(payload) {
+      envios.push(payload);
     },
   };
-  const res = response();
+  const handler = createDeleteAccountHandler({
+    env: emailJsEnv,
+    createClientImpl: () => client,
+    rateLimit: async () => {},
+    providersFactory: () => providers,
+    generateCode: () => '1234',
+  });
+  const headers = {
+    origin: 'https://app.test',
+    'content-type': 'application/json',
+    authorization: 'Bearer token',
+  };
+  const sessionId = 'd'.repeat(64);
 
-  await handler(req, res);
+  const pedido = response();
+  await handler(
+    { method: 'POST', headers, body: { action: 'request', sessionId } },
+    pedido,
+  );
+  assert.equal(pedido.statusCode, 200);
+  const tentativa = JSON.parse(pedido.body);
+  assert.match(tentativa.id, /^[a-f0-9-]{36}$/);
+  assert.match(tentativa.token, /^[a-f0-9]{64}$/);
+  assert.equal(envios.length, 1);
+  assert.deepEqual(envios[0], {
+    purpose: 'exclusao',
+    email: 'cliente@example.com',
+    name: 'Cliente Teste',
+    code: '1234',
+  });
+  assert.deepEqual(ordem, []);
 
-  assert.equal(res.statusCode, 200);
+  const incorreto = response();
+  await handler(
+    {
+      method: 'POST',
+      headers,
+      body: {
+        action: 'confirm',
+        id: tentativa.id,
+        token: tentativa.token,
+        sessionId,
+        code: '0000',
+      },
+    },
+    incorreto,
+  );
+  assert.equal(incorreto.statusCode, 400);
+  assert.match(JSON.parse(incorreto.body).error, /Código incorreto/);
+  assert.deepEqual(ordem, []);
+
+  const confirmacao = response();
+  await handler(
+    {
+      method: 'POST',
+      headers,
+      body: {
+        action: 'confirm',
+        id: tentativa.id,
+        token: tentativa.token,
+        sessionId,
+        code: '1234',
+      },
+    },
+    confirmacao,
+  );
+  assert.equal(confirmacao.statusCode, 200);
   assert.deepEqual(ordem, ['foto', 'usuario']);
+});
+
+test('sessão de tentativa diferente não reutiliza a autorização de exclusão', async () => {
+  let tokenMac;
+  const user = { id: 'u1', email: 'cliente@example.com', user_metadata: {} };
+  const client = {
+    auth: { getUser: async () => ({ data: { user }, error: null }) },
+    storage: { from: () => ({ remove: async () => ({ error: null }) }) },
+  };
+  const providers = {
+    async rpc(name, params) {
+      if (name === 'lc_auth_start') {
+        tokenMac = params.p_token_mac;
+        return { ok: true };
+      }
+      if (name === 'lc_auth_activate') return true;
+      if (name === 'lc_auth_verify')
+        return params.p_token_mac === tokenMac
+          ? { ok: true }
+          : { ok: false, reason: 'invalid_attempt' };
+      return true;
+    },
+    async send() {},
+  };
+  const handler = createDeleteAccountHandler({
+    env: emailJsEnv,
+    createClientImpl: () => client,
+    rateLimit: async () => {},
+    providersFactory: () => providers,
+    generateCode: () => '1234',
+  });
+  const headers = {
+    origin: 'https://app.test',
+    'content-type': 'application/json',
+    authorization: 'Bearer token',
+  };
+  const pedido = response();
+  await handler(
+    {
+      method: 'POST',
+      headers,
+      body: { action: 'request', sessionId: 'a'.repeat(64) },
+    },
+    pedido,
+  );
+  const tentativa = JSON.parse(pedido.body);
+
+  const confirmacao = response();
+  await handler(
+    {
+      method: 'POST',
+      headers,
+      body: {
+        action: 'confirm',
+        id: tentativa.id,
+        token: tentativa.token,
+        sessionId: 'b'.repeat(64),
+        code: '1234',
+      },
+    },
+    confirmacao,
+  );
+  assert.equal(confirmacao.statusCode, 400);
 });

@@ -24,6 +24,15 @@
   color: #b42318;
   font-weight: 700;
   cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.zona-perigo-conta button:hover,
+.zona-perigo-conta button:focus-visible {
+  background: #b42318;
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 5px 14px rgba(180, 35, 24, 0.24);
 }
 
 .exclusao-conta-overlay {
@@ -73,16 +82,18 @@
 .exclusao-conta-modal input {
   box-sizing: border-box;
   width: 100%;
-  min-height: 46px;
-  margin: 18px 0 0;
-  padding: 10px 12px;
+  min-height: 48px;
+  margin-top: 18px;
+  padding: 10px 14px;
   border: 2px solid #1a263b;
   border-radius: 13px;
   outline: none;
   background: #fff;
   color: #1a263b;
   font: inherit;
-  font-weight: 700;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
   text-align: center;
 }
 
@@ -129,11 +140,23 @@
   background: #f5f7fa;
 }
 
-.exclusao-conta-erro {
-  margin-top: 10px !important;
-  color: #b43a16 !important;
+.exclusao-conta-erro,
+.exclusao-conta-sucesso {
+  margin-top: 12px !important;
+  padding: 10px 12px;
+  border-radius: 10px;
   font-size: 13px !important;
   font-weight: 700;
+}
+
+.exclusao-conta-erro {
+  background: #fff0ec;
+  color: #b43a16 !important;
+}
+
+.exclusao-conta-sucesso {
+  background: #edf7ef;
+  color: #236b35 !important;
 }
 
 .exclusao-confirmar:disabled {

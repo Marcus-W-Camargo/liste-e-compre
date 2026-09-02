@@ -8,7 +8,9 @@ vi.mock('../src/hooks/useAuth', () => ({
 }));
 
 vi.mock('../src/utils/accountDeletion', () => ({
-  excluirConta: vi.fn(),
+  solicitarExclusaoConta: vi.fn(),
+  confirmarExclusaoConta: vi.fn(),
+  cancelarExclusaoConta: vi.fn(),
 }));
 
 afterEach(() => {
