@@ -170,7 +170,7 @@ export function Header() {
                   💡 Ajuda
                 </Link>
                 <a
-                  href="https://marcuscamargo-portfolio.vercel.app/"
+                  href="https://marcuscamargo-portfolio.mcpt.workers.dev/"
                   className="item-dropdown"
                   onClick={() => setDropdownAberto(false)}
                 >
