@@ -24,6 +24,15 @@
   color: #b42318;
   font-weight: 700;
   cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.zona-perigo-conta button:hover,
+.zona-perigo-conta button:focus-visible {
+  background: #b42318;
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 5px 14px rgba(180, 35, 24, 0.24);
 }
 
 .exclusao-conta-overlay {
