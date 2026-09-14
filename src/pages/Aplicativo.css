@@ -1,0 +1,199 @@
+.pagina-aplicativo {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 108px 20px 48px;
+  color: #1a263b;
+}
+
+.card-aplicativo {
+  display: flex;
+  width: min(100%, 760px);
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(26px, 5vw, 44px);
+  border: 3px solid #1a263b;
+  border-radius: 28px;
+  background: rgb(255 255 255 / 94%);
+  box-shadow: 0 16px 38px rgb(26 38 59 / 18%);
+  text-align: center;
+}
+
+.logo-aplicativo {
+  width: min(100%, 330px);
+  height: auto;
+  margin-bottom: 18px;
+}
+
+.selo-aplicativo {
+  display: inline-flex;
+  padding: 6px 12px;
+  border: 2px solid #1a263b;
+  border-radius: 999px;
+  background: #ffebd6;
+  color: #f7501b;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.card-aplicativo h1 {
+  margin: 14px 0 10px;
+  font-size: clamp(28px, 5vw, 42px);
+  line-height: 1.08;
+}
+
+.introducao-aplicativo {
+  max-width: 620px;
+  margin: 0;
+  color: #4a5b78;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.status-aplicativo {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  margin-top: 26px;
+  border: 2px solid #1a263b;
+  border-radius: 18px;
+  text-align: left;
+}
+
+.status-aplicativo.compativel {
+  background: #edf7ef;
+}
+
+.status-aplicativo.incompativel {
+  background: #fff6e9;
+}
+
+.icone-status-aplicativo {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border-radius: 50%;
+  background: #f7501b;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+  place-items: center;
+}
+
+.status-aplicativo h2 {
+  margin: 0 0 5px;
+  font-size: 18px;
+}
+
+.status-aplicativo p {
+  margin: 0;
+  color: #4a5b78;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.botao-download-aplicativo,
+.voltar-web-aplicativo {
+  box-sizing: border-box;
+  display: flex;
+  width: min(100%, 520px);
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px;
+  border: 3px solid #1a263b;
+  border-radius: 15px;
+  font-weight: 800;
+  text-align: center;
+  text-decoration: none;
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.botao-download-aplicativo {
+  margin-top: 22px;
+  background: #f7501b;
+  color: #fff;
+}
+
+.botao-download-aplicativo:hover,
+.botao-download-aplicativo:focus-visible {
+  background: #e04312;
+  transform: translateY(-2px);
+}
+
+.versao-aplicativo {
+  margin: 8px 0 0;
+  color: #6a7890;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.explicacao-aplicativo {
+  width: 100%;
+  padding-top: 22px;
+  margin-top: 24px;
+  border-top: 2px solid rgb(26 38 59 / 12%);
+  text-align: left;
+}
+
+.explicacao-aplicativo h2 {
+  margin: 0 0 8px;
+  font-size: 19px;
+}
+
+.explicacao-aplicativo p {
+  margin: 0;
+  color: #4a5b78;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.voltar-web-aplicativo {
+  margin-top: 22px;
+  background: #cce0ff;
+  color: #1a263b;
+}
+
+.voltar-web-aplicativo:hover,
+.voltar-web-aplicativo:focus-visible {
+  background: #b3d1ff;
+  transform: translateY(-2px);
+}
+
+.link-privacidade-aplicativo {
+  margin-top: 18px;
+  color: #1f5f9f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .pagina-aplicativo {
+    align-items: flex-start;
+    padding: 84px 10px 26px;
+  }
+
+  .card-aplicativo {
+    padding: 24px 16px;
+    border-radius: 20px;
+  }
+
+  .logo-aplicativo {
+    width: min(86vw, 290px);
+  }
+
+  .status-aplicativo {
+    padding: 15px;
+  }
+
+  .card-aplicativo h1 {
+    font-size: 30px;
+  }
+}

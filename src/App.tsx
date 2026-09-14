@@ -1,14 +1,23 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Link,
+  Navigate,
+  useLocation,
+} from 'react-router-dom';
 import { Home } from './pages/Home';
 import { Header } from './components/Header';
 import { AccountDeletion } from './components/AccountDeletion';
 import { CloudAccess, CloudStatus } from './components/CloudAccess';
 import { useDesktopKeyboardNavigation } from './hooks/useDesktopKeyboardNavigation';
+import { detectarPlataforma } from './config/appDownload';
 import './App.css';
 
 const Conta = lazy(() => import('./pages/Conta').then((modulo) => ({ default: modulo.Conta })));
 const Privacidade = lazy(() => import('./pages/Privacidade').then((modulo) => ({ default: modulo.Privacidade })));
+const Aplicativo = lazy(() => import('./pages/Aplicativo').then((modulo) => ({ default: modulo.Aplicativo })));
 const Lista = lazy(() => import('./pages/Lista').then((modulo) => ({ default: modulo.Lista })));
 const Compras = lazy(() => import('./pages/Compras').then((modulo) => ({ default: modulo.Compras })));
 const ComprasSessao = lazy(() => import('./pages/ComprasSessao').then((modulo) => ({ default: modulo.ComprasSessao })));
@@ -33,6 +42,35 @@ function NavegacaoDesktop() {
   return null;
 }
 
+function RotasAplicacao() {
+  const location = useLocation();
+  const android = detectarPlataforma() === 'android';
+  const rotaPublicaNoAndroid = ['/aplicativo', '/privacidade'].includes(
+    location.pathname,
+  );
+
+  if (android && !rotaPublicaNoAndroid) {
+    return <Navigate to="/aplicativo" replace />;
+  }
+
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/conta" element={<Conta />} />
+      <Route path="/privacidade" element={<Privacidade />} />
+      <Route path="/aplicativo" element={<Aplicativo />} />
+      <Route element={<CloudAccess />}>
+        <Route path="/lista" element={<Lista />} />
+        <Route path="/compre" element={<Compras />} />
+        <Route path="/compre/:listaId" element={<ComprasSessao />} />
+        <Route path="/historico" element={<HistoricoCompras />} />
+        <Route path="/perfil" element={<Perfil />} />
+        <Route path="/ajuda" element={<PaginaAjuda />} />
+      </Route>
+    </Routes>
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -43,19 +81,7 @@ function App() {
           <CloudStatus />
           <AccountDeletion />
           <Suspense fallback={null}>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/conta" element={<Conta />} />
-              <Route path="/privacidade" element={<Privacidade />} />
-              <Route element={<CloudAccess />}>
-                <Route path="/lista" element={<Lista />} />
-                <Route path="/compre" element={<Compras />} />
-                <Route path="/compre/:listaId" element={<ComprasSessao />} />
-                <Route path="/historico" element={<HistoricoCompras />} />
-                <Route path="/perfil" element={<Perfil />} />
-                <Route path="/ajuda" element={<PaginaAjuda />} />
-              </Route>
-            </Routes>
+            <RotasAplicacao />
           </Suspense>
         </div>
 

@@ -173,6 +173,13 @@ export function Header() {
                     </Link>
                   </>
                 )}
+                <Link
+                  to="/aplicativo"
+                  className="item-dropdown"
+                  onClick={() => setDropdownAberto(false)}
+                >
+                  📱 Aplicativo
+                </Link>
                 <a
                   href="https://marcuscamargo-portfolio.mcpt.workers.dev/"
                   className="item-dropdown"
