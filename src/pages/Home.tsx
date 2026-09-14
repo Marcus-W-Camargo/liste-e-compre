@@ -66,10 +66,6 @@ export function Home() {
             Histórico de compras <span>&rarr;</span>
           </a>
         </div>
-
-        <Link to="/aplicativo" className="link-aplicativo-home">
-          📱 Conheça o aplicativo
-        </Link>
       </main>
 
       <Modal aberto={modalAcesso} onFechar={() => setModalAcesso(false)}>

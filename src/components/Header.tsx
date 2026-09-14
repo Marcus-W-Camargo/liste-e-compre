@@ -180,6 +180,13 @@ export function Header() {
                 >
                   📱 Aplicativo
                 </Link>
+                <Link
+                  to="/apoie"
+                  className="item-dropdown"
+                  onClick={() => setDropdownAberto(false)}
+                >
+                  💛 Apoie-me
+                </Link>
                 <a
                   href="https://marcuscamargo-portfolio.mcpt.workers.dev/"
                   className="item-dropdown"

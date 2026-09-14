@@ -18,6 +18,7 @@ import './App.css';
 const Conta = lazy(() => import('./pages/Conta').then((modulo) => ({ default: modulo.Conta })));
 const Privacidade = lazy(() => import('./pages/Privacidade').then((modulo) => ({ default: modulo.Privacidade })));
 const Aplicativo = lazy(() => import('./pages/Aplicativo').then((modulo) => ({ default: modulo.Aplicativo })));
+const Apoie = lazy(() => import('./pages/Apoie').then((modulo) => ({ default: modulo.Apoie })));
 const Lista = lazy(() => import('./pages/Lista').then((modulo) => ({ default: modulo.Lista })));
 const Compras = lazy(() => import('./pages/Compras').then((modulo) => ({ default: modulo.Compras })));
 const ComprasSessao = lazy(() => import('./pages/ComprasSessao').then((modulo) => ({ default: modulo.ComprasSessao })));
@@ -45,7 +46,7 @@ function NavegacaoDesktop() {
 function RotasAplicacao() {
   const location = useLocation();
   const android = detectarPlataforma() === 'android';
-  const rotaPublicaNoAndroid = ['/aplicativo', '/privacidade'].includes(
+  const rotaPublicaNoAndroid = ['/aplicativo', '/apoie', '/privacidade'].includes(
     location.pathname,
   );
 
@@ -59,6 +60,7 @@ function RotasAplicacao() {
       <Route path="/conta" element={<Conta />} />
       <Route path="/privacidade" element={<Privacidade />} />
       <Route path="/aplicativo" element={<Aplicativo />} />
+      <Route path="/apoie" element={<Apoie />} />
       <Route element={<CloudAccess />}>
         <Route path="/lista" element={<Lista />} />
         <Route path="/compre" element={<Compras />} />

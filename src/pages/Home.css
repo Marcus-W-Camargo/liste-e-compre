@@ -75,22 +75,6 @@
   user-select: none;
 }
 
-.link-aplicativo-home {
-  margin-top: 18px;
-  color: #1a263b;
-  font-size: 14px;
-  font-weight: 800;
-  text-decoration: underline;
-  text-decoration-color: #f7501b;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 4px;
-}
-
-.link-aplicativo-home:hover,
-.link-aplicativo-home:focus-visible {
-  color: #f7501b;
-}
-
 @media (max-width: 600px) {
   .body-home-wrapper .container-principal {
     height: auto;
@@ -121,10 +105,5 @@
   .seta-abaixo {
     margin: -4px 0 5px;
     font-size: 28px;
-  }
-
-  .link-aplicativo-home {
-    margin-top: 14px;
-    font-size: 13px;
   }
 }
