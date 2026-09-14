@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://listeecompre.marcuscamargo-portfolio.com.br/sitemap.xml
