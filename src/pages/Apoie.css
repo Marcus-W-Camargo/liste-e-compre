@@ -17,7 +17,7 @@
   border-radius: 999px;
   background: #ffebd6;
   color: #f7501b;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -32,7 +32,7 @@
 .apoie-cabecalho p {
   margin: 0;
   color: #4a5b78;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .apoie-card,
@@ -54,6 +54,11 @@
 
 .apoie-coracao {
   margin-bottom: 7px;
+  font-size: 0;
+}
+
+.apoie-coracao::before {
+  content: '🧡';
   font-size: 34px;
 }
 
@@ -67,7 +72,7 @@
 .apoie-hero p {
   max-width: 610px;
   margin: 12px auto 0;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.65;
 }
 
@@ -75,7 +80,7 @@
   display: block;
   margin-top: 12px;
   color: #4a5b78;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .apoie-projetos {
@@ -104,12 +109,12 @@
 }
 
 .apoie-projetos strong {
-  font-size: 16px;
+  font-size: 17px;
 }
 
 .apoie-projetos small {
   color: #4a5b78;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .apoie-projetos b {
@@ -118,7 +123,7 @@
 
 .apoie-secao-titulo {
   margin: 24px 0 9px;
-  font-size: 18px;
+  font-size: 19px;
 }
 
 .apoie-pix-card {
@@ -130,7 +135,7 @@
 .apoie-intro-pix {
   margin: 0 0 17px;
   color: #4a5b78;
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.55;
   text-align: center;
 }
@@ -159,13 +164,13 @@
 
 .apoie-chave-label {
   color: #66758d;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
 }
 
 .apoie-chave {
   margin-top: 4px;
-  font-size: 15px;
+  font-size: 16px;
   overflow-wrap: anywhere;
   text-align: center;
 }
@@ -196,7 +201,7 @@
   align-items: flex-start;
   gap: 11px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   line-height: 1.45;
 }
@@ -234,8 +239,8 @@
 .apoie-aviso {
   margin: 11px 0 0;
   color: #66758d;
-  font-size: 11px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 .apoie-observacao {
@@ -246,22 +251,27 @@
 }
 
 .apoie-observacao strong {
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .apoie-observacao p {
   margin: 5px 0 0;
   color: #4a5b78;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.55;
 }
 
 .apoie-rodape-texto {
   margin: 20px 0 0;
   color: #4a5b78;
-  font-size: 12px;
+  font-size: 0;
   font-weight: 700;
   text-align: center;
+}
+
+.apoie-rodape-texto::before {
+  content: 'Obrigado por apoiar um projeto independente. 🧡';
+  font-size: 14px;
 }
 
 @media (max-width: 600px) {
