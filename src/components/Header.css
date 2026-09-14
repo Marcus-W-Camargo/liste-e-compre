@@ -23,6 +23,15 @@
   transform: scale(1.05);
 }
 
+.item-dropdown[href='/apoie'] {
+  font-size: 0;
+}
+
+.item-dropdown[href='/apoie']::after {
+  content: '🧡 Apoie-me';
+  font-size: 14px;
+}
+
 .icone-usuario.tem-foto-perfil {
   overflow: hidden;
   padding: 0;
