@@ -11,6 +11,7 @@ import { Home } from './pages/Home';
 import { Header } from './components/Header';
 import { AccountDeletion } from './components/AccountDeletion';
 import { CloudAccess, CloudStatus } from './components/CloudAccess';
+import { Seo } from './components/Seo';
 import { useDesktopKeyboardNavigation } from './hooks/useDesktopKeyboardNavigation';
 import { detectarPlataforma } from './config/appDownload';
 import './App.css';
@@ -76,6 +77,7 @@ function RotasAplicacao() {
 function App() {
   return (
     <BrowserRouter>
+      <Seo />
       <NavegacaoDesktop />
       <div className="app-layout">
         <div className="app-conteudo">
